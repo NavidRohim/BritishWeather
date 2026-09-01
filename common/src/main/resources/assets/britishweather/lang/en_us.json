@@ -1,0 +1,8 @@
+{
+  "br.config.title": "British Weather",
+  "br.config.category.weather": "Weather Settings",
+  "br.config.category.weather.lat": "Manual Latitude",
+  "br.config.category.weather.long": "Manual Longitude",
+  "br.config.category.weather.fetchWeatherIntervalSecs": "Check weather state interval",
+  "br.config.category.weather.useIp": "Use IP to fetch weather state"
+}
