@@ -20,33 +20,40 @@ public class WeatherManager
     private static float lon_ip = 999;
     private static String area = "Earth";
 
+    private static WeatherCondition getConditionsFromWMOCode(int code)
+    {
+        WeatherCondition conditions = WeatherCondition.CLOUDY;
+
+        // src: https://www.nodc.noaa.gov/archive/arc0021/0002199/1.1/data/0-data/HTML/WMO-CODE/WMO4677.HTM
+        if (code == 17) // Thunder, no rain
+        {
+            conditions = WeatherCondition.THUNDERSTORM_NO_RAIN;
+        }
+        else if (code >= 50 && code <= 94) // General precipitation. Generalised into just "RAINY" for minecraft purposes
+        {
+            conditions = WeatherCondition.RAINY;
+        } else if (code >= 95 && code <= 99) // Thunderstorm with rain.
+        {
+            conditions = WeatherCondition.THUNDERSTORM;
+        }
+
+        return conditions;
+    }
+
     // Deserializer class for getting response from open-mateo endpoint
     private static class WeatherResponseDecoder implements JsonDeserializer<WeatherState>
     {
-        // Only deserialise
+        // Only deserialize
         @Override
         public WeatherState deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException
         {
             try
             {
                 int WMOCode = json.getAsJsonObject().getAsJsonObject("current").get("weather_code").getAsInt();
-                WeatherCondition conditions = WeatherCondition.CLOUDY;
+                WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
 
-                // src: https://www.nodc.noaa.gov/archive/arc0021/0002199/1.1/data/0-data/HTML/WMO-CODE/WMO4677.HTM
-                if (WMOCode == 17) // Thunder, no rain
-                {
-                    conditions = WeatherCondition.THUNDERSTORM_NO_RAIN;
-                }
-                else if (WMOCode >= 50 && WMOCode <= 94) // General precipitation. Generalised into just "RAINY" for minecraft purposes
-                {
-                    conditions = WeatherCondition.RAINY;
-                } else if (WMOCode >= 95 && WMOCode <= 99) // Thunderstorm with rain.
-                {
-                    conditions = WeatherCondition.THUNDERSTORM;
-                }
-                // If no condition is met, will be cloudy.
                 String landmarkName = STATE != null ? STATE.landmarkName : area; // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
-                return new WeatherState(WMOCode, conditions, landmarkName, getLatFromIP(), getLonFromIP());
+                return new WeatherState(WMOCode, weatherCondition, landmarkName, getLatFromIP(), getLonFromIP());
 
             } catch (Exception e)
             {
@@ -56,7 +63,7 @@ public class WeatherManager
         }
     }
 
-    public enum WeatherCondition
+    private enum WeatherCondition
     {
         CLOUDY,
         RAINY,
@@ -71,7 +78,7 @@ public class WeatherManager
     public static class WeatherState
     {
         int WMOCode;
-        WeatherCondition weatherCondition;
+        transient WeatherCondition weatherCondition;
         String landmarkName;
         float lat;
         float lon;
@@ -90,6 +97,27 @@ public class WeatherManager
             return "WeatherState[WMOCode=%s, weatherCondition=%s, landmarkName=%s, lat=%f, lon=%f]".formatted(WMOCode, weatherCondition.toString(), landmarkName, lat, lon);
         }
 
+        public String serialize()
+        {
+            return GSON.toJson(this);
+        }
+
+        @Nullable
+        public static WeatherState deserialize(@Nullable String json)
+        {
+            if (json == null || json.isEmpty() || json.equals("{}"))
+            {
+                return null;
+            }
+            JsonObject rawWeatherStateData = JsonParser.parseString(json).getAsJsonObject();
+            int WMOCode = rawWeatherStateData.get("WMOCode").getAsInt();
+            WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
+            String landmarkName = rawWeatherStateData.get("landmarkName").getAsString();
+            float lat = rawWeatherStateData.get("lat").getAsFloat();
+            float lon = rawWeatherStateData.get("lon").getAsFloat();
+
+            return new WeatherState(WMOCode, weatherCondition, landmarkName, lat, lon);
+        }
         /*
         Used to see if the weather state has changed from last check
          */
@@ -107,12 +135,17 @@ public class WeatherManager
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(WeatherState.class, new WeatherResponseDecoder()).create();
     @Nullable private static WeatherState STATE = null;
 
-    private static void onWeatherChanged(WeatherManager.WeatherState weatherState, MinecraftServer minecraftServer)
+    private static void changeServerWeather(MinecraftServer minecraftServer)
     {
-        Constants.LOG.info("Changing weather state to " + weatherState);
+        Constants.LOG.info("Changing weather state to " + STATE);
 
         // THUNDERSTORM_NO_RAIN may not do anything. I have never seen there be no rain but thunder in minecraft.
-        switch (weatherState.weatherCondition)
+        if (STATE == null)
+        {
+            Constants.LOG.warn("Trying to change weather in-game before weather state has been established. Call WeatherManager.fetchNewWeatherState() first.");
+        }
+
+        switch (STATE.weatherCondition)
         {
             case CLOUDY -> minecraftServer.setWeatherParameters(9999, 0, false, false);
             case RAINY -> minecraftServer.setWeatherParameters(0, 9999, true, false);
@@ -143,9 +176,9 @@ public class WeatherManager
     /*
     Get new weather state. This is called every 120 seconds by default as specified in config.
      */
-    public static void fetchNewWeatherState(MinecraftServer server)
+    private static void fetchNewWeatherState(MinecraftServer server)
     {
-        Constants.LOG.info("Fetching weather for {} {}", getLatFromIP(), getLonFromIP());
+        Constants.LOG.info("Fetching weather for {} {} {}", getLatFromIP(), getLonFromIP(), STATE);
 
         // Make request to open-mateo. No API key needed for our purposes.
         HttpRequest request = HttpRequest.newBuilder().uri(Util.getWeatherAPIUrl()).GET().build();
@@ -162,8 +195,12 @@ public class WeatherManager
                 Constants.LOG.debug("Fetching weather state for {}", weatherState + Util.getWeatherAPIUrl().toString());
                 if (!weatherState.equals(STATE)) // Check if weather has actually changed, if not, just ignore and carry on.
                 {
-                    STATE = weatherState;
-                    onWeatherChanged(STATE, server);
+                    setState(weatherState);
+                    changeServerWeather(server);
+                    if (CommonClass.getConfig().usePlayerIP())
+                    {
+                        CommonClass.CACHE.setCachedWeatherState(Constants.USER_IP, STATE);
+                    }
                 }
 
             } else { // Error response
@@ -184,14 +221,26 @@ public class WeatherManager
         );
     }
 
+    public static void setState(WeatherState weatherState)
+    {
+        STATE = weatherState;
+    }
+
     /*
     Get clients coordinates. This is called once when the user loads into the main menu of minecraft for the first time.
      */
-    public static void setCoordinatesFromIP()
+    public static void setWeather(MinecraftServer server)
     {
         @Nullable URI IPAPIURI = Util.getIPAPIUrlForIP(); // Generate URI for current IP
         if (CommonClass.getConfig().usePlayerIP() && IPAPIURI != null)
         {
+            if (CommonClass.CACHE.isIpCached())
+            {
+                WeatherManager.fetchNewWeatherState(server);
+                return;
+            }
+
+            Constants.LOG.info("IP not cached, fetching from server.");
             // Make API request
             HttpRequest requestIPApi = HttpRequest.newBuilder(IPAPIURI).GET().build();
 
@@ -207,10 +256,17 @@ public class WeatherManager
                     lat_ip =        returnedObj.get("lat").getAsFloat();
                     lon_ip =        returnedObj.get("lon").getAsFloat();
                     area =          returnedObj.get("city").getAsString() + returnedObj.get("district").getAsString(); // "district" may be irrelevant in the UK?
+                    if (STATE != null)
+                    {
+                        STATE.landmarkName = area;
+                    }
 
                     Constants.LOG.info("Got Lat: {} Lon: {} from IP: {} Area: {}", lat_ip, lon_ip, Constants.USER_IP, area);
+                    WeatherManager.fetchNewWeatherState(server);
                 }
             });
+        } else {
+            WeatherManager.fetchNewWeatherState(server);
         }
     }
 }

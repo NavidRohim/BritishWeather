@@ -18,6 +18,5 @@ public class FabricMain implements ModInitializer {
 
         // events
         ServerTickEvents.END_SERVER_TICK.register(CommonClass::onTick);
-        ClientLifecycleEvents.CLIENT_STARTED.register(CommonClass::onStart);
     }
 }

@@ -1,8 +1,8 @@
 package me.brynview.navidrohim;
 
 import me.brynview.navidrohim.platform.services.CommonModConfig;
+import me.brynview.navidrohim.server.DataCache;
 import me.brynview.navidrohim.server.WeatherManager;
-import net.minecraft.client.Minecraft;
 import net.minecraft.server.MinecraftServer;
 
 // This class is part of the common project meaning it is shared between all supported loaders. Code written here can only
@@ -12,6 +12,7 @@ import net.minecraft.server.MinecraftServer;
 public class CommonClass {
 
     private static CommonModConfig CONFIG;
+    public static DataCache CACHE;
 
     /*
     Since the config is not present in the common namespace, each mod loader must provide their own config (using YACL, which doesn't have a common JAR).
@@ -31,17 +32,14 @@ public class CommonClass {
     {
         long tick = server.getTickCount();
 
+        if (tick == 1)
+        {
+            DataCache.initCache(server);
+        }
+
         if (tick % CONFIG.getWeatherFetchIntervalInTicks() == 0 || tick == 1) // Check if tick is multiple of configs update interval, or is 1 (Player / server just started)
         {
-            WeatherManager.fetchNewWeatherState(server);
+            WeatherManager.setWeather(server);
         }
-    }
-
-    /*
-    Should only be fired when minecraft is started.
-     */
-    public static void onStart(Minecraft _minecraft)
-    {
-        WeatherManager.setCoordinatesFromIP();
     }
 }
