@@ -4,14 +4,17 @@ import me.brynview.navidrohim.CommonClass;
 import me.brynview.navidrohim.Constants;
 import com.google.gson.*;
 import me.brynview.navidrohim.Util;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.concurrent.CompletableFuture;
 
 public class WeatherManager
 {
@@ -145,6 +148,8 @@ public class WeatherManager
             Constants.LOG.warn("Trying to change weather in-game before weather state has been established. Call WeatherManager.fetchNewWeatherState() first.");
         }
 
+        // look into ServerLevel and ClientLevel for possible new weather states.
+
         switch (STATE.weatherCondition)
         {
             case CLOUDY -> minecraftServer.setWeatherParameters(9999, 0, false, false);
@@ -197,6 +202,8 @@ public class WeatherManager
                 {
                     setState(weatherState);
                     changeServerWeather(server);
+
+                    // Again, only cache state if using IP.
                     if (CommonClass.getConfig().usePlayerIP())
                     {
                         CommonClass.CACHE.setCachedWeatherState(Constants.USER_IP, STATE);
@@ -215,8 +222,14 @@ public class WeatherManager
             }
 
         }).exceptionally(exc -> {
-                Constants.LOG.error("Error while fetching the weather: ", exc);
-                return null;
+                if (exc.getCause() instanceof ConnectException) // No internet connection
+                {
+                    Constants.LOG.debug("No internet connection. Cannot fetch weather.");
+                } else
+                {
+                    Constants.LOG.error("Uncatchable error while fetching the weather: ", exc);
+                }
+            return null;
             }
         );
     }

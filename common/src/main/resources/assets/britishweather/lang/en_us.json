@@ -2,7 +2,11 @@
   "br.config.title": "British Weather",
   "br.config.category.weather": "Weather Settings",
   "br.config.category.weather.lat": "Manual Latitude",
+  "br.config.category.weather.lat.description": "Latitude value that will be used if IP geolocating is OFF",
   "br.config.category.weather.long": "Manual Longitude",
+  "br.config.category.weather.long.description": "Longitude value that will be used if IP geolocating is OFF",
   "br.config.category.weather.fetchWeatherIntervalSecs": "Check weather state interval",
-  "br.config.category.weather.useIp": "Use IP to fetch weather state"
+  "br.config.category.weather.fetchWeatherIntervalSecs.description": "How often this mod will fetch the current weather, in seconds.",
+  "br.config.category.weather.useIp": "IP geolocating",
+  "br.config.category.weather.useIp.description": "Use IP to get weather instead of using Manual Latitude and Longitude values."
 }

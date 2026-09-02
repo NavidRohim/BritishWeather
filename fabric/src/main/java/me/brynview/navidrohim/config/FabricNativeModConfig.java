@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.config;
 
+import dev.isxander.yacl3.api.OptionDescription;
 import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
 import me.brynview.navidrohim.Constants;
 import com.google.gson.GsonBuilder;
@@ -47,6 +48,7 @@ public class FabricNativeModConfig implements ModMenuApi
     {
 
         // I always hate how configs are set up. It works great, but looks so ugly here.
+        // Also, does Component.translatable() have to be called every time, for every key, every time the config screen is rendered? Seems wasteful.
         return parent -> YetAnotherConfigLib.createBuilder()
                 .title(Component.translatable("br.config.title"))
                 .category(ConfigCategory.createBuilder()
@@ -54,6 +56,7 @@ public class FabricNativeModConfig implements ModMenuApi
 
                         .option(Option.<Float>createBuilder() // Lat (float)
                                 .name(Component.translatable("br.config.category.weather.lat"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.weather.lat.description")))
                                 .binding(lat,
                                         () -> lat,
                                         newVal -> lat = Math.clamp(newVal, -90, 90)) // Make sure it's an actual valid latitude value (-90 - 90)
@@ -62,6 +65,7 @@ public class FabricNativeModConfig implements ModMenuApi
 
                         ).option(Option.<Float>createBuilder() // Lon (float)
                                 .name(Component.translatable("br.config.category.weather.long"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.weather.long.description")))
                                 .binding(lon,
                                         () -> lon,
                                         newLonVal -> lon = Math.clamp(newLonVal, -180, 180)) // Make sure it's an actual longitude value (-180 - 180, does not use 360deg format)
@@ -70,6 +74,7 @@ public class FabricNativeModConfig implements ModMenuApi
 
                         ).option(Option.<Integer>createBuilder() // Weather fetch interval, uncapped integer
                                 .name(Component.translatable("br.config.category.weather.fetchWeatherIntervalSecs"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.weather.fetchWeatherIntervalSecs.description")))
                                 .binding(fetchWeatherStatusIntervalInSeconds,
                                         () -> fetchWeatherStatusIntervalInSeconds,
                                         newDurationVal -> fetchWeatherStatusIntervalInSeconds = newDurationVal)
@@ -78,6 +83,7 @@ public class FabricNativeModConfig implements ModMenuApi
 
                         ).option(Option.<Boolean>createBuilder() // Use player IP to geolocate, boolean
                                 .name(Component.translatable("br.config.category.weather.useIp"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.weather.useIp.description")))
                                 .binding(usePlayerIP,
                                         () -> usePlayerIP,
                                         newVal -> usePlayerIP = newVal)

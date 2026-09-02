@@ -5,13 +5,10 @@ import me.brynview.navidrohim.server.DataCache;
 import me.brynview.navidrohim.server.WeatherManager;
 import net.minecraft.server.MinecraftServer;
 
-// This class is part of the common project meaning it is shared between all supported loaders. Code written here can only
-// import and access the vanilla codebase, libraries used by vanilla, and optionally third party libraries that provide
-// common compatible binaries. This means common code can not directly use loader specific concepts such as NeoForge events
-// however it will be compatible with all supported mod loaders.
 public class CommonClass {
 
     private static CommonModConfig CONFIG;
+    // Cache is only used if getting lat/long from IP.
     public static DataCache CACHE;
 
     /*
@@ -23,22 +20,27 @@ public class CommonClass {
         CONFIG = config;
     }
 
+    // Config getter
     public static CommonModConfig getConfig()
     {
         return CONFIG;
     }
 
+    // This onTick method works on both IntegratedServer and DedicatedServer theoretically.
+    // But for LAN worlds, I do not like this.
     public static void onTick(MinecraftServer server)
     {
         long tick = server.getTickCount();
 
         if (tick == 1)
         {
+            // Call on first tick
             DataCache.initCache(server);
         }
 
         if (tick % CONFIG.getWeatherFetchIntervalInTicks() == 0 || tick == 1) // Check if tick is multiple of configs update interval, or is 1 (Player / server just started)
         {
+            // Also set weather on first tick or when threshold is reached.
             WeatherManager.setWeather(server);
         }
     }
