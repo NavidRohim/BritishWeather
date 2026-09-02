@@ -63,14 +63,16 @@ public class DataCache extends SavedData
         {
             CommonClass.CACHE = server.getDataStorage().computeIfAbsent(TYPE);
             WeatherManager.setState(CommonClass.CACHE.getCachedWeatherState());
+            Constants.LOG.debug("Initialized weather cache");
         } else {
-            Constants.LOG.debug("Cache already been initialized. Ignoring.");
+            Constants.LOG.debug("Cache already been initialized. Ignoring");
         }
     }
 
     public void setCachedWeatherState(String ip, WeatherManager.WeatherState weatherState)
     {
-        Constants.LOG.debug("Caching weather state from IP: {}", weatherState.toString());
+        Constants.LOG.debug("Caching weather state for IP -> {}", weatherState);
+
         this.ip = ip;
         this.rawWeatherCache = weatherState.serialize();
         this.setDirty(true);

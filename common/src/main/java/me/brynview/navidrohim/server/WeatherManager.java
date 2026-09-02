@@ -244,18 +244,18 @@ public class WeatherManager
      */
     public static void setWeather(MinecraftServer server)
     {
-        @Nullable URI IPAPIURI = Util.getIPAPIUrlForIP(); // Generate URI for current IP
-        if (CommonClass.getConfig().usePlayerIP() && IPAPIURI != null)
+        if (CommonClass.getConfig().usePlayerIP())
         {
             if (CommonClass.CACHE.isIpCached())
             {
+                Constants.LOG.debug("Cache hit for weather state -> {}", STATE);
                 WeatherManager.fetchNewWeatherState(server);
                 return;
             }
 
-            Constants.LOG.info("IP not cached, fetching from server.");
+            Constants.LOG.info("IP not cached. Fetching from server IP API");
             // Make API request
-            HttpRequest requestIPApi = HttpRequest.newBuilder(IPAPIURI).GET().build();
+            HttpRequest requestIPApi = HttpRequest.newBuilder(Constants.IP_API_ENDPOINT).GET().build();
 
             // Send request asynchronously. Check status code is valid and API request is successful. View docs here
             // https://ip-api.com/docs/api:json
@@ -274,7 +274,6 @@ public class WeatherManager
                         STATE.landmarkName = area;
                     }
 
-                    Constants.LOG.info("Got Lat: {} Lon: {} from IP: {} Area: {}", lat_ip, lon_ip, Constants.USER_IP, area);
                     WeatherManager.fetchNewWeatherState(server);
                 }
             });
