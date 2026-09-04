@@ -4,17 +4,21 @@ import me.brynview.navidrohim.CommonClass;
 import me.brynview.navidrohim.Constants;
 import com.google.gson.*;
 import me.brynview.navidrohim.Util;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.level.levelgen.Heightmap;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.net.ConnectException;
-import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.concurrent.CompletableFuture;
 
 public class WeatherManager
 {
@@ -43,6 +47,36 @@ public class WeatherManager
         return conditions;
     }
 
+    public static @Nullable WeatherState getState()
+    {
+        return STATE;
+    }
+
+    private static Identifier getHailTexture(int intensity)
+    {
+        return Identifier.fromNamespaceAndPath(Constants.MOD_ID, "textures/environment/hail%s.png".formatted(intensity));
+    }
+
+    private static boolean isPlayerSafeFromHail(ServerPlayer player)
+    {
+        BlockPos headHeight = player.blockPosition().above(2);
+        int heightBlockAtY = player.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, headHeight).getY();
+        return heightBlockAtY >= headHeight.getY() || player.hasItemInSlot(EquipmentSlot.HEAD);
+    }
+
+    public static void tick(MinecraftServer server)
+    {
+        DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
+
+        server.getPlayerList().getPlayers().forEach(player ->
+                {
+                    if (!isPlayerSafeFromHail(player))
+                    {
+                        player.hurtServer(player.level(), hailDamage, 0.5f / STATE.getWeatherCondition().getHailLevel());
+                    }
+                });
+    }
+
     // Deserializer class for getting response from open-mateo endpoint
     private static class WeatherResponseDecoder implements JsonDeserializer<WeatherState>
     {
@@ -66,12 +100,47 @@ public class WeatherManager
         }
     }
 
-    private enum WeatherCondition
+    public enum WeatherCondition
     {
         CLOUDY,
         RAINY,
         THUNDERSTORM,
-        THUNDERSTORM_NO_RAIN
+        THUNDERSTORM_NO_RAIN,
+
+        HAIL_STAGE_1(1),
+        HAIL_STAGE_2(2),
+        HAIL_STAGE_3(3);
+
+        @Nullable
+        final Identifier weatherTexture;
+        final int hailLevel;
+
+        WeatherCondition(int hailLevel)
+        {
+            this.hailLevel = hailLevel;
+            this.weatherTexture = getHailTexture(hailLevel);
+        }
+
+        WeatherCondition()
+        {
+            this.hailLevel = -1;
+            this.weatherTexture = null;
+        }
+
+        public boolean isHail()
+        {
+            return hailLevel > 0;
+        }
+
+        public int getHailLevel()
+        {
+            return hailLevel;
+        }
+
+        public @Nullable Identifier getWeatherTexture()
+        {
+            return weatherTexture;
+        }
     }
 
     /*
@@ -121,9 +190,15 @@ public class WeatherManager
 
             return new WeatherState(WMOCode, weatherCondition, landmarkName, lat, lon);
         }
+
+        public WeatherCondition getWeatherCondition()
+        {
+            return weatherCondition;
+        }
+
         /*
-        Used to see if the weather state has changed from last check
-         */
+                Used to see if the weather state has changed from last check
+                 */
         public boolean equals(@Nullable Object o)
         {
             if (o instanceof WeatherState)
@@ -236,7 +311,7 @@ public class WeatherManager
 
     public static void setState(WeatherState weatherState)
     {
-        STATE = weatherState;
+        STATE = CommonClass.DEBUG_MASTER_WEATHER_STATE;
     }
 
     /*

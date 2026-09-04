@@ -8,5 +8,7 @@
   "br.config.category.weather.fetchWeatherIntervalSecs": "Check weather state interval",
   "br.config.category.weather.fetchWeatherIntervalSecs.description": "How often this mod will fetch the current weather, in seconds.",
   "br.config.category.weather.useIp": "IP geolocating",
-  "br.config.category.weather.useIp.description": "Use IP to get weather instead of using Manual Latitude and Longitude values."
+  "br.config.category.weather.useIp.description": "Use IP to get weather instead of using Manual Latitude and Longitude values.",
+
+  "death.attack.hail_damage": "%1$s was made into Swiss cheese by hailstones"
 }
