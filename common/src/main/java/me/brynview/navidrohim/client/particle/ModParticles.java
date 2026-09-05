@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.client;
+package me.brynview.navidrohim.client.particle;
 
 import net.minecraft.core.particles.SimpleParticleType;
 

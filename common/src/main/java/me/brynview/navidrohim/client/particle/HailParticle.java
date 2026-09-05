@@ -1,5 +1,6 @@
-package me.brynview.navidrohim.client;
+package me.brynview.navidrohim.client.particle;
 
+import me.brynview.navidrohim.client.ClientCommon;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleProvider;
@@ -16,14 +17,13 @@ public class HailParticle extends SimpleAnimatedParticle
     protected HailParticle(ClientLevel level, double x, double y, double z, SpriteSet sprites, RandomSource random)
     {
         super(level, x, y, z, sprites, 1);
-        int hail = ClientCommon.SERVER_WEATHER_STATE.getWeatherCondition().getHailLevel();
+
+        int hail = ClientCommon.getWeatherManager().getWeather().getHailLevel();
         if (hail != 1 && random.nextInt(0, hail + 1) == 0)
         {
             this.remove();
         }
-        this.setParticleSpeed(random.nextInt(1), yd + (0.10 + (0.05 * ClientCommon.SERVER_WEATHER_STATE.getWeatherCondition().getHailLevel())), random.nextInt(1));
-
-
+        this.setParticleSpeed((double) random.nextInt(2) / 5, yd + (0.25 + (-0.05 * hail)), (double) random.nextInt(2) / 5);
         this.setLifetime(60);
     }
 

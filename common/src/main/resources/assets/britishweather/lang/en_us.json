@@ -10,5 +10,5 @@
   "br.config.category.weather.useIp": "IP geolocating",
   "br.config.category.weather.useIp.description": "Use IP to get weather instead of using Manual Latitude and Longitude values.",
 
-  "death.attack.hail_damage": "%1$s was made into Swiss cheese by hailstones"
+  "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?"
 }

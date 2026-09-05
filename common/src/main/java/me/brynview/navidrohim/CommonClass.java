@@ -1,34 +1,31 @@
 package me.brynview.navidrohim;
 
-import me.brynview.navidrohim.client.ModParticles;
+import me.brynview.navidrohim.client.particle.ModParticles;
+import me.brynview.navidrohim.common.WeatherCondition;
 import me.brynview.navidrohim.platform.services.CommonModConfig;
-import me.brynview.navidrohim.server.DamageSources;
 import me.brynview.navidrohim.server.DataCache;
-import me.brynview.navidrohim.server.WeatherManager;
+import me.brynview.navidrohim.server.ServerWeatherManager;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.damagesource.DamageTypes;
+
+import java.util.function.Consumer;
 
 public class CommonClass {
 
     private static CommonModConfig CONFIG;
-    // Cache is only used if getting lat/long from IP.
-    public static DataCache CACHE;
-
-    public static final WeatherManager.WeatherState DEBUG_MASTER_WEATHER_STATE = new WeatherManager.WeatherState(90, WeatherManager.WeatherCondition.HAIL_STAGE_1, "London", 1, 1);
+    public static DataCache CACHE; // Cache is only used if getting lat/long from IP.
+    public static ServerWeatherManager WEATHER_MANAGER;
 
     /*
     Since the config is not present in the common namespace, each mod loader must provide their own config (using YACL, which doesn't have a common JAR).
     Then pass an instance of CommonModConfig to common init so all common code can use it.
      */
-    public static void init(CommonModConfig config)
+    public static void init(CommonModConfig config, Consumer<MinecraftServer> weatherRefreshCallback)
     {
         CONFIG = config;
-
+        WEATHER_MANAGER = new ServerWeatherManager(weatherRefreshCallback);
         Registry.register(BuiltInRegistries.PARTICLE_TYPE, Identifier.fromNamespaceAndPath(Constants.MOD_ID, "fallen_hail_1"), ModParticles.HAIL);
     }
 
@@ -36,6 +33,11 @@ public class CommonClass {
     public static CommonModConfig getConfig()
     {
         return CONFIG;
+    }
+
+    public static ServerWeatherManager getWeatherManager()
+    {
+        return WEATHER_MANAGER;
     }
 
     // This onTick method works on both IntegratedServer and DedicatedServer theoretically.
@@ -53,12 +55,14 @@ public class CommonClass {
         if (tick % CONFIG.getWeatherFetchIntervalInTicks() == 0 || tick == 1) // Check if tick is multiple of configs update interval, or is 1 (Player / server just started)
         {
             // Also set weather on first tick or when threshold is reached.
-            WeatherManager.setWeather(server);
+            WEATHER_MANAGER.setWeather(server);
         }
 
-        if (tick % 40 == 0 && WeatherManager.getState() != null && WeatherManager.getState().getWeatherCondition().getHailLevel() >= 0)
-        {
-            WeatherManager.tick(server);
-        }
+        WEATHER_MANAGER.getState().ifPresent((condition) -> {
+            if (condition.getWeatherCondition().isHail() && tick % (20L * condition.getWeatherCondition().getHailLevel()) == 0)
+            {
+                WEATHER_MANAGER.tick(server);
+            }
+        });
     }
 }

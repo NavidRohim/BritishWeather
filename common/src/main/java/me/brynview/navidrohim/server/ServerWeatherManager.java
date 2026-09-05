@@ -4,6 +4,7 @@ import me.brynview.navidrohim.CommonClass;
 import me.brynview.navidrohim.Constants;
 import com.google.gson.*;
 import me.brynview.navidrohim.Util;
+import me.brynview.navidrohim.common.WeatherCondition;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -19,27 +20,40 @@ import java.net.ConnectException;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 
-public class WeatherManager
+public class ServerWeatherManager
 {
     // 999 are default values to check if these values have been changed by IP geolocating.
     private static float lat_ip = 999;
     private static float lon_ip = 999;
     private static String area = "Earth";
 
+    private static final List<Integer> LIGHT_HAIL = List.of(87, 89, 93, 96);
+    private static final List<Integer> HEAVY_HAIL = List.of(88, 90, 94, 99);
+
     private static WeatherCondition getConditionsFromWMOCode(int code)
     {
         WeatherCondition conditions = WeatherCondition.CLOUDY;
-
         // src: https://www.nodc.noaa.gov/archive/arc0021/0002199/1.1/data/0-data/HTML/WMO-CODE/WMO4677.HTM
-        if (code == 17) // Thunder, no rain
+        if (LIGHT_HAIL.contains(code))
+        {
+            conditions = WeatherCondition.HAIL_STAGE_3;
+        } else if (HEAVY_HAIL.contains(code))
+        {
+            conditions = WeatherCondition.HAIL_STAGE_1;
+        }
+        else if (code == 17) // Thunder, no rain
         {
             conditions = WeatherCondition.THUNDERSTORM_NO_RAIN;
         }
         else if (code >= 50 && code <= 94) // General precipitation. Generalised into just "RAINY" for minecraft purposes
         {
             conditions = WeatherCondition.RAINY;
-        } else if (code >= 95 && code <= 99) // Thunderstorm with rain.
+        }
+        else if (code >= 95 && code <= 99) // Thunderstorm with rain.
         {
             conditions = WeatherCondition.THUNDERSTORM;
         }
@@ -47,14 +61,9 @@ public class WeatherManager
         return conditions;
     }
 
-    public static @Nullable WeatherState getState()
+    public Optional<WeatherState> getState()
     {
-        return STATE;
-    }
-
-    private static Identifier getHailTexture(int intensity)
-    {
-        return Identifier.fromNamespaceAndPath(Constants.MOD_ID, "textures/environment/hail%s.png".formatted(intensity));
+        return Optional.ofNullable(STATE);
     }
 
     private static boolean isPlayerSafeFromHail(ServerPlayer player)
@@ -64,7 +73,7 @@ public class WeatherManager
         return heightBlockAtY >= headHeight.getY() || player.hasItemInSlot(EquipmentSlot.HEAD);
     }
 
-    public static void tick(MinecraftServer server)
+    public void tick(MinecraftServer server)
     {
         DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
 
@@ -75,6 +84,11 @@ public class WeatherManager
                         player.hurtServer(player.level(), hailDamage, 0.5f / STATE.getWeatherCondition().getHailLevel());
                     }
                 });
+    }
+
+    public ServerWeatherManager(Consumer<MinecraftServer> weatherChangeCallback)
+    {
+        this.WEATHER_CHANGE_CALLBACK = weatherChangeCallback;
     }
 
     // Deserializer class for getting response from open-mateo endpoint
@@ -89,7 +103,7 @@ public class WeatherManager
                 int WMOCode = json.getAsJsonObject().getAsJsonObject("current").get("weather_code").getAsInt();
                 WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
 
-                String landmarkName = STATE != null ? STATE.landmarkName : area; // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
+                String landmarkName = CommonClass.getWeatherManager().STATE != null ? CommonClass.getWeatherManager().STATE.landmarkName : area; // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
                 return new WeatherState(WMOCode, weatherCondition, landmarkName, getLatFromIP(), getLonFromIP());
 
             } catch (Exception e)
@@ -97,49 +111,6 @@ public class WeatherManager
                 Constants.LOG.info("Got error when trying to deserialize WeatherState from server. Json following:\n\n{}", json.toString());
                 throw e;
             }
-        }
-    }
-
-    public enum WeatherCondition
-    {
-        CLOUDY,
-        RAINY,
-        THUNDERSTORM,
-        THUNDERSTORM_NO_RAIN,
-
-        HAIL_STAGE_1(1),
-        HAIL_STAGE_2(2),
-        HAIL_STAGE_3(3);
-
-        @Nullable
-        final Identifier weatherTexture;
-        final int hailLevel;
-
-        WeatherCondition(int hailLevel)
-        {
-            this.hailLevel = hailLevel;
-            this.weatherTexture = getHailTexture(hailLevel);
-        }
-
-        WeatherCondition()
-        {
-            this.hailLevel = -1;
-            this.weatherTexture = null;
-        }
-
-        public boolean isHail()
-        {
-            return hailLevel > 0;
-        }
-
-        public int getHailLevel()
-        {
-            return hailLevel;
-        }
-
-        public @Nullable Identifier getWeatherTexture()
-        {
-            return weatherTexture;
         }
     }
 
@@ -211,9 +182,11 @@ public class WeatherManager
 
     private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(WeatherState.class, new WeatherResponseDecoder()).create();
-    @Nullable private static WeatherState STATE = null;
 
-    private static void changeServerWeather(MinecraftServer minecraftServer)
+    @Nullable private WeatherState STATE = null;
+    private final Consumer<MinecraftServer> WEATHER_CHANGE_CALLBACK;
+
+    private void changeServerWeather(MinecraftServer minecraftServer)
     {
         Constants.LOG.info("Changing weather state to " + STATE);
 
@@ -231,6 +204,12 @@ public class WeatherManager
             case RAINY -> minecraftServer.setWeatherParameters(0, 9999, true, false);
             case THUNDERSTORM -> minecraftServer.setWeatherParameters(0, 9999, true, true);
             case THUNDERSTORM_NO_RAIN -> minecraftServer.setWeatherParameters(0, 0, false, true);
+            default -> {
+                if (STATE.weatherCondition.isHail())
+                {
+                    minecraftServer.setWeatherParameters(0, 9999, true, false);
+                }
+            }
         }
     }
 
@@ -256,7 +235,7 @@ public class WeatherManager
     /*
     Get new weather state. This is called every 120 seconds by default as specified in config.
      */
-    private static void fetchNewWeatherState(MinecraftServer server)
+    private void fetchNewWeatherState(MinecraftServer server)
     {
         Constants.LOG.info("Fetching weather for {} {} {}", getLatFromIP(), getLonFromIP(), STATE);
 
@@ -283,6 +262,9 @@ public class WeatherManager
                     {
                         CommonClass.CACHE.setCachedWeatherState(Constants.USER_IP, STATE);
                     }
+
+                    WEATHER_CHANGE_CALLBACK.accept(server);
+                    Constants.LOG.info("Sent weather change packets to clients");
                 }
 
             } else { // Error response
@@ -309,22 +291,22 @@ public class WeatherManager
         );
     }
 
-    public static void setState(WeatherState weatherState)
+    public void setState(WeatherState weatherState)
     {
-        STATE = CommonClass.DEBUG_MASTER_WEATHER_STATE;
+        STATE = weatherState;
     }
 
     /*
     Get clients coordinates. This is called once when the user loads into the main menu of minecraft for the first time.
      */
-    public static void setWeather(MinecraftServer server)
+    public void setWeather(MinecraftServer server)
     {
         if (CommonClass.getConfig().usePlayerIP())
         {
             if (CommonClass.CACHE.isIpCached())
             {
                 Constants.LOG.debug("Cache hit for weather state -> {}", STATE);
-                WeatherManager.fetchNewWeatherState(server);
+                this.fetchNewWeatherState(server);
                 return;
             }
 
@@ -349,11 +331,11 @@ public class WeatherManager
                         STATE.landmarkName = area;
                     }
 
-                    WeatherManager.fetchNewWeatherState(server);
+                    this.fetchNewWeatherState(server);
                 }
             });
         } else {
-            WeatherManager.fetchNewWeatherState(server);
+            this.fetchNewWeatherState(server);
         }
     }
 }

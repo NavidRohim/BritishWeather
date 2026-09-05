@@ -8,7 +8,6 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
-import org.jetbrains.annotations.Nullable;
 
 /*
 CACHE only used when IP geolocating.
@@ -62,14 +61,14 @@ public class DataCache extends SavedData
         if (CommonClass.CACHE == null)
         {
             CommonClass.CACHE = server.getDataStorage().computeIfAbsent(TYPE);
-            WeatherManager.setState(CommonClass.CACHE.getCachedWeatherState());
+            CommonClass.getWeatherManager().setState(CommonClass.CACHE.getCachedWeatherState());
             Constants.LOG.debug("Initialized weather cache");
         } else {
             Constants.LOG.debug("Cache already been initialized. Ignoring");
         }
     }
 
-    public void setCachedWeatherState(String ip, WeatherManager.WeatherState weatherState)
+    public void setCachedWeatherState(String ip, ServerWeatherManager.WeatherState weatherState)
     {
         Constants.LOG.debug("Caching weather state for IP -> {}", weatherState);
 
@@ -78,9 +77,9 @@ public class DataCache extends SavedData
         this.setDirty(true);
     }
 
-    public WeatherManager.WeatherState getCachedWeatherState()
+    public ServerWeatherManager.WeatherState getCachedWeatherState()
     {
-        return WeatherManager.WeatherState.deserialize(rawWeatherCache);
+        return ServerWeatherManager.WeatherState.deserialize(rawWeatherCache);
     }
 
     public boolean isIpCached()

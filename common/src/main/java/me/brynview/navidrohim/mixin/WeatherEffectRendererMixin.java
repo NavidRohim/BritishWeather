@@ -2,7 +2,7 @@ package me.brynview.navidrohim.mixin;
 
 import com.mojang.blaze3d.systems.RenderPass;
 import me.brynview.navidrohim.client.ClientCommon;
-import me.brynview.navidrohim.server.WeatherManager;
+import me.brynview.navidrohim.common.WeatherCondition;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.WeatherEffectRenderer;
 import net.minecraft.client.renderer.texture.AbstractTexture;
@@ -19,7 +19,7 @@ public class WeatherEffectRendererMixin
     @Inject(method = "renderWeather", at = @At("HEAD"), cancellable = true)
     private void injectTest(RenderPass renderPass, AbstractTexture texture, int startColumn, int columnCount, CallbackInfo ci)
     {
-        WeatherManager.WeatherCondition condition = ClientCommon.SERVER_WEATHER_STATE.getWeatherCondition();
+        WeatherCondition condition = ClientCommon.getWeatherManager().getWeather();
 
         if (condition.isHail() && startColumn == 0) // startColumn = 0 makes sure it's raining and not snowing.
         {

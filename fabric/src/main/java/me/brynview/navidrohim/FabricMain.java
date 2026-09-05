@@ -1,15 +1,15 @@
 package me.brynview.navidrohim;
 
-import me.brynview.navidrohim.client.ModParticles;
+import me.brynview.navidrohim.client.particle.ModParticles;
+import me.brynview.navidrohim.common.WeatherUpdatePacket;
 import me.brynview.navidrohim.config.FabricCommonModConfig;
 import me.brynview.navidrohim.config.FabricNativeModConfig;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 
 public class FabricMain implements ModInitializer {
 
@@ -17,17 +17,27 @@ public class FabricMain implements ModInitializer {
     public void onInitialize() {
 
         // init
-        FabricNativeModConfig.HANDLER.load();
+        initNetwork();
         initParticles();
+        FabricNativeModConfig.HANDLER.load();
 
         // events
         ServerTickEvents.END_SERVER_TICK.register(CommonClass::onTick);
-
-        CommonClass.init(new FabricCommonModConfig());
+        CommonClass.init(new FabricCommonModConfig(), (server) -> {
+            CommonClass.getWeatherManager().getState().ifPresent((condition) -> {
+                WeatherUpdatePacket packet = new WeatherUpdatePacket(condition.getWeatherCondition());
+                server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));
+            });
+        });
     }
 
     private void initParticles()
     {
         ModParticles.HAIL = FabricParticleTypes.simple();
+    }
+
+    private void initNetwork()
+    {
+        PayloadTypeRegistry.clientboundPlay().register(WeatherUpdatePacket.TYPE, WeatherUpdatePacket.CODEC);
     }
 }
