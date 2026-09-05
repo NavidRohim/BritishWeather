@@ -15,8 +15,8 @@ import java.util.function.Consumer;
 public class CommonClass {
 
     private static CommonModConfig CONFIG;
-    public static DataCache CACHE; // Cache is only used if getting lat/long from IP.
-    public static ServerWeatherManager WEATHER_MANAGER;
+    private static DataCache CACHE; // Cache is only used if getting lat/long from IP.
+    private static ServerWeatherManager WEATHER_MANAGER;
 
     /*
     Since the config is not present in the common namespace, each mod loader must provide their own config (using YACL, which doesn't have a common JAR).
@@ -34,10 +34,17 @@ public class CommonClass {
     {
         return CONFIG;
     }
+    public static ServerWeatherManager getWeatherManager() {return WEATHER_MANAGER;}
+    public static DataCache getCache() { return CACHE; }
 
-    public static ServerWeatherManager getWeatherManager()
+    public static void setCache(DataCache CACHE)
     {
-        return WEATHER_MANAGER;
+        if (CommonClass.CACHE == null)
+        {
+            CommonClass.CACHE = CACHE;
+        } else {
+            throw new IllegalStateException("Cache already set.");
+        }
     }
 
     // This onTick method works on both IntegratedServer and DedicatedServer theoretically.

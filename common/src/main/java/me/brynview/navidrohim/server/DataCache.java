@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.server;
 
+import com.google.gson.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.CommonClass;
@@ -8,6 +9,9 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Type;
 
 /*
 CACHE only used when IP geolocating.
@@ -17,6 +21,30 @@ CACHE only used when IP geolocating.
  */
 public class DataCache extends SavedData
 {
+    static class WeatherStateDataCacheSerializer implements JsonDeserializer<ServerWeatherManager.WeatherState>, JsonSerializer<ServerWeatherManager.WeatherState>
+    {
+        @Override
+        @Nullable
+        public ServerWeatherManager.WeatherState deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException
+        {
+            return ServerWeatherManager.WeatherState.deserialize(json.getAsJsonObject());
+        }
+
+        @Override
+        public JsonElement serialize(ServerWeatherManager.WeatherState src, Type typeOfSrc, JsonSerializationContext context)
+        {
+            JsonObject json = new JsonObject();
+            json.add("WMOCode", new JsonPrimitive(src.WMOCode));
+            json.add("landmarkName", new JsonPrimitive(src.location.name()));
+            json.add("lat", new JsonPrimitive(src.location.lat()));
+            json.add("lon", new JsonPrimitive(src.location.lon()));
+
+            return json;
+        }
+    }
+
+    private static final Gson GSON = new GsonBuilder().registerTypeAdapter(ServerWeatherManager.WeatherState.class, new WeatherStateDataCacheSerializer()).create();
+
     private static final Codec<DataCache> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             // Values to be stored in cache
             Codec.STRING.fieldOf("ip").forGetter(v -> v.ip), // IP. Acts as a key
@@ -58,12 +86,13 @@ public class DataCache extends SavedData
      */
     public static void initCache(MinecraftServer server)
     {
-        if (CommonClass.CACHE == null)
+        if (CommonClass.getCache() == null)
         {
-            CommonClass.CACHE = server.getDataStorage().computeIfAbsent(TYPE);
-            CommonClass.getWeatherManager().setState(CommonClass.CACHE.getCachedWeatherState());
+            CommonClass.setCache(server.getDataStorage().computeIfAbsent(TYPE));
+            CommonClass.getWeatherManager().setState(CommonClass.getCache().getCachedWeatherState());
             Constants.LOG.debug("Initialized weather cache");
-        } else {
+        } else
+        {
             Constants.LOG.debug("Cache already been initialized. Ignoring");
         }
     }
@@ -73,17 +102,18 @@ public class DataCache extends SavedData
         Constants.LOG.debug("Caching weather state for IP -> {}", weatherState);
 
         this.ip = ip;
-        this.rawWeatherCache = weatherState.serialize();
+        this.rawWeatherCache = GSON.toJson(weatherState);
         this.setDirty(true);
     }
 
+    @Nullable
     public ServerWeatherManager.WeatherState getCachedWeatherState()
     {
-        return ServerWeatherManager.WeatherState.deserialize(rawWeatherCache);
+        return GSON.fromJson(rawWeatherCache, ServerWeatherManager.WeatherState.class);
     }
 
     public boolean isIpCached()
     {
-        return this.ip.equals(Constants.USER_IP);
+        return this.ip.equalsIgnoreCase(Constants.USER_IP);
     }
 }

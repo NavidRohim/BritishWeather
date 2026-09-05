@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.mixin;
+package me.brynview.navidrohim.mixin.client;
 
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.particle.ModParticles;

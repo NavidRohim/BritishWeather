@@ -19,7 +19,7 @@
             "me.brynview.navidrohim.client.FabricMainClient"
         ],
         "modmenu": [
-            "me.brynview.navidrohim.config.FabricNativeModConfig"
+          "me.brynview.navidrohim.common.config.FabricNativeModConfig"
         ]
     },
     "mixins": [

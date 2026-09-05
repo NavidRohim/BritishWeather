@@ -1,5 +1,7 @@
 package me.brynview.navidrohim.platform.services;
 
+import me.brynview.navidrohim.server.locationsource.LocationSource;
+
 public interface CommonModConfig
 {
     Float getLongitude();
@@ -9,4 +11,6 @@ public interface CommonModConfig
     Integer getWeatherFetchIntervalInTicks();
 
     Boolean usePlayerIP();
+
+    LocationSource getLocationSource();
 }

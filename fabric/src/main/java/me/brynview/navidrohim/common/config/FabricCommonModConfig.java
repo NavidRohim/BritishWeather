@@ -1,6 +1,7 @@
-package me.brynview.navidrohim.config;
+package me.brynview.navidrohim.common.config;
 
 import me.brynview.navidrohim.platform.services.CommonModConfig;
+import me.brynview.navidrohim.server.locationsource.LocationSource;
 
 public class FabricCommonModConfig implements CommonModConfig
 {
@@ -27,5 +28,11 @@ public class FabricCommonModConfig implements CommonModConfig
     public Boolean usePlayerIP()
     {
         return FabricNativeModConfig.usePlayerIP;
+    }
+
+    @Override
+    public LocationSource getLocationSource()
+    {
+        return FabricNativeModConfig.locationOptions.locationSource;
     }
 }

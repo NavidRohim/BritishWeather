@@ -24,14 +24,12 @@ public enum WeatherCondition
 
     public static final StreamCodec<ByteBuf, WeatherCondition> STREAM_CODEC = StreamCodec.of((b, w) -> b.writeBytes(w.toString().getBytes()), (b) -> {
         String conString = b.readString(b.readableBytes(), Charsets.UTF_8);
-        Constants.LOG.info(conString);
         try
         {
-            WeatherCondition c = WeatherCondition.valueOf(conString);
-            return c;
-        } catch (Throwable e)
+            return WeatherCondition.valueOf(conString);
+        } catch (IllegalArgumentException e)
         {
-            e.printStackTrace();
+            Constants.LOG.error("Server sent unknown weather condition: {}! Usually indicates client-server version mismatch!", conString);
         }
         return WeatherCondition.CLOUDY;
     });

@@ -5,6 +5,8 @@ import me.brynview.navidrohim.Constants;
 import com.google.gson.*;
 import me.brynview.navidrohim.Util;
 import me.brynview.navidrohim.common.WeatherCondition;
+import me.brynview.navidrohim.server.locationsource.IPLocationSource;
+import me.brynview.navidrohim.server.locationsource.LocationSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
@@ -17,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
 import java.net.ConnectException;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -26,71 +29,6 @@ import java.util.function.Consumer;
 
 public class ServerWeatherManager
 {
-    // 999 are default values to check if these values have been changed by IP geolocating.
-    private static float lat_ip = 999;
-    private static float lon_ip = 999;
-    private static String area = "Earth";
-
-    private static final List<Integer> LIGHT_HAIL = List.of(87, 89, 93, 96);
-    private static final List<Integer> HEAVY_HAIL = List.of(88, 90, 94, 99);
-
-    private static WeatherCondition getConditionsFromWMOCode(int code)
-    {
-        WeatherCondition conditions = WeatherCondition.CLOUDY;
-        // src: https://www.nodc.noaa.gov/archive/arc0021/0002199/1.1/data/0-data/HTML/WMO-CODE/WMO4677.HTM
-        if (LIGHT_HAIL.contains(code))
-        {
-            conditions = WeatherCondition.HAIL_STAGE_3;
-        } else if (HEAVY_HAIL.contains(code))
-        {
-            conditions = WeatherCondition.HAIL_STAGE_1;
-        }
-        else if (code == 17) // Thunder, no rain
-        {
-            conditions = WeatherCondition.THUNDERSTORM_NO_RAIN;
-        }
-        else if (code >= 50 && code <= 94) // General precipitation. Generalised into just "RAINY" for minecraft purposes
-        {
-            conditions = WeatherCondition.RAINY;
-        }
-        else if (code >= 95 && code <= 99) // Thunderstorm with rain.
-        {
-            conditions = WeatherCondition.THUNDERSTORM;
-        }
-
-        return conditions;
-    }
-
-    public Optional<WeatherState> getState()
-    {
-        return Optional.ofNullable(STATE);
-    }
-
-    private static boolean isPlayerSafeFromHail(ServerPlayer player)
-    {
-        BlockPos headHeight = player.blockPosition().above(2);
-        int heightBlockAtY = player.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, headHeight).getY();
-        return heightBlockAtY >= headHeight.getY() || player.hasItemInSlot(EquipmentSlot.HEAD);
-    }
-
-    public void tick(MinecraftServer server)
-    {
-        DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
-
-        server.getPlayerList().getPlayers().forEach(player ->
-                {
-                    if (!isPlayerSafeFromHail(player))
-                    {
-                        player.hurtServer(player.level(), hailDamage, 0.5f / STATE.getWeatherCondition().getHailLevel());
-                    }
-                });
-    }
-
-    public ServerWeatherManager(Consumer<MinecraftServer> weatherChangeCallback)
-    {
-        this.WEATHER_CHANGE_CALLBACK = weatherChangeCallback;
-    }
-
     // Deserializer class for getting response from open-mateo endpoint
     private static class WeatherResponseDecoder implements JsonDeserializer<WeatherState>
     {
@@ -103,8 +41,14 @@ public class ServerWeatherManager
                 int WMOCode = json.getAsJsonObject().getAsJsonObject("current").get("weather_code").getAsInt();
                 WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
 
-                String landmarkName = CommonClass.getWeatherManager().STATE != null ? CommonClass.getWeatherManager().STATE.landmarkName : area; // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
-                return new WeatherState(WMOCode, weatherCondition, landmarkName, getLatFromIP(), getLonFromIP());
+                @Nullable LocationSource.Location landmarkName = null;
+
+                if (CommonClass.getWeatherManager().getState().isPresent())
+                {
+                    landmarkName = CommonClass.getWeatherManager().getState().get().location; // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
+                }
+
+                return new WeatherState(WMOCode, weatherCondition, landmarkName);
 
             } catch (Exception e)
             {
@@ -120,48 +64,50 @@ public class ServerWeatherManager
      */
     public static class WeatherState
     {
+
         int WMOCode;
         transient WeatherCondition weatherCondition;
-        String landmarkName;
-        float lat;
-        float lon;
+        @Nullable LocationSource.Location location;
 
-        public WeatherState(int WMOCode, WeatherCondition weatherCondition, String landmarkName, float lat, float lon)
+        public WeatherState(int WMOCode, WeatherCondition weatherCondition, @Nullable LocationSource.Location location)
         {
             this.WMOCode = WMOCode;
             this.weatherCondition = weatherCondition;
-            this.landmarkName = landmarkName;
-            this.lat = lat;
-            this.lon = lon;
+            this.location = location;
         }
 
         public String toString()
         {
-            return "WeatherState[WMOCode=%s, weatherCondition=%s, landmarkName=%s, lat=%f, lon=%f]".formatted(WMOCode, weatherCondition.toString(), landmarkName, lat, lon);
+            return "WeatherState[WMOCode=%s, weatherCondition=%s, location=%s]".formatted(WMOCode, weatherCondition.toString(), location);
         }
 
-        public String serialize()
+        public @Nullable LocationSource.Location getLocation()
         {
-            return GSON.toJson(this);
+            return location;
+        }
+
+        public void setLocation(@Nullable LocationSource.Location location)
+        {
+            this.location = location;
         }
 
         @Nullable
-        public static WeatherState deserialize(@Nullable String json)
+        public static WeatherState deserialize(@Nullable JsonObject json)
         {
-            if (json == null || json.isEmpty() || json.equals("{}"))
+            try
+            {
+                int WMOCode = json.get("WMOCode").getAsInt();
+                WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
+                String landmarkName = json.get("landmarkName").getAsString();
+                float lat = json.get("lat").getAsFloat();
+                float lon = json.get("lon").getAsFloat();
+
+                return new WeatherState(WMOCode, weatherCondition, new LocationSource.Location(lat, lon, landmarkName));
+            } catch (NullPointerException e)
             {
                 return null;
             }
-            JsonObject rawWeatherStateData = JsonParser.parseString(json).getAsJsonObject();
-            int WMOCode = rawWeatherStateData.get("WMOCode").getAsInt();
-            WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
-            String landmarkName = rawWeatherStateData.get("landmarkName").getAsString();
-            float lat = rawWeatherStateData.get("lat").getAsFloat();
-            float lon = rawWeatherStateData.get("lon").getAsFloat();
-
-            return new WeatherState(WMOCode, weatherCondition, landmarkName, lat, lon);
         }
-
         public WeatherCondition getWeatherCondition()
         {
             return weatherCondition;
@@ -180,7 +126,10 @@ public class ServerWeatherManager
         }
     }
 
-    private static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
+    private static final List<Integer> LIGHT_HAIL = List.of(87, 89, 93, 96);
+    private static final List<Integer> HEAVY_HAIL = List.of(88, 90, 94, 99);
+
+    public static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(WeatherState.class, new WeatherResponseDecoder()).create();
 
     @Nullable private WeatherState STATE = null;
@@ -213,34 +162,72 @@ public class ServerWeatherManager
         }
     }
 
-    /*
-    Gets Latitude determined from setCoordinatesFromIP.
-    If usePlayerIP in config is `false`, it will use the one determined in the config by the user.
-     */
-    public static float getLatFromIP()
+    private static WeatherCondition getConditionsFromWMOCode(int code)
     {
-        return CommonClass.getConfig().usePlayerIP() && lat_ip < 999 ? lat_ip : CommonClass.getConfig().getLatitude();
+        WeatherCondition conditions = WeatherCondition.CLOUDY;
+        // src: https://www.nodc.noaa.gov/archive/arc0021/0002199/1.1/data/0-data/HTML/WMO-CODE/WMO4677.HTM
+        if (LIGHT_HAIL.contains(code))
+        {
+            conditions = WeatherCondition.HAIL_STAGE_3;
+        } else if (HEAVY_HAIL.contains(code))
+        {
+            conditions = WeatherCondition.HAIL_STAGE_1;
+        }
+        else if (code == 17) // Thunder, no rain
+        {
+            conditions = WeatherCondition.THUNDERSTORM_NO_RAIN;
+        }
+        else if (code >= 50 && code <= 94) // General precipitation. Generalised into just "RAINY" for minecraft purposes
+        {
+            conditions = WeatherCondition.RAINY;
+        }
+        else if (code >= 95 && code <= 99) // Thunderstorm with rain.
+        {
+            conditions = WeatherCondition.THUNDERSTORM;
+        }
+
+        return conditions;
     }
 
-    /*
-    Gets Longitude determined from setCoordinatesFromIP.
-    If usePlayerIP in config is `false`, it will use the one determined in the config by the user.
-     */
-    public static float getLonFromIP()
+    private static boolean isPlayerSafeFromHail(ServerPlayer player)
     {
-        return CommonClass.getConfig().usePlayerIP() && lon_ip < 999 ? lon_ip : CommonClass.getConfig().getLongitude();
-
+        BlockPos headHeight = player.blockPosition().above(2);
+        int heightBlockAtY = player.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, headHeight).getY();
+        return heightBlockAtY >= headHeight.getY() || player.hasItemInSlot(EquipmentSlot.HEAD);
     }
 
+    public void tick(MinecraftServer server)
+    {
+        DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
+
+        server.getPlayerList().getPlayers().forEach(player ->
+                {
+                    if (!isPlayerSafeFromHail(player))
+                    {
+                        player.hurtServer(player.level(), hailDamage, 0.5f / STATE.getWeatherCondition().getHailLevel());
+                    }
+                });
+    }
+
+    public ServerWeatherManager(Consumer<MinecraftServer> weatherChangeCallback)
+    {
+        this.WEATHER_CHANGE_CALLBACK = weatherChangeCallback;
+    }
+
+    public Optional<WeatherState> getState()
+    {
+        return Optional.ofNullable(STATE);
+    }
     /*
     Get new weather state. This is called every 120 seconds by default as specified in config.
      */
-    private void fetchNewWeatherState(MinecraftServer server)
+    private void fetchNewWeatherState(MinecraftServer server, LocationSource.Location location, LocationSource locationSource)
     {
-        Constants.LOG.info("Fetching weather for {} {} {}", getLatFromIP(), getLonFromIP(), STATE);
+        Constants.LOG.info("Fetching weather for {} {}", location, STATE);
 
         // Make request to open-mateo. No API key needed for our purposes.
-        HttpRequest request = HttpRequest.newBuilder().uri(Util.getWeatherAPIUrl()).GET().build();
+        URI uriEndpoint = Util.getWeatherAPIUrl(location);
+        HttpRequest request = HttpRequest.newBuilder().uri(uriEndpoint).GET().build();
 
         // Send async, check for correct status etc.
         // https://open-meteo.com/en/docs useful for figuring out API endpoint
@@ -251,16 +238,17 @@ public class ServerWeatherManager
             if (statusCode == 200)
             {
                 WeatherState weatherState = GSON.fromJson(stringHttpResponse.body(), WeatherState.class);
-                Constants.LOG.debug("Fetching weather state for {}", weatherState + Util.getWeatherAPIUrl().toString());
+                setStateAndLocation(weatherState, location);
+
+                Constants.LOG.debug("Fetching weather state for {}", weatherState + uriEndpoint.toString());
                 if (!weatherState.equals(STATE)) // Check if weather has actually changed, if not, just ignore and carry on.
                 {
-                    setState(weatherState);
                     changeServerWeather(server);
 
                     // Again, only cache state if using IP.
-                    if (CommonClass.getConfig().usePlayerIP())
+                    if (locationSource instanceof IPLocationSource)
                     {
-                        CommonClass.CACHE.setCachedWeatherState(Constants.USER_IP, STATE);
+                        CommonClass.getCache().setCachedWeatherState(Constants.USER_IP, STATE);
                     }
 
                     WEATHER_CHANGE_CALLBACK.accept(server);
@@ -296,46 +284,17 @@ public class ServerWeatherManager
         STATE = weatherState;
     }
 
+    public void setStateAndLocation(WeatherState weatherState, LocationSource.Location locationSource)
+    {
+        STATE = weatherState;
+        STATE.setLocation(locationSource);
+    }
+
     /*
     Get clients coordinates. This is called once when the user loads into the main menu of minecraft for the first time.
      */
     public void setWeather(MinecraftServer server)
     {
-        if (CommonClass.getConfig().usePlayerIP())
-        {
-            if (CommonClass.CACHE.isIpCached())
-            {
-                Constants.LOG.debug("Cache hit for weather state -> {}", STATE);
-                this.fetchNewWeatherState(server);
-                return;
-            }
-
-            Constants.LOG.info("IP not cached. Fetching from server IP API");
-            // Make API request
-            HttpRequest requestIPApi = HttpRequest.newBuilder(Constants.IP_API_ENDPOINT).GET().build();
-
-            // Send request asynchronously. Check status code is valid and API request is successful. View docs here
-            // https://ip-api.com/docs/api:json
-            HTTP_CLIENT.sendAsync(requestIPApi, HttpResponse.BodyHandlers.ofString()).thenAccept(stringHttpResponse -> {
-
-                int statusCode =            stringHttpResponse.statusCode();
-                JsonObject returnedObj =    JsonParser.parseString(stringHttpResponse.body()).getAsJsonObject();
-                // TODO error handling
-                if (statusCode == 200 && returnedObj.get("status").getAsString().equals("success"))
-                {
-                    lat_ip =        returnedObj.get("lat").getAsFloat();
-                    lon_ip =        returnedObj.get("lon").getAsFloat();
-                    area =          returnedObj.get("city").getAsString() + returnedObj.get("district").getAsString(); // "district" may be irrelevant in the UK?
-                    if (STATE != null)
-                    {
-                        STATE.landmarkName = area;
-                    }
-
-                    this.fetchNewWeatherState(server);
-                }
-            });
-        } else {
-            this.fetchNewWeatherState(server);
-        }
+        CommonClass.getConfig().getLocationSource().getLocation((loc, locationSource) -> fetchNewWeatherState(server, loc, locationSource));
     }
 }

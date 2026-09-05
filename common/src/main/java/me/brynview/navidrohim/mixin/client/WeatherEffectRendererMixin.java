@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.mixin;
+package me.brynview.navidrohim.mixin.client;
 
 import com.mojang.blaze3d.systems.RenderPass;
 import me.brynview.navidrohim.client.ClientCommon;

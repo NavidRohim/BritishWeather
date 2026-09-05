@@ -2,12 +2,11 @@ package me.brynview.navidrohim;
 
 import me.brynview.navidrohim.client.particle.ModParticles;
 import me.brynview.navidrohim.common.WeatherUpdatePacket;
-import me.brynview.navidrohim.config.FabricCommonModConfig;
-import me.brynview.navidrohim.config.FabricNativeModConfig;
+import me.brynview.navidrohim.common.config.FabricCommonModConfig;
+import me.brynview.navidrohim.common.config.FabricNativeModConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
-import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 

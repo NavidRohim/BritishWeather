@@ -1,6 +1,7 @@
 package me.brynview.navidrohim;
 
 import me.brynview.navidrohim.server.ServerWeatherManager;
+import me.brynview.navidrohim.server.locationsource.LocationSource;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -28,9 +29,9 @@ public class Util
         }
     }
 
-    public static URI getWeatherAPIUrl()
+    public static URI getWeatherAPIUrl(LocationSource.Location location)
     {
         // https://open-meteo.com/en/docs to determine endpoint
-        return URI.create(String.format("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=weather_code&timezone=auto", ServerWeatherManager.getLatFromIP(), ServerWeatherManager.getLonFromIP()));
+        return URI.create(String.format("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=weather_code&timezone=auto", location.lat(), location.lon()));
     }
 }
