@@ -23,10 +23,8 @@ public class FabricMain implements ModInitializer {
         // events
         ServerTickEvents.END_SERVER_TICK.register(CommonClass::onTick);
         CommonClass.init(new FabricCommonModConfig(), (server) -> {
-            CommonClass.getWeatherManager().getState().ifPresent((condition) -> {
-                WeatherUpdatePacket packet = new WeatherUpdatePacket(condition.getWeatherCondition());
+                WeatherUpdatePacket packet = new WeatherUpdatePacket(CommonClass.getWeatherManager().getState().getWeatherCondition());
                 server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));
-            });
         });
     }
 

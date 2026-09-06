@@ -1,6 +1,5 @@
 package me.brynview.navidrohim.server;
 
-import com.google.gson.*;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.CommonClass;
@@ -11,8 +10,6 @@ import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.reflect.Type;
-
 /*
 CACHE only used when IP geolocating.
 
@@ -21,51 +18,27 @@ CACHE only used when IP geolocating.
  */
 public class DataCache extends SavedData
 {
-    static class WeatherStateDataCacheSerializer implements JsonDeserializer<ServerWeatherManager.WeatherState>, JsonSerializer<ServerWeatherManager.WeatherState>
-    {
-        @Override
-        @Nullable
-        public ServerWeatherManager.WeatherState deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException
-        {
-            return ServerWeatherManager.WeatherState.deserialize(json.getAsJsonObject());
-        }
-
-        @Override
-        public JsonElement serialize(ServerWeatherManager.WeatherState src, Type typeOfSrc, JsonSerializationContext context)
-        {
-            JsonObject json = new JsonObject();
-            json.add("WMOCode", new JsonPrimitive(src.WMOCode));
-            json.add("landmarkName", new JsonPrimitive(src.location.name()));
-            json.add("lat", new JsonPrimitive(src.location.lat()));
-            json.add("lon", new JsonPrimitive(src.location.lon()));
-
-            return json;
-        }
-    }
-
-    private static final Gson GSON = new GsonBuilder().registerTypeAdapter(ServerWeatherManager.WeatherState.class, new WeatherStateDataCacheSerializer()).create();
-
     private static final Codec<DataCache> CODEC = RecordCodecBuilder.create(ins -> ins.group(
             // Values to be stored in cache
             Codec.STRING.fieldOf("ip").forGetter(v -> v.ip), // IP. Acts as a key
-            Codec.STRING.fieldOf("weather_cache").forGetter(v -> v.rawWeatherCache) // Serialized WeatherState instance
+            Codec.INT.fieldOf("WMOCode").forGetter(v -> v.WMOCode),
+            Codec.STRING.fieldOf("name").forGetter(v -> v.name),
+            Codec.FLOAT.fieldOf("latitude").forGetter(v -> v.latitude),
+            Codec.FLOAT.fieldOf("longitude").forGetter(v -> v.longitude)
     ).apply(ins, DataCache::new));
 
-    public static final SavedDataType<DataCache> TYPE =
-            new SavedDataType<>(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "weather_ip_cache"), // path: name of dat file
+    private static final SavedDataType<DataCache> TYPE =
+            new SavedDataType<>(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "weather_ip_cache"), // path: name of dat file©
                     DataCache::new,
                     CODEC,
                     null
             );
 
     private String ip;
-    private String rawWeatherCache;
-
-    public DataCache(String ip, String rawWeatherCache)
-    {
-        this.ip = ip;
-        this.rawWeatherCache = rawWeatherCache;
-    }
+    private int WMOCode;
+    private String name;
+    private float latitude;
+    private float longitude;
 
     /*
     This constructor is called when the cache file does not exist.
@@ -74,9 +47,23 @@ public class DataCache extends SavedData
     public DataCache()
     {
         this.ip = "192.168.0.1";
-        this.rawWeatherCache = "{}";
+        this.WMOCode = 0;
+        this.name = Constants.DEFAULT_LOCATION_NAME;
+        this.latitude = 0;
+        this.longitude = 0;
     }
 
+    /*
+    If dat file already exists.
+     */
+    public DataCache(String ip, int WMOCode, String name, float latitude, float longitude)
+    {
+        this.ip = ip;
+        this.WMOCode = WMOCode;
+        this.name = name;
+        this.latitude = latitude;
+        this.longitude = longitude;
+    }
     /*
     This method is called on the first tick of a new world load.
     For servers, this works "fine" for clients, this works, but not how I want it to.
@@ -91,29 +78,30 @@ public class DataCache extends SavedData
             CommonClass.setCache(server.getDataStorage().computeIfAbsent(TYPE));
             CommonClass.getWeatherManager().setState(CommonClass.getCache().getCachedWeatherState());
             Constants.LOG.debug("Initialized weather cache");
-        } else
-        {
-            Constants.LOG.debug("Cache already been initialized. Ignoring");
         }
     }
 
     public void setCachedWeatherState(String ip, ServerWeatherManager.WeatherState weatherState)
     {
-        Constants.LOG.debug("Caching weather state for IP -> {}", weatherState);
+        Constants.LOG.info("Caching weather state for IP -> {}", weatherState);
 
         this.ip = ip;
-        this.rawWeatherCache = GSON.toJson(weatherState);
+        this.WMOCode = weatherState.WMOCode;
+        this.name = weatherState.location.name();
+        this.longitude = weatherState.location.lat();
+        this.latitude = weatherState.location.lon();
+
         this.setDirty(true);
     }
 
     @Nullable
     public ServerWeatherManager.WeatherState getCachedWeatherState()
     {
-        return GSON.fromJson(rawWeatherCache, ServerWeatherManager.WeatherState.class);
+        return new ServerWeatherManager.WeatherState(this.WMOCode, this.name, this.latitude, this.longitude);
     }
 
-    public boolean isIpCached()
+    public boolean ipNotCached()
     {
-        return this.ip.equalsIgnoreCase(Constants.USER_IP);
+        return !this.ip.equalsIgnoreCase(Constants.USER_IP);
     }
 }

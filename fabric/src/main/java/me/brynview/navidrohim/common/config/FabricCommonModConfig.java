@@ -25,12 +25,6 @@ public class FabricCommonModConfig implements CommonModConfig
     }
 
     @Override
-    public Boolean usePlayerIP()
-    {
-        return FabricNativeModConfig.usePlayerIP;
-    }
-
-    @Override
     public LocationSource getLocationSource()
     {
         return FabricNativeModConfig.locationOptions.locationSource;

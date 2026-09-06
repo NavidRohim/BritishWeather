@@ -10,7 +10,5 @@ public interface CommonModConfig
 
     Integer getWeatherFetchIntervalInTicks();
 
-    Boolean usePlayerIP();
-
     LocationSource getLocationSource();
 }

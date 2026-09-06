@@ -9,12 +9,12 @@ import me.brynview.navidrohim.server.locationsource.IPLocationSource;
 import me.brynview.navidrohim.server.locationsource.LocationSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.level.levelgen.Heightmap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
@@ -40,15 +40,7 @@ public class ServerWeatherManager
             {
                 int WMOCode = json.getAsJsonObject().getAsJsonObject("current").get("weather_code").getAsInt();
                 WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
-
-                @Nullable LocationSource.Location landmarkName = null;
-
-                if (CommonClass.getWeatherManager().getState().isPresent())
-                {
-                    landmarkName = CommonClass.getWeatherManager().getState().get().location; // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
-                }
-
-                return new WeatherState(WMOCode, weatherCondition, landmarkName);
+                return new WeatherState(WMOCode, weatherCondition, CommonClass.getWeatherManager().getState().location); // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
 
             } catch (Exception e)
             {
@@ -76,9 +68,21 @@ public class ServerWeatherManager
             this.location = location;
         }
 
+        public WeatherState(int wmoCode, String name, float latitude, float longitude)
+        {
+            this.WMOCode = wmoCode;
+            this.weatherCondition = getConditionsFromWMOCode(wmoCode);
+            this.location = new LocationSource.Location(longitude, latitude, name);
+        }
+
         public String toString()
         {
             return "WeatherState[WMOCode=%s, weatherCondition=%s, location=%s]".formatted(WMOCode, weatherCondition.toString(), location);
+        }
+
+        public boolean isEmpty()
+        {
+            return WMOCode == -1;
         }
 
         public @Nullable LocationSource.Location getLocation()
@@ -91,23 +95,6 @@ public class ServerWeatherManager
             this.location = location;
         }
 
-        @Nullable
-        public static WeatherState deserialize(@Nullable JsonObject json)
-        {
-            try
-            {
-                int WMOCode = json.get("WMOCode").getAsInt();
-                WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
-                String landmarkName = json.get("landmarkName").getAsString();
-                float lat = json.get("lat").getAsFloat();
-                float lon = json.get("lon").getAsFloat();
-
-                return new WeatherState(WMOCode, weatherCondition, new LocationSource.Location(lat, lon, landmarkName));
-            } catch (NullPointerException e)
-            {
-                return null;
-            }
-        }
         public WeatherCondition getWeatherCondition()
         {
             return weatherCondition;
@@ -124,6 +111,11 @@ public class ServerWeatherManager
             }
             return false;
         }
+
+        public static WeatherState empty()
+        {
+            return new WeatherState(-1, WeatherCondition.CLOUDY, null);
+        }
     }
 
     private static final List<Integer> LIGHT_HAIL = List.of(87, 89, 93, 96);
@@ -132,7 +124,8 @@ public class ServerWeatherManager
     public static final HttpClient HTTP_CLIENT = HttpClient.newHttpClient();
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(WeatherState.class, new WeatherResponseDecoder()).create();
 
-    @Nullable private WeatherState STATE = null;
+    @NotNull
+    private WeatherState STATE = WeatherState.empty();
     private final Consumer<MinecraftServer> WEATHER_CHANGE_CALLBACK;
 
     private void changeServerWeather(MinecraftServer minecraftServer)
@@ -140,10 +133,8 @@ public class ServerWeatherManager
         Constants.LOG.info("Changing weather state to " + STATE);
 
         // THUNDERSTORM_NO_RAIN may not do anything. I have never seen there be no rain but thunder in minecraft.
-        if (STATE == null)
-        {
-            Constants.LOG.warn("Trying to change weather in-game before weather state has been established. Call WeatherManager.fetchNewWeatherState() first.");
-        }
+        //Constants.LOG.warn("Trying to change weather in-game before weather state has been established. Call WeatherManager.fetchNewWeatherState() first.");
+
 
         // look into ServerLevel and ClientLevel for possible new weather states.
 
@@ -186,6 +177,7 @@ public class ServerWeatherManager
             conditions = WeatherCondition.THUNDERSTORM;
         }
 
+        conditions = WeatherCondition.HAIL_STAGE_1;
         return conditions;
     }
 
@@ -196,17 +188,26 @@ public class ServerWeatherManager
         return heightBlockAtY >= headHeight.getY() || player.hasItemInSlot(EquipmentSlot.HEAD);
     }
 
-    public void tick(MinecraftServer server)
+    private boolean isInRain(ServerPlayer player)
     {
-        DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
+        BlockPos pos = player.blockPosition();
+        return player.level().isRainingAt(pos) || player.level().isRainingAt(BlockPos.containing(pos.getX(), player.getBoundingBox().maxY, pos.getZ()));
+    }
 
-        server.getPlayerList().getPlayers().forEach(player ->
+    public void tick(MinecraftServer server, long tick)
+    {
+        if (STATE.getWeatherCondition().isHail() && STATE.weatherCondition.getHailLevel() == 1 && tick % 45 == 0)
+        {
+            DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
+
+            server.getPlayerList().getPlayers().forEach(player ->
+            {
+                if (!isPlayerSafeFromHail(player) && isInRain(player))
                 {
-                    if (!isPlayerSafeFromHail(player))
-                    {
-                        player.hurtServer(player.level(), hailDamage, 0.5f / STATE.getWeatherCondition().getHailLevel());
-                    }
-                });
+                    player.hurtServer(player.level(), hailDamage, 0.5f / STATE.getWeatherCondition().getHailLevel());
+                }
+            });
+        }
     }
 
     public ServerWeatherManager(Consumer<MinecraftServer> weatherChangeCallback)
@@ -214,14 +215,19 @@ public class ServerWeatherManager
         this.WEATHER_CHANGE_CALLBACK = weatherChangeCallback;
     }
 
-    public Optional<WeatherState> getState()
+    public Consumer<MinecraftServer> getWeatherChangeCallback()
     {
-        return Optional.ofNullable(STATE);
+        return WEATHER_CHANGE_CALLBACK;
+    }
+
+    public WeatherState getState()
+    {
+        return STATE;
     }
     /*
     Get new weather state. This is called every 120 seconds by default as specified in config.
      */
-    private void fetchNewWeatherState(MinecraftServer server, LocationSource.Location location, LocationSource locationSource)
+    private void fetchWeatherState(MinecraftServer server, LocationSource.Location location, LocationSource locationSource)
     {
         Constants.LOG.info("Fetching weather for {} {}", location, STATE);
 
@@ -238,21 +244,21 @@ public class ServerWeatherManager
             if (statusCode == 200)
             {
                 WeatherState weatherState = GSON.fromJson(stringHttpResponse.body(), WeatherState.class);
-                setStateAndLocation(weatherState, location);
-
                 Constants.LOG.debug("Fetching weather state for {}", weatherState + uriEndpoint.toString());
+
+                STATE.setLocation(location);
                 if (!weatherState.equals(STATE)) // Check if weather has actually changed, if not, just ignore and carry on.
                 {
+                    setStateAndLocation(weatherState);
+                    CommonClass.getCache().setCachedWeatherState(Constants.USER_IP, STATE);
                     changeServerWeather(server);
-
-                    // Again, only cache state if using IP.
-                    if (locationSource instanceof IPLocationSource)
-                    {
-                        CommonClass.getCache().setCachedWeatherState(Constants.USER_IP, STATE);
-                    }
-
                     WEATHER_CHANGE_CALLBACK.accept(server);
+
                     Constants.LOG.info("Sent weather change packets to clients");
+                }
+                else if (CommonClass.getCache().ipNotCached() && locationSource instanceof IPLocationSource)// Again, only cache state if using IP.
+                {
+                    CommonClass.getCache().setCachedWeatherState(Constants.USER_IP, STATE);
                 }
 
             } else { // Error response
@@ -284,10 +290,9 @@ public class ServerWeatherManager
         STATE = weatherState;
     }
 
-    public void setStateAndLocation(WeatherState weatherState, LocationSource.Location locationSource)
+    public void setStateAndLocation(WeatherState weatherState)
     {
         STATE = weatherState;
-        STATE.setLocation(locationSource);
     }
 
     /*
@@ -295,6 +300,6 @@ public class ServerWeatherManager
      */
     public void setWeather(MinecraftServer server)
     {
-        CommonClass.getConfig().getLocationSource().getLocation((loc, locationSource) -> fetchNewWeatherState(server, loc, locationSource));
+        CommonClass.getConfig().getLocationSource().getLocation((loc, locationSource) -> fetchWeatherState(server, loc, locationSource));
     }
 }

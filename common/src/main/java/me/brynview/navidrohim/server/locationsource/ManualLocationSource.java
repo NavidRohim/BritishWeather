@@ -12,6 +12,6 @@ public class ManualLocationSource implements LocationSource
     public void getLocation(BiConsumer<Location, LocationSource> callable)
     {
         Constants.LOG.info("Getting location information via Lat/Long manual");
-        callable.accept(new Location(CommonClass.getConfig().getLatitude(), CommonClass.getConfig().getLongitude(), "Earth"), this);
+        callable.accept(new Location(CommonClass.getConfig().getLatitude(), CommonClass.getConfig().getLongitude(), Constants.DEFAULT_LOCATION_NAME), this);
     }
 }

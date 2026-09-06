@@ -7,9 +7,7 @@ import me.brynview.navidrohim.Constants;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import static me.brynview.navidrohim.server.ServerWeatherManager.HTTP_CLIENT;
 
@@ -19,7 +17,7 @@ public class IPLocationSource implements LocationSource
     @Override
     public void getLocation(BiConsumer<Location, LocationSource> callable)
     {
-        if (!CommonClass.getCache().isIpCached())
+        if (CommonClass.getCache().ipNotCached())
         {
             HttpRequest requestIPApi = HttpRequest.newBuilder(Constants.IP_API_ENDPOINT).GET().build();
 
@@ -42,10 +40,10 @@ public class IPLocationSource implements LocationSource
                 }
             });
         } else {
-            if (CommonClass.getWeatherManager().getState().isPresent())
+            if (!CommonClass.getWeatherManager().getState().isEmpty())
             {
                 Constants.LOG.info("Getting location information via IP cache.");
-                callable.accept(CommonClass.getWeatherManager().getState().get().getLocation(), this);
+                callable.accept(CommonClass.getWeatherManager().getState().getLocation(), this);
             } else if (CommonClass.getCache().getCachedWeatherState() != null)
             {
                 Constants.LOG.warn("Using cached weather state when getState() is not present! This is very bad!");

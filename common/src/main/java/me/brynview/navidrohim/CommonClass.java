@@ -57,6 +57,7 @@ public class CommonClass {
         {
             // Call on first tick
             DataCache.initCache(server);
+            getWeatherManager().getWeatherChangeCallback().accept(server);
         }
 
         if (tick % CONFIG.getWeatherFetchIntervalInTicks() == 0 || tick == 1) // Check if tick is multiple of configs update interval, or is 1 (Player / server just started)
@@ -65,11 +66,6 @@ public class CommonClass {
             WEATHER_MANAGER.setWeather(server);
         }
 
-        WEATHER_MANAGER.getState().ifPresent((condition) -> {
-            if (condition.getWeatherCondition().isHail() && tick % (20L * condition.getWeatherCondition().getHailLevel()) == 0)
-            {
-                WEATHER_MANAGER.tick(server);
-            }
-        });
+        WEATHER_MANAGER.tick(server, tick);
     }
 }
