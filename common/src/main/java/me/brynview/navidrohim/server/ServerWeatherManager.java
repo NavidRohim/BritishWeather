@@ -10,10 +10,12 @@ import me.brynview.navidrohim.server.locationsource.LocationSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +26,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Consumer;
 
 public class ServerWeatherManager
@@ -181,17 +182,18 @@ public class ServerWeatherManager
         return conditions;
     }
 
-    private static boolean isPlayerSafeFromHail(ServerPlayer player)
+    private static boolean isNotSafeFromHail(LivingEntity entity)
     {
-        BlockPos headHeight = player.blockPosition().above(2);
-        int heightBlockAtY = player.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, headHeight).getY();
-        return heightBlockAtY >= headHeight.getY() || player.hasItemInSlot(EquipmentSlot.HEAD);
+        BlockPos headHeight = entity.blockPosition().above(2);
+        int heightBlockAtY = entity.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, headHeight).getY();
+
+        return isInRain(entity) && heightBlockAtY < headHeight.getY() && !entity.hasItemInSlot(EquipmentSlot.HEAD);
     }
 
-    private boolean isInRain(ServerPlayer player)
+    private static boolean isInRain(LivingEntity entity)
     {
-        BlockPos pos = player.blockPosition();
-        return player.level().isRainingAt(pos) || player.level().isRainingAt(BlockPos.containing(pos.getX(), player.getBoundingBox().maxY, pos.getZ()));
+        BlockPos pos = entity.blockPosition();
+        return entity.level().isRainingAt(pos) || entity.level().isRainingAt(BlockPos.containing(pos.getX(), entity.getBoundingBox().maxY, pos.getZ()));
     }
 
     public void tick(MinecraftServer server, long tick)
@@ -199,12 +201,24 @@ public class ServerWeatherManager
         if (STATE.getWeatherCondition().isHail() && STATE.weatherCondition.getHailLevel() == 1 && tick % 45 == 0)
         {
             DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
+            float damageToTake = 0.5f / STATE.getWeatherCondition().getHailLevel();
 
             server.getPlayerList().getPlayers().forEach(player ->
             {
-                if (!isPlayerSafeFromHail(player) && isInRain(player))
+                ServerLevel level = player.level();
+                BlockPos playerBlockPos = player.blockPosition();
+                AABB searchArea = AABB.encapsulatingFullBlocks(playerBlockPos, playerBlockPos.atY((int) (player.getY() + 40))).inflate(16);
+
+                // Hurt surrounding entities
+                level.getEntitiesOfClass(LivingEntity.class, searchArea, ServerWeatherManager::isNotSafeFromHail).forEach(entity -> {
+                    entity.hurtServer(level, hailDamage, damageToTake);
+                    //entity.getBrain().addActivity();
+                });
+
+                // Hurt player
+                if (isNotSafeFromHail(player))
                 {
-                    player.hurtServer(player.level(), hailDamage, 0.5f / STATE.getWeatherCondition().getHailLevel());
+                    player.hurtServer(level, hailDamage, damageToTake);
                 }
             });
         }
