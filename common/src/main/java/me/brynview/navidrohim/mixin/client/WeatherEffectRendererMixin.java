@@ -8,6 +8,7 @@ import net.minecraft.client.renderer.WeatherEffectRenderer;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -16,12 +17,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class WeatherEffectRendererMixin
 {
 
+    @Unique
+    private static final String britishWeather$RAIN = "rain.png";
+
     @Inject(method = "renderWeather", at = @At("HEAD"), cancellable = true)
     private void injectTest(RenderPass renderPass, AbstractTexture texture, int startColumn, int columnCount, CallbackInfo ci)
     {
         WeatherCondition condition = ClientCommon.getWeatherManager().getWeather();
-
-        if (condition.isHail() && startColumn == 0) // startColumn = 0 makes sure it's raining and not snowing.
+        if (condition.isHail() && texture.getTexture().getLabel().endsWith(britishWeather$RAIN)) // startColumn = 0 makes sure it's raining and not snowing.
         {
             TextureManager textureManager = Minecraft.getInstance().getTextureManager();
             AbstractTexture hailTexture = textureManager.getTexture(condition.getWeatherTexture()); // if isHail is true, this warning doesn't matter
