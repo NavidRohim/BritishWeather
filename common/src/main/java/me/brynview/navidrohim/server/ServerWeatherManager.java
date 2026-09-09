@@ -178,7 +178,6 @@ public class ServerWeatherManager
             conditions = WeatherCondition.THUNDERSTORM;
         }
 
-        conditions = WeatherCondition.HAIL_STAGE_1;
         return conditions;
     }
 

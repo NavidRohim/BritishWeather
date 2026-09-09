@@ -4,7 +4,7 @@
   "package": "me.brynview.navidrohim.mixin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
-    "server.MobGoalMixin"
+    "server.AnimalAiMixin"
   ],
   "client": [
     "client.ClientLevelMixin",

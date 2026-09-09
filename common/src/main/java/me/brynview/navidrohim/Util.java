@@ -34,4 +34,9 @@ public class Util
         // https://open-meteo.com/en/docs to determine endpoint
         return URI.create(String.format("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&current=weather_code&timezone=auto", location.lat(), location.lon()));
     }
+
+    public static boolean isHailing()
+    {
+        return CommonClass.getWeatherManager().getState().getWeatherCondition().isHail();
+    }
 }
