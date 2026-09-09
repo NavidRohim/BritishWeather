@@ -1,10 +1,10 @@
 package me.brynview.navidrohim;
 
 import me.brynview.navidrohim.client.particle.ModParticles;
-import me.brynview.navidrohim.common.WeatherCondition;
 import me.brynview.navidrohim.platform.services.CommonModConfig;
-import me.brynview.navidrohim.server.DataCache;
-import me.brynview.navidrohim.server.ServerWeatherManager;
+import me.brynview.navidrohim.server.weather.WeatherCache;
+import me.brynview.navidrohim.server.weather.ServerWeatherManager;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
@@ -12,10 +12,11 @@ import net.minecraft.server.MinecraftServer;
 
 import java.util.function.Consumer;
 
-public class CommonClass {
+public class BritishWeather
+{
 
     private static CommonModConfig CONFIG;
-    private static DataCache CACHE; // Cache is only used if getting lat/long from IP.
+    private static WeatherCache CACHE; // Cache is only used if getting lat/long from IP.
     private static ServerWeatherManager WEATHER_MANAGER;
 
     /*
@@ -35,16 +36,11 @@ public class CommonClass {
         return CONFIG;
     }
     public static ServerWeatherManager getWeatherManager() {return WEATHER_MANAGER;}
-    public static DataCache getCache() { return CACHE; }
+    public static WeatherCache getCache() { return CACHE; }
 
-    public static void setCache(DataCache CACHE)
+    public static void setCache(WeatherCache CACHE)
     {
-        if (CommonClass.CACHE == null)
-        {
-            CommonClass.CACHE = CACHE;
-        } else {
-            throw new IllegalStateException("Cache already set.");
-        }
+        BritishWeather.CACHE = CACHE;
     }
 
     // This onTick method works on both IntegratedServer and DedicatedServer theoretically.
@@ -56,7 +52,7 @@ public class CommonClass {
         if (tick == 1)
         {
             // Call on first tick
-            DataCache.initCache(server);
+            WeatherLocationSources.initCachesForMethods(server);
             getWeatherManager().getWeatherChangeCallback().accept(server);
         }
 

@@ -1,49 +1,78 @@
 package me.brynview.navidrohim.common.config;
 
 import dev.isxander.yacl3.api.*;
-import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
-import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
-import me.brynview.navidrohim.CommonClass;
+import dev.isxander.yacl3.api.controller.*;
+import dev.isxander.yacl3.gui.controllers.string.IStringController;
+import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
+import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import com.google.gson.GsonBuilder;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import dev.isxander.yacl3.api.controller.FloatFieldControllerBuilder;
-import dev.isxander.yacl3.api.controller.IntegerFieldControllerBuilder;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
-import me.brynview.navidrohim.server.locationsource.IPLocationSource;
-import me.brynview.navidrohim.server.locationsource.LocationSource;
-import me.brynview.navidrohim.server.locationsource.ManualLocationSource;
-import me.brynview.navidrohim.server.locationsource.PostcodeLocationSource;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class FabricNativeModConfig implements ModMenuApi
 {
     private static final String modConfigFile = "%s.json5".formatted(Constants.MOD_ID);
 
+    private record PostcodeStringController(Option<String> option) implements IStringController<String>
+    {
+        @Override
+        public String getString()
+        {
+            return option.pendingValue();
+        }
+
+        @Override
+        public void setFromString(String value)
+        {
+            option.requestSet(value);
+        }
+
+        @Override
+        public Option<String> option()
+        {
+            return option;
+        }
+
+        @Override
+        public boolean isInputValid(String input)
+        {
+            return input.length() <= 7 && !input.contains(" ");
+        }
+
+        public static class PostcodeStringControllerBuilderImpl extends AbstractControllerBuilderImpl<String> implements ControllerBuilder<String>
+        {
+            protected PostcodeStringControllerBuilderImpl(Option<String> option)
+            {
+                super(option);
+            }
+
+            public Controller<String> build()
+            {
+                return new PostcodeStringController(option);
+            }
+        }
+    }
+
     public enum LocationOptions implements NameableEnum
     {
 
-        IP_GEOLOCATION("ip_geolocation", new IPLocationSource()),
-        POSTCODE_GEOLOCATION("postcode_geolocation", new PostcodeLocationSource()),
-        MANUAL_GEOLOCATION("manual_geolocation", new ManualLocationSource());
+        IP_GEOLOCATION("ip"),
+        POSTCODE_GEOLOCATION("postcode"),
+        MANUAL_GEOLOCATION("manual");
 
         final String key;
-        final LocationSource locationSource;
 
-        LocationOptions(String key, LocationSource locationSource)
+        LocationOptions(String key)
         {
             this.key = key;
-            this.locationSource = locationSource;
         }
 
         @Override
@@ -72,7 +101,7 @@ public class FabricNativeModConfig implements ModMenuApi
     public static int fetchWeatherStatusIntervalInSeconds = 120; // Fetch every 2 minutes by default
 
     @SerialEntry
-    public static boolean usePlayerIP = true;
+    public static String postcode = "NP77LP"; // Default postcode
 
     @SerialEntry
     public static LocationOptions locationOptions = LocationOptions.IP_GEOLOCATION;
@@ -106,6 +135,16 @@ public class FabricNativeModConfig implements ModMenuApi
                                 .controller(FloatFieldControllerBuilder::create)
                                 .build()
 
+                        ).option(Option.<String>createBuilder()
+                                .name(Component.translatable("br.config.category.weather.postcode"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.weather.postcode.description")))
+                                .binding(postcode,
+                                        () -> postcode,
+                                        newPostcodeVal -> postcode = newPostcodeVal
+                                )
+                                .controller(PostcodeStringController.PostcodeStringControllerBuilderImpl::new)
+                                .build()
+
                         ).option(Option.<Integer>createBuilder() // Weather fetch interval, uncapped integer
                                 .name(Component.translatable("br.config.category.weather.fetchWeatherIntervalSecs"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.weather.fetchWeatherIntervalSecs.description")))
@@ -118,12 +157,17 @@ public class FabricNativeModConfig implements ModMenuApi
                         ).option(Option.<LocationOptions>createBuilder()
                                 .name(Component.translatable("br.config.category.weather.locationMethod"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.weather.locationMethod.description")))
-                                .binding(Binding.generic(locationOptions, () -> locationOptions, (val) -> locationOptions = val))
+                                .binding(Binding.generic(locationOptions, () -> locationOptions, (val) -> {
+                                    locationOptions = val;
+                                    BritishWeather.setCache(WeatherLocationSources.getSource(val.key).getCache());
+                                }))
                                 .controller(opt -> EnumControllerBuilder.create(opt)
                                         .enumClass(LocationOptions.class))
                                 .build()
+
                     ).build()
                 )
+
                 .save(() -> HANDLER.save()) // Save config to file everytime save button is pressed.
                 .build()
                 .generateScreen(parent); // Go to ModMenu screen when finished

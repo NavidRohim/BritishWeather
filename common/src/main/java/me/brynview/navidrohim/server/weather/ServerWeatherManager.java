@@ -1,12 +1,12 @@
-package me.brynview.navidrohim.server;
+package me.brynview.navidrohim.server.weather;
 
-import me.brynview.navidrohim.CommonClass;
+import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import com.google.gson.*;
 import me.brynview.navidrohim.Util;
 import me.brynview.navidrohim.common.WeatherCondition;
-import me.brynview.navidrohim.server.locationsource.IPLocationSource;
-import me.brynview.navidrohim.server.locationsource.LocationSource;
+import me.brynview.navidrohim.server.DamageSources;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.MinecraftServer;
@@ -41,7 +41,7 @@ public class ServerWeatherManager
             {
                 int WMOCode = json.getAsJsonObject().getAsJsonObject("current").get("weather_code").getAsInt();
                 WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
-                return new WeatherState(WMOCode, weatherCondition, CommonClass.getWeatherManager().getState().location); // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
+                return new WeatherState(WMOCode, weatherCondition, BritishWeather.getWeatherManager().getState().location); // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
 
             } catch (Exception e)
             {
@@ -60,9 +60,9 @@ public class ServerWeatherManager
 
         int WMOCode;
         transient WeatherCondition weatherCondition;
-        @Nullable LocationSource.Location location;
+        @Nullable WeatherLocationSource.Location location;
 
-        public WeatherState(int WMOCode, WeatherCondition weatherCondition, @Nullable LocationSource.Location location)
+        public WeatherState(int WMOCode, WeatherCondition weatherCondition, @Nullable WeatherLocationSource.Location location)
         {
             this.WMOCode = WMOCode;
             this.weatherCondition = weatherCondition;
@@ -73,7 +73,7 @@ public class ServerWeatherManager
         {
             this.WMOCode = wmoCode;
             this.weatherCondition = getConditionsFromWMOCode(wmoCode);
-            this.location = new LocationSource.Location(longitude, latitude, name);
+            this.location = new WeatherLocationSource.Location(longitude, latitude, name);
         }
 
         public String toString()
@@ -86,12 +86,12 @@ public class ServerWeatherManager
             return WMOCode == -1;
         }
 
-        public @Nullable LocationSource.Location getLocation()
+        public @Nullable WeatherLocationSource.Location getLocation()
         {
             return location;
         }
 
-        public void setLocation(@Nullable LocationSource.Location location)
+        public void setLocation(@Nullable WeatherLocationSource.Location location)
         {
             this.location = location;
         }
@@ -240,7 +240,7 @@ public class ServerWeatherManager
     /*
     Get new weather state. This is called every 120 seconds by default as specified in config.
      */
-    private void fetchWeatherState(MinecraftServer server, LocationSource.Location location, LocationSource locationSource)
+    private void fetchWeatherState(MinecraftServer server, WeatherLocationSource.Location location, WeatherLocationSource weatherLocationSource, String cacheKey)
     {
         Constants.LOG.info("Fetching weather for {} {}", location, STATE);
 
@@ -263,15 +263,20 @@ public class ServerWeatherManager
                 if (!weatherState.equals(STATE)) // Check if weather has actually changed, if not, just ignore and carry on.
                 {
                     setStateAndLocation(weatherState);
-                    CommonClass.getCache().setCachedWeatherState(Constants.USER_IP, STATE);
+
+                    if (weatherLocationSource.hasCache())
+                    {
+                        weatherLocationSource.getCache().setCachedWeatherState(cacheKey, STATE);
+                    }
                     changeServerWeather(server);
                     WEATHER_CHANGE_CALLBACK.accept(server);
 
                     Constants.LOG.info("Sent weather change packets to clients");
                 }
-                else if (CommonClass.getCache().ipNotCached() && locationSource instanceof IPLocationSource)// Again, only cache state if using IP.
+
+                else if (weatherLocationSource.hasCache() && weatherLocationSource.getCache().isNotCached(cacheKey))// Again, only cache state if using IP.
                 {
-                    CommonClass.getCache().setCachedWeatherState(Constants.USER_IP, STATE);
+                    weatherLocationSource.getCache().setCachedWeatherState(cacheKey, STATE);
                 }
 
             } else { // Error response
@@ -313,6 +318,6 @@ public class ServerWeatherManager
      */
     public void setWeather(MinecraftServer server)
     {
-        CommonClass.getConfig().getLocationSource().getLocation((loc, locationSource) -> fetchWeatherState(server, loc, locationSource));
+        BritishWeather.getConfig().getLocationSource().getLocation((loc, locationSource, key) -> fetchWeatherState(server, loc, locationSource, key));
     }
 }

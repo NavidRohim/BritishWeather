@@ -1,6 +1,6 @@
 package me.brynview.navidrohim.platform.services;
 
-import me.brynview.navidrohim.server.locationsource.LocationSource;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 
 public interface CommonModConfig
 {
@@ -10,5 +10,7 @@ public interface CommonModConfig
 
     Integer getWeatherFetchIntervalInTicks();
 
-    LocationSource getLocationSource();
+    WeatherLocationSource getLocationSource();
+
+    String getPostcode();
 }

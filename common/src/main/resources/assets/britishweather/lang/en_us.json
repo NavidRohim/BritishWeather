@@ -7,13 +7,12 @@
   "br.config.category.weather.long.description": "Longitude value that will be used if Location Method is Manual",
   "br.config.category.weather.fetchWeatherIntervalSecs": "Check weather state interval",
   "br.config.category.weather.fetchWeatherIntervalSecs.description": "How often this mod will fetch the current weather, in seconds.",
-  "br.config.category.weather.useIp": "IP geolocating",
-  "br.config.category.weather.useIp.description": "Use IP to get weather instead of using Manual Latitude and Longitude values.",
   "br.config.category.weather.locationMethod": "Location Method",
   "br.config.category.weather.locationMethod.description": "Which location method is used to get the weather.",
-  "br.config.category.weather.ip_geolocation": "IP",
-  "br.config.category.weather.postcode_geolocation": "Postcode",
-  "br.config.category.weather.manual_geolocation": "Manual",
+  "br.config.category.weather.ip": "IP",
+  "br.config.category.weather.manual": "Manual",
+  "br.config.category.weather.postcode": "Postcode",
+  "br.config.category.weather.postcode.description": "What postcode to use if using postcode location method. Please use a full postcode with no spaces. United Kingdom only (no zip codes or any other form of postal identifiers)",
 
   "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?"
 }

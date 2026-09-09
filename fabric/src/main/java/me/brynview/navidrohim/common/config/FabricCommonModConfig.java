@@ -1,7 +1,8 @@
 package me.brynview.navidrohim.common.config;
 
 import me.brynview.navidrohim.platform.services.CommonModConfig;
-import me.brynview.navidrohim.server.locationsource.LocationSource;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 
 public class FabricCommonModConfig implements CommonModConfig
 {
@@ -25,8 +26,14 @@ public class FabricCommonModConfig implements CommonModConfig
     }
 
     @Override
-    public LocationSource getLocationSource()
+    public WeatherLocationSource getLocationSource()
     {
-        return FabricNativeModConfig.locationOptions.locationSource;
+        return WeatherLocationSources.getSource(FabricNativeModConfig.locationOptions.key);
+    }
+
+    @Override
+    public String getPostcode()
+    {
+        return FabricNativeModConfig.postcode;
     }
 }

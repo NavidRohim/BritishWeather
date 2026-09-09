@@ -5,7 +5,6 @@ import me.brynview.navidrohim.common.WeatherUpdatePacket;
 import me.brynview.navidrohim.common.config.FabricCommonModConfig;
 import me.brynview.navidrohim.common.config.FabricNativeModConfig;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -22,10 +21,10 @@ public class FabricMain implements ModInitializer {
         FabricNativeModConfig.HANDLER.load();
 
         // events
-        ServerTickEvents.END_SERVER_TICK.register(CommonClass::onTick);
+        ServerTickEvents.END_SERVER_TICK.register(BritishWeather::onTick);
 
-        CommonClass.init(new FabricCommonModConfig(), (server) -> {
-                WeatherUpdatePacket packet = new WeatherUpdatePacket(CommonClass.getWeatherManager().getState().getWeatherCondition());
+        BritishWeather.init(new FabricCommonModConfig(), (server) -> {
+                WeatherUpdatePacket packet = new WeatherUpdatePacket(BritishWeather.getWeatherManager().getState().getWeatherCondition());
                 server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));
         });
     }

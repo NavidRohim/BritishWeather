@@ -1,9 +1,5 @@
 package me.brynview.navidrohim.client;
 
-import me.brynview.navidrohim.CommonClass;
-import me.brynview.navidrohim.server.ServerWeatherManager;
-import net.minecraft.client.multiplayer.ClientLevel;
-
 public class ClientCommon
 {
     private static ClientWeatherManager WEATHER_MANAGER;
