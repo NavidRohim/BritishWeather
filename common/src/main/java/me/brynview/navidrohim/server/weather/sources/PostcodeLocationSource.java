@@ -20,17 +20,6 @@ public final class PostcodeLocationSource implements WeatherLocationSource
 
     private static final String KEY = "postcode";
     private static WeatherCache CACHE;
-    private static final WeatherCache.TypeAndCodec TYPE_AND_CODEC;
-
-    static {
-        TYPE_AND_CODEC = WeatherCache.getTypeAndCodecForMethod(KEY);
-    }
-
-    @Override
-    public WeatherCache.@NonNull TypeAndCodec getTypeAndCodec()
-    {
-        return TYPE_AND_CODEC;
-    }
 
     @Override
     public @Nullable WeatherCache getCache()
@@ -45,9 +34,15 @@ public final class PostcodeLocationSource implements WeatherLocationSource
     }
 
     @Override
-    public boolean hasCache()
+    public boolean shouldHaveCache()
     {
         return true;
+    }
+
+    @Override
+    public String getKey()
+    {
+        return KEY;
     }
 
     private URI getPostcodesIOEndpointForPostcode(String postcode)

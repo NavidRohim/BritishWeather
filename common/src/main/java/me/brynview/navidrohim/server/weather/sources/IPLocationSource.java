@@ -17,25 +17,12 @@ import static me.brynview.navidrohim.server.weather.ServerWeatherManager.HTTP_CL
 public final class IPLocationSource implements WeatherLocationSource
 {
     private static final String key = "ip";
-    private static final WeatherCache.TypeAndCodec TYPE_AND_CODEC;
-
     private static WeatherCache CACHE = null;
-
-    static
-    {
-        TYPE_AND_CODEC = WeatherCache.getTypeAndCodecForMethod(key);
-    }
 
     @Override
     public @Nullable WeatherCache getCache()
     {
         return CACHE;
-    }
-
-    @Override
-    public WeatherCache.@NonNull TypeAndCodec getTypeAndCodec()
-    {
-        return TYPE_AND_CODEC;
     }
 
     @Override
@@ -45,15 +32,21 @@ public final class IPLocationSource implements WeatherLocationSource
     }
 
     @Override
-    public boolean hasCache()
+    public boolean shouldHaveCache()
     {
         return true;
     }
 
     @Override
+    public String getKey()
+    {
+        return key;
+    }
+
+    @Override
     public void getLocation(TriConsumer<Location, WeatherLocationSource, String> callable)
     {
-        if (BritishWeather.getCache().isNotCached(Constants.USER_IP))
+        if (getCache().isNotCached(Constants.USER_IP))
         {
             HttpRequest requestIPApi = HttpRequest.newBuilder(Constants.IP_API_ENDPOINT).GET().build();
 
@@ -71,17 +64,17 @@ public final class IPLocationSource implements WeatherLocationSource
                     String area = returnedObj.get("city").getAsString() + returnedObj.get("district").getAsString(); // "district" may be irrelevant in the UK?
                     Location location = new Location(lat_ip, lon_ip, area);
 
-                    Constants.LOG.info("Getting location information via IP");
+                    Constants.LOG.info("Getting location information via IP + " + location);
                     callable.accept(location, this, Constants.USER_IP);
                 }
             });
         } else
         {
-            if (!BritishWeather.getWeatherManager().getState().isEmpty())
+            if (!getCache().getCachedWeatherState().isEmpty())
             {
                 Constants.LOG.info("Getting location information via IP cache.");
-                callable.accept(BritishWeather.getWeatherManager().getState().getLocation(), this, Constants.USER_IP);
-            } else if (BritishWeather.getCache().getCachedWeatherState() != null)
+                callable.accept(getCache().getCachedWeatherState().getLocation(), this, Constants.USER_IP);
+            } else if (getCache().getCachedWeatherState() != null)
             {
                 Constants.LOG.warn("Using cached weather state when getState() is not present! This is very bad!");
                 callable.accept(BritishWeather.getCache().getCachedWeatherState().getLocation(), this, Constants.USER_IP);

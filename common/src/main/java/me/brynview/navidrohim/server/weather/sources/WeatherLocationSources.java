@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.server.weather.sources;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.server.weather.WeatherCache;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.Map;
@@ -17,13 +18,12 @@ public class WeatherLocationSources
     {
         for (WeatherLocationSource source : sources.values())
         {
-            if (source.hasCache() && source.getCache() == null)
+            WeatherCache.TypeAndCodec TYPE_AND_CODEC = WeatherCache.getTypeAndCodecForMethod(source);
+            if (TYPE_AND_CODEC != null)
             {
-                source.setCache(minecraftServer.getDataStorage().computeIfAbsent(source.getTypeAndCodec().type()));
+                source.setCache(minecraftServer.getDataStorage().computeIfAbsent(TYPE_AND_CODEC.type()));
             }
         }
-        BritishWeather.setCache(BritishWeather.getConfig().getLocationSource().getCache());
-        BritishWeather.getWeatherManager().setState(BritishWeather.getConfig().getLocationSource().getCache().getCachedWeatherState());
     }
 
     public static WeatherLocationSource getSource(String type)

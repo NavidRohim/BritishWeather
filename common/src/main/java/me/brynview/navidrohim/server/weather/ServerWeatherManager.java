@@ -210,8 +210,10 @@ public class ServerWeatherManager
 
                 // Hurt surrounding entities
                 level.getEntitiesOfClass(LivingEntity.class, searchArea, ServerWeatherManager::isNotSafeFromHail).forEach(entity -> {
-                    entity.hurtServer(level, hailDamage, damageToTake);
-                    //entity.getBrain().addActivity();
+                    if (entity.getRandom().nextInt() % 2 == 0)
+                    {
+                        entity.hurtServer(level, hailDamage, damageToTake);
+                    }
                 });
 
                 // Hurt player
@@ -260,24 +262,15 @@ public class ServerWeatherManager
                 Constants.LOG.debug("Fetching weather state for {}", weatherState + uriEndpoint.toString());
 
                 STATE.setLocation(location);
-                if (!weatherState.equals(STATE)) // Check if weather has actually changed, if not, just ignore and carry on.
+                if (!weatherState.equals(STATE) || STATE.isEmpty()) // Check if weather has actually changed, if not, just ignore and carry on.
                 {
                     setStateAndLocation(weatherState);
-
-                    if (weatherLocationSource.hasCache())
-                    {
-                        weatherLocationSource.getCache().setCachedWeatherState(cacheKey, STATE);
-                    }
-                    changeServerWeather(server);
                     WEATHER_CHANGE_CALLBACK.accept(server);
 
                     Constants.LOG.info("Sent weather change packets to clients");
                 }
-
-                else if (weatherLocationSource.hasCache() && weatherLocationSource.getCache().isNotCached(cacheKey))// Again, only cache state if using IP.
-                {
-                    weatherLocationSource.getCache().setCachedWeatherState(cacheKey, STATE);
-                }
+                changeServerWeather(server);
+                weatherLocationSource.setCachedWeatherState(cacheKey, STATE);
 
             } else { // Error response
                 String reason = stringHttpResponse.body();
@@ -303,14 +296,10 @@ public class ServerWeatherManager
         );
     }
 
-    public void setState(WeatherState weatherState)
-    {
-        STATE = weatherState;
-    }
-
     public void setStateAndLocation(WeatherState weatherState)
     {
         STATE = weatherState;
+        STATE.setLocation(weatherState.getLocation());
     }
 
     /*

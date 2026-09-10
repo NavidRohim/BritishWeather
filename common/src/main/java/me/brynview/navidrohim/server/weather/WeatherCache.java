@@ -3,6 +3,7 @@ package me.brynview.navidrohim.server.weather;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.saveddata.SavedDataType;
@@ -19,24 +20,27 @@ public class WeatherCache extends SavedData
 
     public record TypeAndCodec(SavedDataType<WeatherCache> type, Codec<WeatherCache> codec) {}
 
-    public static TypeAndCodec getTypeAndCodecForMethod(String methodKey)
+    public static @Nullable TypeAndCodec getTypeAndCodecForMethod(WeatherLocationSource source)
     {
-        Codec<WeatherCache> codec =  RecordCodecBuilder.create(ins -> ins.group(
-            // Values to be stored in cache
-            Codec.STRING.fieldOf("key").forGetter(v -> v.key), // IP. Acts as a key
-            Codec.INT.fieldOf("WMOCode").forGetter(v -> v.WMOCode),
-            Codec.STRING.fieldOf("name").forGetter(v -> v.name),
-            Codec.FLOAT.fieldOf("latitude").forGetter(v -> v.latitude),
-            Codec.FLOAT.fieldOf("longitude").forGetter(v -> v.longitude)
+        if (source.shouldHaveCache())
+        {
+            Codec<WeatherCache> codec =  RecordCodecBuilder.create(ins -> ins.group(
+                    // Values to be stored in cache
+                    Codec.STRING.fieldOf("key").forGetter(v -> v.key), // IP. Acts as a key
+                    Codec.INT.fieldOf("WMOCode").forGetter(v -> v.WMOCode),
+                    Codec.STRING.fieldOf("name").forGetter(v -> v.name),
+                    Codec.FLOAT.fieldOf("latitude").forGetter(v -> v.latitude),
+                    Codec.FLOAT.fieldOf("longitude").forGetter(v -> v.longitude)
             ).apply(ins, WeatherCache::new));
 
-        SavedDataType<WeatherCache> type = new SavedDataType<>(Identifier.fromNamespaceAndPath(Constants.MOD_ID, methodKey + "_cache"), // path: name of dat file©
-                WeatherCache::new,
-                codec,
-                null
-        );
-
-        return new TypeAndCodec(type, codec);
+            SavedDataType<WeatherCache> type = new SavedDataType<>(Identifier.fromNamespaceAndPath(Constants.MOD_ID, source.getKey() + "_cache"), // path: name of dat file©
+                    WeatherCache::new,
+                    codec,
+                    null
+            );
+            return new TypeAndCodec(type, codec);
+        }
+        return null;
     }
 
     private String key;

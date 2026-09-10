@@ -159,7 +159,6 @@ public class FabricNativeModConfig implements ModMenuApi
                                 .description(OptionDescription.of(Component.translatable("br.config.category.weather.locationMethod.description")))
                                 .binding(Binding.generic(locationOptions, () -> locationOptions, (val) -> {
                                     locationOptions = val;
-                                    BritishWeather.setCache(WeatherLocationSources.getSource(val.key).getCache());
                                 }))
                                 .controller(opt -> EnumControllerBuilder.create(opt)
                                         .enumClass(LocationOptions.class))

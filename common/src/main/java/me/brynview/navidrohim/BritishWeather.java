@@ -9,6 +9,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
@@ -16,7 +17,6 @@ public class BritishWeather
 {
 
     private static CommonModConfig CONFIG;
-    private static WeatherCache CACHE; // Cache is only used if getting lat/long from IP.
     private static ServerWeatherManager WEATHER_MANAGER;
 
     /*
@@ -36,12 +36,7 @@ public class BritishWeather
         return CONFIG;
     }
     public static ServerWeatherManager getWeatherManager() {return WEATHER_MANAGER;}
-    public static WeatherCache getCache() { return CACHE; }
-
-    public static void setCache(WeatherCache CACHE)
-    {
-        BritishWeather.CACHE = CACHE;
-    }
+    public static WeatherCache getCache() { return CONFIG.getLocationSource().getCache(); }
 
     // This onTick method works on both IntegratedServer and DedicatedServer theoretically.
     // But for LAN worlds, I do not like this.
