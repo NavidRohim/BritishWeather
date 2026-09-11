@@ -56,7 +56,7 @@ public class WeatherCache extends SavedData
     public WeatherCache()
     {
         this.key = "192.168.0.1";
-        this.WMOCode = 0;
+        this.WMOCode = -1;
         this.name = Constants.DEFAULT_LOCATION_NAME;
         this.latitude = 0;
         this.longitude = 0;
@@ -98,9 +98,9 @@ public class WeatherCache extends SavedData
         return new ServerWeatherManager.WeatherState(this.WMOCode, this.name, this.latitude, this.longitude);
     }
 
-    public boolean isNotCached(String key)
+    public boolean isNotCached(String cacheKey)
     {
-        return !this.key.equalsIgnoreCase(key);
+        return !this.key.equalsIgnoreCase(cacheKey);
     }
 
     public String getKey()

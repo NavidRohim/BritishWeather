@@ -9,7 +9,7 @@ import org.spongepowered.include.com.google.common.base.Charsets;
 
 public enum WeatherCondition
 {
-
+    DEFAULT,
     CLOUDY,
     RAINY,
     THUNDERSTORM,

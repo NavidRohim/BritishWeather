@@ -26,7 +26,7 @@ public interface WeatherLocationSource
 
     default void setCachedWeatherState(String cacheKey, ServerWeatherManager.WeatherState weatherState)
     {
-        if (this.shouldHaveCache() && (this.getCache().isNotCached(cacheKey) || getCache().getCachedWeatherState().isEmpty()))
+        if (this.shouldHaveCache() && (this.getCache().isNotCached(cacheKey)))
         {
             getCache().setCachedWeatherState(cacheKey, weatherState);
         }

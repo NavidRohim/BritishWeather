@@ -115,7 +115,7 @@ public class ServerWeatherManager
 
         public static WeatherState empty()
         {
-            return new WeatherState(-1, WeatherCondition.CLOUDY, null);
+            return new WeatherState(-1, WeatherCondition.DEFAULT, null);
         }
     }
 
@@ -126,17 +126,14 @@ public class ServerWeatherManager
     private static final Gson GSON = new GsonBuilder().registerTypeAdapter(WeatherState.class, new WeatherResponseDecoder()).create();
 
     @NotNull
-    private WeatherState STATE = WeatherState.empty();
+    private volatile WeatherState STATE = WeatherState.empty();
     private final Consumer<MinecraftServer> WEATHER_CHANGE_CALLBACK;
 
     private void changeServerWeather(MinecraftServer minecraftServer)
     {
-        Constants.LOG.info("Changing weather state to " + STATE);
+        Constants.LOG.info("Changing server weather state to {}", STATE.weatherCondition);
 
         // THUNDERSTORM_NO_RAIN may not do anything. I have never seen there be no rain but thunder in minecraft.
-        //Constants.LOG.warn("Trying to change weather in-game before weather state has been established. Call WeatherManager.fetchNewWeatherState() first.");
-
-
         // look into ServerLevel and ClientLevel for possible new weather states.
 
         switch (STATE.weatherCondition)
@@ -149,6 +146,8 @@ public class ServerWeatherManager
                 if (STATE.weatherCondition.isHail())
                 {
                     minecraftServer.setWeatherParameters(0, 9999, true, false);
+                } else {
+                    Constants.LOG.error("Invalid weather condition: {}",  STATE.weatherCondition);
                 }
             }
         }
@@ -183,10 +182,7 @@ public class ServerWeatherManager
 
     private static boolean isNotSafeFromHail(LivingEntity entity)
     {
-        BlockPos headHeight = entity.blockPosition().above(2);
-        int heightBlockAtY = entity.level().getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, headHeight).getY();
-
-        return isInRain(entity) && heightBlockAtY < headHeight.getY() && !entity.hasItemInSlot(EquipmentSlot.HEAD);
+        return isInRain(entity) && entity.level().canSeeSky(entity.blockPosition()) && !entity.hasItemInSlot(EquipmentSlot.HEAD);
     }
 
     private static boolean isInRain(LivingEntity entity)
@@ -197,10 +193,10 @@ public class ServerWeatherManager
 
     public void tick(MinecraftServer server, long tick)
     {
-        if (STATE.getWeatherCondition().isHail() && STATE.weatherCondition.getHailLevel() == 1 && tick % 45 == 0)
+        if ( tick % 45 == 0 && STATE.getWeatherCondition().isHail() && STATE.weatherCondition.getHailLevel() == 1 )
         {
             DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
-            float damageToTake = 0.5f / STATE.getWeatherCondition().getHailLevel();
+            float damageToTake = 0.5f;
 
             server.getPlayerList().getPlayers().forEach(player ->
             {
@@ -244,11 +240,12 @@ public class ServerWeatherManager
      */
     private void fetchWeatherState(MinecraftServer server, WeatherLocationSource.Location location, WeatherLocationSource weatherLocationSource, String cacheKey)
     {
-        Constants.LOG.info("Fetching weather for {} {}", location, STATE);
+        Constants.LOG.info("Fetching weather for {}", location);
+        Constants.LOG.info("Current STATE is {}", STATE);
 
         // Make request to open-mateo. No API key needed for our purposes.
         URI uriEndpoint = Util.getWeatherAPIUrl(location);
-        HttpRequest request = HttpRequest.newBuilder().uri(uriEndpoint).GET().build();
+        HttpRequest request = HttpRequest.newBuilder().uri(uriEndpoint).GET().build(); 
 
         // Send async, check for correct status etc.
         // https://open-meteo.com/en/docs useful for figuring out API endpoint
@@ -259,16 +256,16 @@ public class ServerWeatherManager
             if (statusCode == 200)
             {
                 WeatherState weatherState = GSON.fromJson(stringHttpResponse.body(), WeatherState.class);
-                Constants.LOG.debug("Fetching weather state for {}", weatherState + uriEndpoint.toString());
+                Constants.LOG.debug("New STATE is {}", weatherState);
 
-                STATE.setLocation(location);
-                if (!weatherState.equals(STATE) || STATE.isEmpty()) // Check if weather has actually changed, if not, just ignore and carry on.
+                if (!weatherState.equals(STATE)) // Check if weather has actually changed, if not, just ignore and carry on.
                 {
                     setStateAndLocation(weatherState);
                     WEATHER_CHANGE_CALLBACK.accept(server);
 
                     Constants.LOG.info("Sent weather change packets to clients");
                 }
+                STATE.setLocation(location);
                 changeServerWeather(server);
                 weatherLocationSource.setCachedWeatherState(cacheKey, STATE);
 
@@ -299,7 +296,6 @@ public class ServerWeatherManager
     public void setStateAndLocation(WeatherState weatherState)
     {
         STATE = weatherState;
-        STATE.setLocation(weatherState.getLocation());
     }
 
     /*

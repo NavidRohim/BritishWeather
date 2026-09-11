@@ -23,7 +23,7 @@ public class Util
             }
         } catch (IOException e)
         {
-            Constants.LOG.error("Couldn't get IP from {}, try use coordinates instead.", Constants.IP_CHECK_URL);
+            Constants.LOG.error("Couldn't get IP from {}", Constants.IP_CHECK_URL);
             return null;
         }
     }

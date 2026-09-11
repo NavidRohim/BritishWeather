@@ -64,15 +64,15 @@ public class FabricNativeModConfig implements ModMenuApi
     public enum LocationOptions implements NameableEnum
     {
 
-        IP_GEOLOCATION("ip"),
-        POSTCODE_GEOLOCATION("postcode"),
-        MANUAL_GEOLOCATION("manual");
+        IP,
+        POSTCODE,
+        MANUAL;
 
         final String key;
 
-        LocationOptions(String key)
+        LocationOptions()
         {
-            this.key = key;
+            this.key = this.name().toLowerCase();
         }
 
         @Override
@@ -98,13 +98,13 @@ public class FabricNativeModConfig implements ModMenuApi
     public static float lon = -3.049397F; // Default lon
 
     @SerialEntry
-    public static int fetchWeatherStatusIntervalInSeconds = 120; // Fetch every 2 minutes by default
+    public static int fetchWeatherStatusIntervalInSeconds = 180; // Fetch every 3 minutes by default
 
     @SerialEntry
     public static String postcode = "NP77LP"; // Default postcode
 
     @SerialEntry
-    public static LocationOptions locationOptions = LocationOptions.IP_GEOLOCATION;
+    public static LocationOptions locationOptions = LocationOptions.IP;
 
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory()
