@@ -16,9 +16,7 @@ public class FabricMainClient implements ClientModInitializer
     {
         ParticleProviderRegistry.getInstance().register(ModParticles.HAIL, HailParticle.Provider::new);
         ClientPlayNetworking.registerGlobalReceiver(WeatherUpdatePacket.TYPE, ((payload, _) ->
-        {
-            ClientCommon.getWeatherManager().setWeather(payload.condition());
-        }));
+                ClientCommon.getWeatherManager().setWeather(payload.condition())));
 
         ClientCommon.init();
     }

@@ -24,9 +24,8 @@ public class FabricMain implements ModInitializer {
         FabricNativeModConfig.HANDLER.load();
 
         // events
-        ServerTickEvents.END_SERVER_TICK.register(BritishWeather::onTick);
 
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, Identifier.fromNamespaceAndPath(Constants.MOD_ID, "fallen_hail_1"), ModParticles.HAIL);
+        ServerTickEvents.END_SERVER_TICK.register(BritishWeather::onTick);
         BritishWeather.init(new FabricCommonModConfig(), (server) -> {
                 WeatherUpdatePacket packet = new WeatherUpdatePacket(BritishWeather.getWeatherManager().getState().getWeatherCondition());
                 server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));
@@ -36,6 +35,7 @@ public class FabricMain implements ModInitializer {
     private void initParticles()
     {
         ModParticles.HAIL = FabricParticleTypes.simple();
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, Identifier.fromNamespaceAndPath(Constants.MOD_ID, "fallen_hail_1"), ModParticles.HAIL);
     }
 
     private void initNetwork()

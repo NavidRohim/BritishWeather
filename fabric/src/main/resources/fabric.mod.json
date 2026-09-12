@@ -9,7 +9,7 @@
     ],
     "contact": {},
     "license": "${license}",
-    "icon": "${mod_id}.png",
+    "icon": "assets/britishweather/icon.png",
     "environment": "*",
     "entrypoints": {
         "main": [

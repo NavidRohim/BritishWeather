@@ -25,9 +25,6 @@ public class WeatherEffectRendererMixin
     @Final
     private static Identifier RAIN_LOCATION;
 
-    @Unique
-    private static final String britishWeather$RAIN = "rain.png";
-
     @Inject(method = "renderWeather", at = @At("HEAD"), cancellable = true)
     private void injectTest(RenderPass renderPass, AbstractTexture texture, int startColumn, int columnCount, CallbackInfo ci)
     {

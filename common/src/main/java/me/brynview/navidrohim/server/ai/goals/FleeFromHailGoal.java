@@ -10,8 +10,6 @@ import org.jspecify.annotations.Nullable;
 
 public class FleeFromHailGoal extends FleeSunGoal
 {
-    public boolean isInProgress = false;
-
     public FleeFromHailGoal(PathfinderMob mob, double speedModifier)
     {
         super(mob, speedModifier);
@@ -48,19 +46,5 @@ public class FleeFromHailGoal extends FleeSunGoal
         }
 
         return null;
-    }
-
-    @Override
-    public void start()
-    {
-        super.start();
-        this.isInProgress = true;
-    }
-
-    @Override
-    public void stop()
-    {
-        super.stop();
-        this.isInProgress = false;
     }
 }

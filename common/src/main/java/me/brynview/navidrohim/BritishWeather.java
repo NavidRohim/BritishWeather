@@ -1,15 +1,10 @@
 package me.brynview.navidrohim;
 
-import me.brynview.navidrohim.client.particle.ModParticles;
-import me.brynview.navidrohim.platform.services.CommonModConfig;
+import me.brynview.navidrohim.server.config.CommonModConfig;
 import me.brynview.navidrohim.server.weather.WeatherCache;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 

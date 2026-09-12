@@ -1,6 +1,5 @@
 package me.brynview.navidrohim.server.config;
 
-import me.brynview.navidrohim.platform.services.CommonModConfig;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 
