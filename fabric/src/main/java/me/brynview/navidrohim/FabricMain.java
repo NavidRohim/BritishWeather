@@ -9,6 +9,9 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.Identifier;
 
 public class FabricMain implements ModInitializer {
 
@@ -23,6 +26,7 @@ public class FabricMain implements ModInitializer {
         // events
         ServerTickEvents.END_SERVER_TICK.register(BritishWeather::onTick);
 
+        Registry.register(BuiltInRegistries.PARTICLE_TYPE, Identifier.fromNamespaceAndPath(Constants.MOD_ID, "fallen_hail_1"), ModParticles.HAIL);
         BritishWeather.init(new FabricCommonModConfig(), (server) -> {
                 WeatherUpdatePacket packet = new WeatherUpdatePacket(BritishWeather.getWeatherManager().getState().getWeatherCondition());
                 server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));

@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.server.config;
+package me.brynview.navidrohim.server;
 
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;

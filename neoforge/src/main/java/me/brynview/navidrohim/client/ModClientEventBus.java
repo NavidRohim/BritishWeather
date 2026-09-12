@@ -26,7 +26,7 @@ public class ModClientEventBus
     @SubscribeEvent
     public static void registerParticleProvider(RegisterParticleProvidersEvent event)
     {
-        ModParticles.HAIL = NFParticleTypes.HAIL.get();
+        ModParticles.HAIL = NeoforgeMainClient.HAIL.get();
         event.registerSpriteSet(ModParticles.HAIL, HailParticle.Provider::new);
 
     }
