@@ -27,7 +27,7 @@ public class BritishWeather
     {
         CONFIG = config;
         WEATHER_MANAGER = new ServerWeatherManager(weatherRefreshCallback);
-        Registry.register(BuiltInRegistries.PARTICLE_TYPE, Identifier.fromNamespaceAndPath(Constants.MOD_ID, "fallen_hail_1"), ModParticles.HAIL);
+        //Registry.register(BuiltInRegistries.PARTICLE_TYPE, Identifier.fromNamespaceAndPath(Constants.MOD_ID, "fallen_hail_1"), ModParticles.HAIL);
     }
 
     // Config getter

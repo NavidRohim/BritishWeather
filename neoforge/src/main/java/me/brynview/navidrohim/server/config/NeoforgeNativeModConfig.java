@@ -1,23 +1,39 @@
-package me.brynview.navidrohim.common.config;
+package me.brynview.navidrohim.server.config;
 
-import dev.isxander.yacl3.api.*;
-import dev.isxander.yacl3.api.controller.*;
-import dev.isxander.yacl3.gui.controllers.string.IStringController;
-import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
-import me.brynview.navidrohim.Constants;
 import com.google.gson.GsonBuilder;
-import com.terraformersmc.modmenu.api.ConfigScreenFactory;
-import com.terraformersmc.modmenu.api.ModMenuApi;
+import dev.isxander.yacl3.api.*;
+import dev.isxander.yacl3.api.controller.ControllerBuilder;
+import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
+import dev.isxander.yacl3.api.controller.FloatFieldControllerBuilder;
+import dev.isxander.yacl3.api.controller.IntegerFieldControllerBuilder;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
-import me.brynview.navidrohim.server.config.LocationOptions;
-import net.fabricmc.loader.api.FabricLoader;
+import dev.isxander.yacl3.gui.controllers.string.IStringController;
+import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
+import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.platform.NeoForgePlatformHelper;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.neoforged.fml.loading.FMLConfig;
+import net.neoforged.fml.loading.FMLLoader;
+import net.neoforged.fml.loading.FMLPaths;
+import net.neoforged.neoforge.common.NeoForge;
 
-public class FabricNativeModConfig implements ModMenuApi
+import java.nio.file.Path;
+
+public class NeoforgeNativeModConfig
 {
+    public static ConfigClassHandler<NeoforgeNativeModConfig> HANDLER = ConfigClassHandler.createBuilder(NeoforgeNativeModConfig.class)
+            .id(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "config"))
+            .serializer(modConfigConfigClassHandler -> GsonConfigSerializerBuilder.create(modConfigConfigClassHandler)
+                    .setPath(FMLPaths.CONFIGDIR.get().resolve(Constants.DefaultConfigValues.modConfigFile))
+                    .appendGsonBuilder(GsonBuilder::setPrettyPrinting)
+                    .setJson5(true)
+                    .build())
+            .build();
+
     private record PostcodeStringController(Option<String> option) implements IStringController<String>
     {
         @Override
@@ -58,41 +74,30 @@ public class FabricNativeModConfig implements ModMenuApi
         }
     }
 
-    public enum FabricLocationOptions implements NameableEnum, LocationOptions
+    public enum NeoforgeLocationOptions implements NameableEnum, LocationOptions
     {
 
         IP,
-        POSTCODE,
-        MANUAL;
+        MANUAL,
+        POSTCODE;
 
-        final String key;
-
-        FabricLocationOptions()
+        private final String key;
+        NeoforgeLocationOptions()
         {
             this.key = this.name().toLowerCase();
         }
-
         @Override
         public Component getDisplayName()
         {
-            return net.minecraft.network.chat.Component.translatable("br.config.category.weather.%s".formatted(getKey()));
+            return Component.translatable("br.config.category.weather.%s".formatted(getKey()));
         }
 
         @Override
         public String getKey()
         {
-            return key;
+            return this.key;
         }
     }
-
-    public static ConfigClassHandler<FabricNativeModConfig> HANDLER = ConfigClassHandler.createBuilder(FabricNativeModConfig.class)
-            .id(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "config"))
-            .serializer(modConfigConfigClassHandler -> GsonConfigSerializerBuilder.create(modConfigConfigClassHandler)
-                    .setPath(FabricLoader.getInstance().getConfigDir().resolve(Constants.DefaultConfigValues.modConfigFile))
-                    .appendGsonBuilder(GsonBuilder::setPrettyPrinting)
-                    .setJson5(true)
-                    .build())
-            .build();
 
     @SerialEntry
     public static float lat = Constants.DefaultConfigValues.latitude; // Default lat
@@ -107,15 +112,14 @@ public class FabricNativeModConfig implements ModMenuApi
     public static String postcode = Constants.DefaultConfigValues.postcode; // Default postcode
 
     @SerialEntry
-    public static FabricLocationOptions locationOptions = FabricLocationOptions.valueOf(Constants.DefaultConfigValues.locationOption);
+    public static NeoforgeLocationOptions locationOptions = NeoforgeLocationOptions.valueOf(Constants.DefaultConfigValues.locationOption);
 
-    @Override
-    public ConfigScreenFactory<?> getModConfigScreenFactory()
+    public static Screen getModConfigScreenFactory(Screen parent)
     {
 
         // I always hate how configs are set up. It works great, but looks so ugly here.
         // Also, does Component.translatable() have to be called every time, for every key, every time the config screen is rendered? Seems wasteful.
-        return parent -> YetAnotherConfigLib.createBuilder()
+        return YetAnotherConfigLib.createBuilder()
                 .title(Component.translatable("br.config.title"))
                 .category(ConfigCategory.createBuilder()
                         .name(Component.translatable("br.config.category.weather"))
@@ -157,17 +161,17 @@ public class FabricNativeModConfig implements ModMenuApi
                                 .controller(IntegerFieldControllerBuilder::create)
                                 .build()
 
-                        ).option(Option.<FabricLocationOptions>createBuilder()
+                        ).option(Option.<NeoforgeLocationOptions>createBuilder()
                                 .name(Component.translatable("br.config.category.weather.locationMethod"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.weather.locationMethod.description")))
                                 .binding(Binding.generic(locationOptions, () -> locationOptions, (val) -> {
                                     locationOptions = val;
                                 }))
                                 .controller(opt -> EnumControllerBuilder.create(opt)
-                                        .enumClass(FabricLocationOptions.class))
+                                        .enumClass(NeoforgeLocationOptions.class))
                                 .build()
 
-                    ).build()
+                        ).build()
                 )
 
                 .save(() -> HANDLER.save()) // Save config to file everytime save button is pressed.

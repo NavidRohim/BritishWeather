@@ -1,39 +1,38 @@
-package me.brynview.navidrohim.common.config;
+package me.brynview.navidrohim.server.config;
 
 import me.brynview.navidrohim.platform.services.CommonModConfig;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 
-public class FabricCommonModConfig implements CommonModConfig
+public class NeoforgeCommonModConfig implements CommonModConfig
 {
-
     @Override
     public Float getLongitude()
     {
-        return FabricNativeModConfig.lon;
+        return NeoforgeNativeModConfig.lon;
     }
 
     @Override
     public Float getLatitude()
     {
-        return FabricNativeModConfig.lat;
+        return NeoforgeNativeModConfig.lat;
     }
 
     @Override
     public Integer getWeatherFetchIntervalInTicks()
     {
-        return FabricNativeModConfig.fetchWeatherStatusIntervalInSeconds * 20; // Convert to ticks
+        return NeoforgeNativeModConfig.fetchWeatherStatusIntervalInSeconds;
     }
 
     @Override
     public WeatherLocationSource getLocationSource()
     {
-        return WeatherLocationSources.getSource(FabricNativeModConfig.locationOptions.getKey());
+        return WeatherLocationSources.getSource(NeoforgeNativeModConfig.locationOptions.getKey());
     }
 
     @Override
     public String getPostcode()
     {
-        return FabricNativeModConfig.postcode;
+        return NeoforgeNativeModConfig.postcode;
     }
 }

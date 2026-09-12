@@ -3,6 +3,13 @@ plugins {
     id 'net.neoforged.moddev'
 }
 
+repositories {
+    maven {
+        name = "Quilt Releases"
+        url = "https://maven.quiltmc.org/repository/release/"
+    }
+}
+
 neoForge {
     version = neoforge_version
     // Automatically enable neoforge AccessTransformers if the file exists
@@ -37,6 +44,10 @@ neoForge {
             sourceSet sourceSets.main
         }
     }
+}
+
+dependencies {
+    compileOnly "dev.isxander:yet-another-config-lib:${project.yacl_version}-neoforge"
 }
 
 sourceSets.main.resources { srcDir 'src/generated/resources' }
