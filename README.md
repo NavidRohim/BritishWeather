@@ -1,3 +1,5 @@
+# British Weather (It's bad..)
+
 This mod will change your in-game weather to your current weather in real life.
 
 By default, BritishWeather will get your current weather by your IP.
