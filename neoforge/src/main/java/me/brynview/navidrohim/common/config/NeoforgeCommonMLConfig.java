@@ -1,7 +1,9 @@
 package me.brynview.navidrohim.common.config;
 
+import me.brynview.navidrohim.client.config.NeoforgeNativeModConfig;
 import me.brynview.navidrohim.server.config.CommonMLConfig;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 
 public class NeoforgeCommonMLConfig implements CommonMLConfig
 {
@@ -26,7 +28,7 @@ public class NeoforgeCommonMLConfig implements CommonMLConfig
     @Override
     public WeatherLocationSource getLocationSource()
     {
-        return NeoforgeCommonSideConfig.locationOptionsSrc;
+        return WeatherLocationSources.getSource(NeoforgeCommonSideConfig.locationOptions);
     }
 
     @Override
