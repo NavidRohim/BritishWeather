@@ -18,6 +18,6 @@ Currently, I use these endpoints / APIs to determine your weather.
 - https://ip-api.com (To fetch Lat/Long via your IP)
 - https://open-meteo.com/ (To fetch weather using Lat/Long)
 
-YACL and ModMenu are required on the client. So download them. If you have a technical issue and it's because one of these are missing, I will pour a pint of Guinness down the sink in your name, which means it's your fault and should feel bad mate. But to be fair, you only need YACL if using NeoForge. We do not support LexForge here because it's deader than my will to live.
+YACL is required on both client and server, ModMenu is also required on the client. So download them. If you have a technical issue and it's because one of these are missing, I will pour a pint of Guinness down the sink in your name, which means it's your fault and should feel bad mate. But to be fair, you only need YACL if using NeoForge. We do not support LexForge here because it's deader than my will to live.
 
 *Serious disclaimer: No IP / Postcode / Lat / Long or ANY identifiable information of ANY kind is retained by me by any means. Your location is safe. Your Postcode, IP and or Lat/Long will be cached in your local instance of Minecraft to cut down on unnecessary API calls.*
