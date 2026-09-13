@@ -1,13 +1,11 @@
 package me.brynview.navidrohim.client.config;
 
 import dev.isxander.yacl3.api.*;
-import dev.isxander.yacl3.api.controller.ControllerBuilder;
-import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
-import dev.isxander.yacl3.api.controller.FloatFieldControllerBuilder;
-import dev.isxander.yacl3.api.controller.IntegerFieldControllerBuilder;
+import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.controllers.string.IStringController;
 import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
 import me.brynview.navidrohim.common.config.NeoforgeCommonSideConfig;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -101,14 +99,13 @@ public class NeoforgeNativeModConfig
                                 .controller(IntegerFieldControllerBuilder::create)
                                 .build()
 
-                        ).option(Option.<NeoforgeCommonSideConfig.NeoforgeLocationOptions>createBuilder()
+                        ).option(Option.<String>createBuilder()
                                 .name(Component.translatable("br.config.category.weather.locationMethod"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.weather.locationMethod.description")))
-                                .binding(Binding.generic(NeoforgeCommonSideConfig.locationOptions, () -> NeoforgeCommonSideConfig.locationOptions, (val) -> {
-                                    NeoforgeCommonSideConfig.locationOptions = val;
-                                }))
-                                .controller(opt -> EnumControllerBuilder.create(opt)
-                                        .enumClass(NeoforgeCommonSideConfig.NeoforgeLocationOptions.class))
+                                .binding(Binding.generic(NeoforgeCommonSideConfig.locationOptions, () -> NeoforgeCommonSideConfig.locationOptions, (val) -> NeoforgeCommonSideConfig.locationOptions = val))
+                                .controller(option -> CyclingListControllerBuilder.create(option)
+                                        .values(WeatherLocationSources.getSources())
+                                        .formatValue(string -> Component.literal(string.toUpperCase())))
                                 .build()
 
                         ).build()

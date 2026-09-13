@@ -1,14 +1,13 @@
 package me.brynview.navidrohim.common.config;
 
 import com.google.gson.GsonBuilder;
-import dev.isxander.yacl3.api.NameableEnum;
 import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
 import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.server.config.LocationOptions;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 
 public class FabricCommonSideConfig
@@ -32,32 +31,5 @@ public class FabricCommonSideConfig
     @SerialEntry
     public static String postcode = Constants.DefaultConfigValues.postcode; // Default postcode
     @SerialEntry
-    public static FabricLocationOptions locationOptions = FabricLocationOptions.valueOf(Constants.DefaultConfigValues.locationOption);
-
-    public enum FabricLocationOptions implements NameableEnum, LocationOptions
-    {
-
-        IP,
-        POSTCODE,
-        MANUAL;
-
-        final String key;
-
-        FabricLocationOptions()
-        {
-            this.key = this.name().toLowerCase();
-        }
-
-        @Override
-        public Component getDisplayName()
-        {
-            return Component.translatable("br.config.category.weather.%s".formatted(getKey()));
-        }
-
-        @Override
-        public String getKey()
-        {
-            return key;
-        }
-    }
+    public static String locationOptions = "ip";
 }

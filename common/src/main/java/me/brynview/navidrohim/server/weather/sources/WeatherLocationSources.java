@@ -5,6 +5,7 @@ import me.brynview.navidrohim.server.weather.WeatherCache;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.Map;
+import java.util.Set;
 
 public class WeatherLocationSources
 {
@@ -29,5 +30,10 @@ public class WeatherLocationSources
     public static WeatherLocationSource getSource(String type)
     {
         return sources.get(type);
+    }
+
+    public static Set<String> getSources()
+    {
+        return sources.keySet();
     }
 }

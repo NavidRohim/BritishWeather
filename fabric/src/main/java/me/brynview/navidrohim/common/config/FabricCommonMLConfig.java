@@ -3,9 +3,6 @@ package me.brynview.navidrohim.common.config;
 import me.brynview.navidrohim.server.config.CommonMLConfig;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Arrays;
 
 public class FabricCommonMLConfig implements CommonMLConfig
 {
@@ -31,12 +28,7 @@ public class FabricCommonMLConfig implements CommonMLConfig
     @Override
     public WeatherLocationSource getLocationSource()
     {
-        @Nullable FabricCommonSideConfig.FabricLocationOptions locationOption = FabricCommonSideConfig.locationOptions;
-        if (locationOption != null)
-        {
-            return WeatherLocationSources.getSource(FabricCommonSideConfig.locationOptions.getKey());
-        }
-        throw new RuntimeException("locationOptions has an invalid value. Can only be " + Arrays.toString(FabricCommonSideConfig.FabricLocationOptions.values()));
+        return WeatherLocationSources.getSource(FabricCommonSideConfig.locationOptions);
     }
 
     @Override

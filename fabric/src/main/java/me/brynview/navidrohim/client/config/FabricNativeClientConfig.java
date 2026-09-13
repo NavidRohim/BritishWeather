@@ -7,6 +7,7 @@ import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
 import me.brynview.navidrohim.common.config.FabricCommonSideConfig;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.minecraft.network.chat.Component;
 
 public class FabricNativeClientConfig implements ModMenuApi
@@ -99,14 +100,13 @@ public class FabricNativeClientConfig implements ModMenuApi
                                 .controller(IntegerFieldControllerBuilder::create)
                                 .build()
 
-                        ).option(Option.<FabricCommonSideConfig.FabricLocationOptions>createBuilder()
+                        ).option(Option.<String>createBuilder()
                                 .name(Component.translatable("br.config.category.weather.locationMethod"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.weather.locationMethod.description")))
-                                .binding(Binding.generic(FabricCommonSideConfig.locationOptions, () -> FabricCommonSideConfig.locationOptions, (val) -> {
-                                    FabricCommonSideConfig.locationOptions = val;
-                                }))
-                                .controller(opt -> EnumControllerBuilder.create(opt)
-                                        .enumClass(FabricCommonSideConfig.FabricLocationOptions.class))
+                                .binding(Binding.generic(FabricCommonSideConfig.locationOptions, () -> FabricCommonSideConfig.locationOptions, (val) -> FabricCommonSideConfig.locationOptions = val))
+                                .controller(option -> CyclingListControllerBuilder.create(option)
+                                        .values(WeatherLocationSources.getSources())
+                                        .formatValue(string -> Component.literal(string.toUpperCase())))
                                 .build()
 
                     ).build()
