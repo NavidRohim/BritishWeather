@@ -196,26 +196,25 @@ public class ServerWeatherManager
         if ( tick % 45 == 0 && STATE.getWeatherCondition().isHail() && STATE.weatherCondition.getHailLevel() == 1 )
         {
             DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
-            float damageToTake = 0.5f;
 
             server.getPlayerList().getPlayers().forEach(player ->
             {
                 ServerLevel level = player.level();
                 BlockPos playerBlockPos = player.blockPosition();
-                AABB searchArea = AABB.encapsulatingFullBlocks(playerBlockPos, playerBlockPos.atY((int) (player.getY() + 40))).inflate(16);
+                AABB searchArea = AABB.encapsulatingFullBlocks(playerBlockPos, playerBlockPos.atY((int) (player.getY() + 40))).inflate(8);
 
                 // Hurt surrounding entities
                 level.getEntitiesOfClass(LivingEntity.class, searchArea, ServerWeatherManager::isNotSafeFromHail).forEach(entity -> {
                     if (entity.getRandom().nextInt() % 2 == 0)
                     {
-                        entity.hurtServer(level, hailDamage, damageToTake);
+                        entity.hurtServer(level, hailDamage, 0.5f);
                     }
                 });
 
                 // Hurt player
                 if (isNotSafeFromHail(player))
                 {
-                    player.hurtServer(level, hailDamage, damageToTake);
+                    player.hurtServer(level, hailDamage, 0.5f);
                 }
             });
         }
@@ -252,6 +251,7 @@ public class ServerWeatherManager
         HTTP_CLIENT.sendAsync(request, HttpResponse.BodyHandlers.ofString()).thenAccept(stringHttpResponse ->
         {
             int statusCode = stringHttpResponse.statusCode();
+
 
             if (statusCode == 200)
             {

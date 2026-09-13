@@ -2,9 +2,10 @@ package me.brynview.navidrohim;
 
 import me.brynview.navidrohim.client.particle.ModParticles;
 import me.brynview.navidrohim.common.WeatherUpdatePacket;
-import me.brynview.navidrohim.common.config.FabricCommonModConfig;
-import me.brynview.navidrohim.common.config.FabricNativeModConfig;
+import me.brynview.navidrohim.common.config.FabricCommonMLConfig;
+import me.brynview.navidrohim.common.config.FabricCommonSideConfig;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -21,13 +22,16 @@ public class FabricMain implements ModInitializer {
         // init
         initNetwork();
         initParticles();
-        FabricNativeModConfig.HANDLER.load();
+        FabricCommonSideConfig.HANDLER.load();
 
         // events
 
         ServerTickEvents.END_SERVER_TICK.register(BritishWeather::onTick);
-        BritishWeather.init(new FabricCommonModConfig(), (server) -> {
-                WeatherUpdatePacket packet = new WeatherUpdatePacket(BritishWeather.getWeatherManager().getState().getWeatherCondition());
+        ServerPlayerEvents.JOIN.register((player) -> {
+            ServerPlayNetworking.send(player, WeatherUpdatePacket.fromCurrentState());
+        });
+        BritishWeather.init(new FabricCommonMLConfig(), (server) -> {
+                WeatherUpdatePacket packet = WeatherUpdatePacket.fromCurrentState();
                 server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));
         });
     }

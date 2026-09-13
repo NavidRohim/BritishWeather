@@ -5,8 +5,6 @@ This mod will change your in-game weather to your current weather in real life.
 By default, BritishWeather will get your current weather by your IP.
 But, you can change this so it gets it via Postcode or Latitude/Longitude.
 
-This mod has not even been tested on dedicated servers, so don't expect it to work.
-
 Now fuck off mate
 
 *If you cannot tell, this mod is a joke. And if you couldn't tell, that's honestly 100% your fault.*

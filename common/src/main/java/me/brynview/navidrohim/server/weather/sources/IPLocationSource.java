@@ -64,7 +64,7 @@ public final class IPLocationSource implements WeatherLocationSource
                     String area = returnedObj.get("city").getAsString() + returnedObj.get("district").getAsString(); // "district" may be irrelevant in the UK?
                     Location location = new Location(lat_ip, lon_ip, area);
 
-                    Constants.LOG.info("Getting location information via IP + " + location);
+                    Constants.LOG.info("Getting location information via IP {}", location);
                     callable.accept(location, this, Constants.USER_IP);
                 }
             });

@@ -2,7 +2,7 @@ package me.brynview.navidrohim.server.config;
 
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 
-public interface CommonModConfig
+public interface CommonMLConfig
 {
     Float getLongitude();
 

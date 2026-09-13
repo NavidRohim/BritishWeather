@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.common;
 
+import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -16,5 +17,10 @@ public record WeatherUpdatePacket(WeatherCondition condition) implements CustomP
     public Type<? extends CustomPacketPayload> type()
     {
         return TYPE;
+    }
+
+    public static WeatherUpdatePacket fromCurrentState()
+    {
+        return new WeatherUpdatePacket(BritishWeather.getWeatherManager().getState().getWeatherCondition());
     }
 }

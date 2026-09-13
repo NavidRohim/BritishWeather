@@ -1,6 +1,6 @@
 package me.brynview.navidrohim;
 
-import me.brynview.navidrohim.server.config.CommonModConfig;
+import me.brynview.navidrohim.server.config.CommonMLConfig;
 import me.brynview.navidrohim.server.weather.WeatherCache;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
@@ -11,21 +11,21 @@ import java.util.function.Consumer;
 public class BritishWeather
 {
 
-    private static CommonModConfig CONFIG;
+    private static CommonMLConfig CONFIG;
     private static ServerWeatherManager WEATHER_MANAGER;
 
     /*
     Since the config is not present in the common namespace, each mod loader must provide their own config (using YACL, which doesn't have a common JAR).
     Then pass an instance of CommonModConfig to common init so all common code can use it.
      */
-    public static void init(CommonModConfig config, Consumer<MinecraftServer> weatherRefreshCallback)
+    public static void init(CommonMLConfig config, Consumer<MinecraftServer> weatherRefreshCallback)
     {
         CONFIG = config;
         WEATHER_MANAGER = new ServerWeatherManager(weatherRefreshCallback);
     }
 
     // Config getter
-    public static CommonModConfig getConfig()
+    public static CommonMLConfig getConfig()
     {
         return CONFIG;
     }

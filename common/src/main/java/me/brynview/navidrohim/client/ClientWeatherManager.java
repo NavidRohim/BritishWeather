@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.client;
 
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.common.WeatherCondition;
 
 public class ClientWeatherManager
@@ -9,10 +10,17 @@ public class ClientWeatherManager
     public void setWeather(WeatherCondition weather)
     {
         WEATHER_CONDITION = weather;
+        Constants.LOG.info("Setting weather to {} on client", weather);
     }
 
     public WeatherCondition getWeather()
     {
         return WEATHER_CONDITION;
+    }
+
+    public void reset()
+    {
+        setWeather(WeatherCondition.DEFAULT);
+        Constants.LOG.info("Resetting client weather manager");
     }
 }
