@@ -1,9 +1,16 @@
 package me.brynview.navidrohim;
 
+import com.mojang.brigadier.CommandDispatcher;
+import me.brynview.navidrohim.common.WeatherCondition;
 import me.brynview.navidrohim.server.config.CommonMLConfig;
 import me.brynview.navidrohim.server.weather.WeatherCache;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
+import net.minecraft.commands.CommandSource;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.ChatType;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 
 import java.util.function.Consumer;
@@ -52,5 +59,25 @@ public class BritishWeather
         }
 
         WEATHER_MANAGER.tick(server, tick);
+    }
+
+    public static void registerCommandsForServer(CommandDispatcher<CommandSourceStack> dispatcher)
+    {
+        dispatcher.register(Commands.literal("brweather")
+                .executes(cmd ->
+                {
+                    ServerWeatherManager.WeatherState weatherState = BritishWeather.getWeatherManager().getState();
+                    String weatherStr = weatherState.getWeatherCondition().getDisplayName();
+                    String location = weatherState.getLocation().name();
+
+                    Component message = BritishWeather.getConfig().shouldShowLocationToClients()
+                            ? Component.translatable("br.command.brweather.message", weatherStr, location)
+                            : Component.translatable("br.command.brweather.message_no_location", weatherStr);
+
+                    // Check if executor is a player.
+                    cmd.getSource().sendSuccess(() -> message, false);
+                    return 0;
+                })
+        );
     }
 }

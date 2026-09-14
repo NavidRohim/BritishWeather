@@ -36,4 +36,10 @@ public class FabricCommonMLConfig implements CommonMLConfig
     {
         return FabricCommonSideConfig.postcode;
     }
+
+    @Override
+    public boolean shouldShowLocationToClients()
+    {
+        return FabricCommonSideConfig.shouldShowLocationToClients;
+    }
 }

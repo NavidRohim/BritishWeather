@@ -9,15 +9,15 @@ import org.spongepowered.include.com.google.common.base.Charsets;
 
 public enum WeatherCondition
 {
-    DEFAULT,
-    CLOUDY,
-    RAINY,
-    THUNDERSTORM,
-    THUNDERSTORM_NO_RAIN,
+    DEFAULT("ERROR"),
+    CLOUDY("cloudy"),
+    RAINY("rainy"),
+    THUNDERSTORM("thunder"),
+    THUNDERSTORM_NO_RAIN("thunder"),
 
-    HAIL_STAGE_1(1), // Most intense
-    HAIL_STAGE_2(2),
-    HAIL_STAGE_3(3); // Light
+    HAIL_STAGE_1(1, "heavy hail"), // Most intense
+    HAIL_STAGE_2(2, "medium hail"),
+    HAIL_STAGE_3(3, "light hail"); // Light
 
     public static final StreamCodec<ByteBuf, WeatherCondition> STREAM_CODEC = StreamCodec.of((b, w) -> b.writeBytes(w.toString().getBytes()), (b) -> {
         String conString = b.readString(b.readableBytes(), Charsets.UTF_8);
@@ -34,17 +34,20 @@ public enum WeatherCondition
     @Nullable
     final Identifier weatherTexture;
     final int hailLevel;
+    final String displayName;
 
-    WeatherCondition(int hailLevel)
+    WeatherCondition(int hailLevel, String displayName)
     {
         this.hailLevel = hailLevel;
         this.weatherTexture = Identifier.fromNamespaceAndPath(Constants.MOD_ID, "textures/environment/hail%s.png".formatted(hailLevel));
+        this.displayName = displayName;
     }
 
-    WeatherCondition()
+    WeatherCondition(String displayName)
     {
         this.hailLevel = -1;
         this.weatherTexture = null;
+        this.displayName = displayName;
     }
 
     public boolean isHail()
@@ -60,5 +63,10 @@ public enum WeatherCondition
     public @Nullable Identifier getWeatherTexture()
     {
         return weatherTexture;
+    }
+
+    public String getDisplayName()
+    {
+        return displayName;
     }
 }

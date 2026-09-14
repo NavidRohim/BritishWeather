@@ -108,6 +108,13 @@ public class NeoforgeNativeModConfig
                                         .formatValue(string -> Component.literal(string.toUpperCase())))
                                 .build()
 
+                        ).option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("br.config.category.weather.shouldShowLocation"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.weather.shouldShowLocation.description")))
+                                .binding(Binding.generic(NeoforgeCommonSideConfig.shouldShowLocationToClients, () -> NeoforgeCommonSideConfig.shouldShowLocationToClients, (val) -> NeoforgeCommonSideConfig.shouldShowLocationToClients = val))
+                                .controller(TickBoxControllerBuilder::create)
+                                .build()
+
                         ).build()
                 )
 

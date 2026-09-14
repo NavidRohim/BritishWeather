@@ -36,4 +36,10 @@ public class NeoforgeCommonMLConfig implements CommonMLConfig
     {
         return NeoforgeCommonSideConfig.postcode;
     }
+
+    @Override
+    public boolean shouldShowLocationToClients()
+    {
+        return NeoforgeCommonSideConfig.shouldShowLocationToClients;
+    }
 }

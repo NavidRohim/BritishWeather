@@ -176,7 +176,6 @@ public class ServerWeatherManager
         {
             conditions = WeatherCondition.THUNDERSTORM;
         }
-
         return conditions;
     }
 

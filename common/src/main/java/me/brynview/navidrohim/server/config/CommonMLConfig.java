@@ -13,4 +13,6 @@ public interface CommonMLConfig
     WeatherLocationSource getLocationSource();
 
     String getPostcode();
+
+    boolean shouldShowLocationToClients();
 }

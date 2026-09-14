@@ -109,7 +109,14 @@ public class FabricNativeClientConfig implements ModMenuApi
                                         .formatValue(string -> Component.literal(string.toUpperCase())))
                                 .build()
 
-                    ).build()
+                        ).option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("br.config.category.weather.shouldShowLocation"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.weather.shouldShowLocation.description")))
+                                .binding(Binding.generic(FabricCommonSideConfig.shouldShowLocationToClients, () -> FabricCommonSideConfig.shouldShowLocationToClients, (val) -> FabricCommonSideConfig.shouldShowLocationToClients = val))
+                                .controller(TickBoxControllerBuilder::create)
+                                .build()
+
+                        ).build()
                 )
 
                 .save(() -> FabricCommonSideConfig.HANDLER.save()) // Save config to file everytime save button is pressed.

@@ -31,6 +31,8 @@ public class NeoforgeCommonSideConfig
     public static String postcode = Constants.DefaultConfigValues.postcode; // Default postcode
     @SerialEntry
     public static String locationOptions = "ip";
+    @SerialEntry
+    public static boolean shouldShowLocationToClients = false;
 
 
 }
