@@ -128,7 +128,7 @@ public class ServerWeatherManager
     private volatile WeatherState STATE = WeatherState.empty();
     private final Consumer<MinecraftServer> WEATHER_CHANGE_CALLBACK;
 
-    private void changeServerWeather(MinecraftServer minecraftServer)
+    public void changeServerWeather(MinecraftServer minecraftServer, boolean sendPacket)
     {
         Constants.LOG.info("Changing server weather state to {}", STATE.weatherCondition);
 
@@ -150,6 +150,16 @@ public class ServerWeatherManager
                 }
             }
         }
+
+        if (sendPacket)
+        {
+            WEATHER_CHANGE_CALLBACK.accept(minecraftServer);
+        }
+    }
+
+    public void changeServerWeather(MinecraftServer minecraftServer)
+    {
+        changeServerWeather(minecraftServer, false);
     }
 
     private static WeatherCondition getConditionFromWMOCode(int code)

@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.WeatherEffectRenderer;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.Identifier;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,18 +27,14 @@ public class WeatherEffectRendererMixin
 
     @Shadow
     @Final
-    private static Identifier RAIN_LOCATION;
+    private TextureManager textureManager;
 
     @Shadow
-    @Final
-    private TextureManager textureManager;
+    private @Nullable AbstractTexture rainTexture;
 
     @Inject(method = "renderWeather", at = @At("HEAD"), cancellable = true)
     private void injectTest(RenderPass renderPass, AbstractTexture texture, int startColumn, int columnCount, CallbackInfo ci)
     {
-        TextureManager textureManager = Minecraft.getInstance().getTextureManager();
-        AbstractTexture rainTexture = textureManager.getTexture(RAIN_LOCATION);
-
         WeatherCondition condition = ClientCommon.getWeatherManager().getWeather();
         if (condition.isHail() && rainTexture == texture)
         {
