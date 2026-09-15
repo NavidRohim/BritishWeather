@@ -1,6 +1,6 @@
 package me.brynview.navidrohim.mixin.client;
 
-import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.renderpearl.api.commands.RenderPass;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.common.WeatherCondition;
@@ -21,9 +21,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class WeatherEffectRendererMixin
 {
 
+    @Unique
+    private static AbstractTexture britishweather$hailTexture;
+
     @Shadow
     @Final
     private static Identifier RAIN_LOCATION;
+
+    @Shadow
+    @Final
+    private TextureManager textureManager;
 
     @Inject(method = "renderWeather", at = @At("HEAD"), cancellable = true)
     private void injectTest(RenderPass renderPass, AbstractTexture texture, int startColumn, int columnCount, CallbackInfo ci)
@@ -34,11 +41,19 @@ public class WeatherEffectRendererMixin
         WeatherCondition condition = ClientCommon.getWeatherManager().getWeather();
         if (condition.isHail() && rainTexture == texture)
         {
-            AbstractTexture hailTexture = textureManager.getTexture(condition.getWeatherTexture()); // if isHail is true, this warning doesn't matter
-
-            renderPass.bindTexture("Sampler0", hailTexture.getTextureView(), hailTexture.getSampler());
+            renderPass.setUniform("Sampler0", britishweather$hailTexture.getTextureView(), britishweather$hailTexture.getSampler());
             renderPass.drawIndexed(columnCount * 6, 1, 0, 0, 0);
             ci.cancel();
+        }
+    }
+
+    @Inject(method = "prepare", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;requestIndexCount(I)V"))
+    private void prepareTexture(CallbackInfo ci)
+    {
+        WeatherCondition condition = ClientCommon.getWeatherManager().getWeather();
+        if (condition.isHail())
+        {
+            britishweather$hailTexture = textureManager.getTexture(condition.getWeatherTexture());
         }
     }
 }

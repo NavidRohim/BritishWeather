@@ -22,7 +22,7 @@ public class FabricCommonMLConfig implements CommonMLConfig
     @Override
     public Integer getWeatherFetchIntervalInTicks()
     {
-        return FabricCommonSideConfig.weatherStatusRefreshIntervalTicks; // Convert to ticks
+        return FabricCommonSideConfig.weatherStatusRefreshIntervalTicks + 1; // Convert to ticks
     }
 
     @Override

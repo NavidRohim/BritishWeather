@@ -39,7 +39,7 @@ public class ServerWeatherManager
             try
             {
                 int WMOCode = json.getAsJsonObject().getAsJsonObject("current").get("weather_code").getAsInt();
-                WeatherCondition weatherCondition = getConditionsFromWMOCode(WMOCode);
+                WeatherCondition weatherCondition = getConditionFromWMOCode(WMOCode);
                 return new WeatherState(WMOCode, weatherCondition, BritishWeather.getWeatherManager().getState().location); // landmark (city) name will only be defined if user is using IP geolocating. Use "earth" by default.
 
             } catch (Exception e)
@@ -71,7 +71,7 @@ public class ServerWeatherManager
         public WeatherState(int wmoCode, String name, float latitude, float longitude)
         {
             this.WMOCode = wmoCode;
-            this.weatherCondition = getConditionsFromWMOCode(wmoCode);
+            this.weatherCondition = getConditionFromWMOCode(wmoCode);
             this.location = new WeatherLocationSource.Location(longitude, latitude, name);
         }
 
@@ -152,7 +152,7 @@ public class ServerWeatherManager
         }
     }
 
-    private static WeatherCondition getConditionsFromWMOCode(int code)
+    private static WeatherCondition getConditionFromWMOCode(int code)
     {
         WeatherCondition conditions = WeatherCondition.CLOUDY;
         // src: https://www.nodc.noaa.gov/archive/arc0021/0002199/1.1/data/0-data/HTML/WMO-CODE/WMO4677.HTM
@@ -175,6 +175,7 @@ public class ServerWeatherManager
         {
             conditions = WeatherCondition.THUNDERSTORM;
         }
+
         return conditions;
     }
 
