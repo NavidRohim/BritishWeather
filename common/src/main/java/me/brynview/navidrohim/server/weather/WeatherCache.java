@@ -17,10 +17,7 @@ CACHE only used when IP geolocating.
  */
 public class WeatherCache extends SavedData
 {
-
-    public record TypeAndCodec(SavedDataType<WeatherCache> type, Codec<WeatherCache> codec) {}
-
-    public static @Nullable TypeAndCodec getTypeAndCodecForMethod(WeatherLocationSource source)
+    public static @Nullable SavedDataType getTypeForMethod(WeatherLocationSource source)
     {
         if (source.shouldHaveCache())
         {
@@ -33,12 +30,12 @@ public class WeatherCache extends SavedData
                     Codec.FLOAT.fieldOf("longitude").forGetter(v -> v.longitude)
             ).apply(ins, WeatherCache::new));
 
-            SavedDataType<WeatherCache> type = new SavedDataType<>(Identifier.fromNamespaceAndPath(Constants.MOD_ID, source.getKey() + "_cache"), // path: name of dat file©
+            SavedDataType<WeatherCache> type = new SavedDataType<>(Identifier.fromNamespaceAndPath(Constants.MOD_ID, source.getIdentifier() + "_cache"), // path: name of dat file
                     WeatherCache::new,
                     codec,
                     null
             );
-            return new TypeAndCodec(type, codec);
+            return type;
         }
         return null;
     }

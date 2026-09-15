@@ -37,7 +37,6 @@ public class BritishWeather
         return CONFIG;
     }
     public static ServerWeatherManager getWeatherManager() {return WEATHER_MANAGER;}
-    public static WeatherCache getCache() { return CONFIG.getLocationSource().getCache(); }
 
     // This onTick method works on both IntegratedServer and DedicatedServer theoretically.
     // But for LAN worlds, I do not like this.
@@ -70,13 +69,13 @@ public class BritishWeather
                     String weatherStr = weatherState.getWeatherCondition().getDisplayName();
                     String location = weatherState.getLocation().name();
 
+                    // Check if location should be shown. We don't want people getting doxxed
                     Component message = BritishWeather.getConfig().shouldShowLocationToClients()
                             ? Component.translatable("br.command.brweather.message", weatherStr, location)
                             : Component.translatable("br.command.brweather.message_no_location", weatherStr);
 
-                    // Check if executor is a player.
                     cmd.getSource().sendSuccess(() -> message, false);
-                    return 0;
+                    return 0; // What does this return value do?
                 })
         );
     }

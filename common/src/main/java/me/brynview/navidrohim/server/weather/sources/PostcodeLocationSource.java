@@ -40,7 +40,7 @@ public final class PostcodeLocationSource implements WeatherLocationSource
     }
 
     @Override
-    public String getKey()
+    public String getIdentifier()
     {
         return KEY;
     }
@@ -97,6 +97,8 @@ public final class PostcodeLocationSource implements WeatherLocationSource
                 } else if (statusCode == 500)
                 {
                     Constants.LOG.error("API endpoint is down for postcode location method. Try manual latitude/longitude or IP");
+                } else {
+                    Constants.LOG.error("Got unexpected HTTP status code {} Body: {}", statusCode,  returnedObj.toString());
                 }
             });
         } else {

@@ -4,6 +4,7 @@ import me.brynview.navidrohim.client.particle.ModParticles;
 import me.brynview.navidrohim.common.WeatherUpdatePacket;
 import me.brynview.navidrohim.common.config.FabricCommonMLConfig;
 import me.brynview.navidrohim.common.config.FabricCommonSideConfig;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -23,7 +24,7 @@ public class FabricMain implements ModInitializer {
         // init
         initNetwork();
         initParticles();
-        FabricCommonSideConfig.HANDLER.load();
+        initConfig();
 
         // events
 
@@ -50,5 +51,10 @@ public class FabricMain implements ModInitializer {
     private void initNetwork()
     {
         PayloadTypeRegistry.clientboundPlay().register(WeatherUpdatePacket.TYPE, WeatherUpdatePacket.CODEC);
+    }
+
+    private void initConfig()
+    {
+        FabricCommonSideConfig.HANDLER.load();
     }
 }

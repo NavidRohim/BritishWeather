@@ -14,7 +14,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -259,7 +258,7 @@ public class ServerWeatherManager
 
                 if (!weatherState.equals(STATE)) // Check if weather has actually changed, if not, just ignore and carry on.
                 {
-                    setStateAndLocation(weatherState);
+                    setState(weatherState);
                     WEATHER_CHANGE_CALLBACK.accept(server);
 
                     Constants.LOG.info("Sent weather change packets to clients");
@@ -292,7 +291,7 @@ public class ServerWeatherManager
         );
     }
 
-    public void setStateAndLocation(WeatherState weatherState)
+    public void setState(WeatherState weatherState)
     {
         STATE = weatherState;
     }

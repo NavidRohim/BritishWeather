@@ -1,6 +1,5 @@
 package me.brynview.navidrohim.common.config;
 
-import me.brynview.navidrohim.client.config.NeoforgeNativeModConfig;
 import me.brynview.navidrohim.server.config.CommonMLConfig;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;

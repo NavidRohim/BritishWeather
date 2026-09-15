@@ -13,10 +13,7 @@ public interface WeatherLocationSource
 
     void getLocation(TriConsumer<Location, WeatherLocationSource, String> callable);
 
-    default String getKey()
-    {
-        return "";
-    }
+    String getIdentifier();
 
     @Nullable
     default WeatherCache getCache()
@@ -44,11 +41,20 @@ public interface WeatherLocationSource
 
     final class ManualLocationSource implements WeatherLocationSource
     {
+
+        private static final String key = "manual";
+
         @Override
         public void getLocation(TriConsumer<Location, WeatherLocationSource, String> callable)
         {
             Constants.LOG.info("Getting location information via Lat/Long manual");
             callable.accept(new Location(BritishWeather.getConfig().getLatitude(), BritishWeather.getConfig().getLongitude(), Constants.DEFAULT_LOCATION_NAME), this, "");
+        }
+
+        @Override
+        public String getIdentifier()
+        {
+            return key;
         }
     }
 

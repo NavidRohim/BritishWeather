@@ -1,35 +1,47 @@
 package me.brynview.navidrohim.server.weather.sources;
 
-import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.server.weather.WeatherCache;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.level.saveddata.SavedDataType;
 
 import java.util.Map;
 import java.util.Set;
 
 public class WeatherLocationSources
 {
+
+    public static final IPLocationSource IP = new IPLocationSource();
+    public static final WeatherLocationSource.ManualLocationSource MANUAL = new WeatherLocationSource.ManualLocationSource();
+    public static final PostcodeLocationSource POSTCODE = new PostcodeLocationSource();
+
     private static final Map<String, WeatherLocationSource> sources = Map.of(
-            "ip", new IPLocationSource(),
-            "manual", new WeatherLocationSource.ManualLocationSource(),
-            "postcode", new PostcodeLocationSource()
+            IP.getIdentifier(), IP,
+            MANUAL.getIdentifier(), MANUAL,
+            POSTCODE.getIdentifier(), POSTCODE
     );
 
     public static void initCachesForMethods(MinecraftServer minecraftServer)
     {
         for (WeatherLocationSource source : sources.values())
         {
-            WeatherCache.TypeAndCodec TYPE_AND_CODEC = WeatherCache.getTypeAndCodecForMethod(source);
-            if (TYPE_AND_CODEC != null)
+            SavedDataType<WeatherCache> type = WeatherCache.getTypeForMethod(source);
+            if (type != null)
             {
-                source.setCache(minecraftServer.getDataStorage().computeIfAbsent(TYPE_AND_CODEC.type()));
+                source.setCache(minecraftServer.getDataStorage().computeIfAbsent(type));
             }
         }
     }
 
     public static WeatherLocationSource getSource(String type)
     {
-        return sources.get(type);
+        WeatherLocationSource source = sources.get(type);
+        if (source != null)
+        {
+            return source;
+        }
+        Constants.LOG.warn("No source named \"{}\" will use default source \"{}\". Valid source values are {}", type, Constants.DefaultConfigValues.defaultLocationMethod.getIdentifier(), getSources());
+        return Constants.DefaultConfigValues.defaultLocationMethod;
     }
 
     public static Set<String> getSources()

@@ -11,6 +11,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.concurrent.TimeUnit;
 
 import static me.brynview.navidrohim.server.weather.ServerWeatherManager.HTTP_CLIENT;
 
@@ -38,7 +39,7 @@ public final class IPLocationSource implements WeatherLocationSource
     }
 
     @Override
-    public String getKey()
+    public String getIdentifier()
     {
         return key;
     }
@@ -46,7 +47,8 @@ public final class IPLocationSource implements WeatherLocationSource
     @Override
     public void getLocation(TriConsumer<Location, WeatherLocationSource, String> callable)
     {
-        if (getCache().isNotCached(Constants.USER_IP))
+
+        if (Constants.USER_IP != null && getCache().isNotCached(Constants.USER_IP))
         {
             HttpRequest requestIPApi = HttpRequest.newBuilder(Constants.IP_API_ENDPOINT).GET().build();
 
@@ -68,21 +70,17 @@ public final class IPLocationSource implements WeatherLocationSource
                     callable.accept(location, this, Constants.USER_IP);
                 }
             });
+
         } else
         {
             if (!getCache().getCachedWeatherState().isEmpty())
             {
                 Constants.LOG.info("Getting location information via IP cache.");
                 callable.accept(getCache().getCachedWeatherState().getLocation(), this, Constants.USER_IP);
-            } else if (getCache().getCachedWeatherState() != null)
-            {
-                Constants.LOG.warn("Using cached weather state when getState() is not present! This is very bad!");
-                callable.accept(BritishWeather.getCache().getCachedWeatherState().getLocation(), this, Constants.USER_IP);
             } else
             {
-                throw new RuntimeException("No valid weather state found for IP!");
+                Constants.LOG.error("Cannot use IP to resolve weather. Try another location method.");
             }
-
         }
     }
 }

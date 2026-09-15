@@ -5,8 +5,6 @@ import dev.isxander.yacl3.config.v2.api.ConfigClassHandler;
 import dev.isxander.yacl3.config.v2.api.SerialEntry;
 import dev.isxander.yacl3.config.v2.api.serializer.GsonConfigSerializerBuilder;
 import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
-import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.minecraft.resources.Identifier;
 import net.neoforged.fml.loading.FMLPaths;
 
@@ -30,9 +28,9 @@ public class NeoforgeCommonSideConfig
     @SerialEntry
     public static String postcode = Constants.DefaultConfigValues.postcode; // Default postcode
     @SerialEntry
-    public static String locationOptions = "ip";
+    public static String locationOptions = Constants.DefaultConfigValues.defaultLocationMethod.getIdentifier();
     @SerialEntry
-    public static boolean shouldShowLocationToClients = false;
+    public static boolean shouldShowLocationToClients = Constants.DefaultConfigValues.shouldShowLocationToClients;
 
 
 }

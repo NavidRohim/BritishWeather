@@ -24,6 +24,8 @@ public class Util
         } catch (IOException e)
         {
             Constants.LOG.error("Couldn't get IP from {}", Constants.IP_CHECK_URL);
+            Constants.LOG.error("Failed to get IP. If your location method is IP, your weather will not change. Try another method.");
+
             return null;
         }
     }

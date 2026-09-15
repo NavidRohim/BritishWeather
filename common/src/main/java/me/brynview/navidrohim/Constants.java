@@ -1,5 +1,7 @@
 package me.brynview.navidrohim;
 
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,12 +22,14 @@ public class Constants {
 
     public static final class DefaultConfigValues
     {
+        public static final String modConfigFile = "%s.json5".formatted(Constants.MOD_ID);
+        public static final WeatherLocationSource defaultLocationMethod = WeatherLocationSources.IP;
+
         public static final float latitude = 51.895776F;
         public static final float longitude = -3.049397F;
         public static final int weatherRefreshInterval = 3600;
         public static final String postcode = "NP77LP";
-        public static final String locationOption = "IP";
-
-        public static final String modConfigFile = "%s.json5".formatted(Constants.MOD_ID);
+        public static final String locationOption = defaultLocationMethod.getIdentifier();
+        public static final boolean shouldShowLocationToClients = false;
     }
 }
