@@ -10,7 +10,7 @@ public class ClientWeatherManager
     public void setWeather(WeatherCondition weather)
     {
         WEATHER_CONDITION = weather;
-        Constants.LOG.info("Setting weather to {} on client", weather);
+        Constants.debug("Setting weather to {} on client", weather);
     }
 
     public WeatherCondition getWeather()
@@ -21,6 +21,6 @@ public class ClientWeatherManager
     public void reset()
     {
         setWeather(WeatherCondition.DEFAULT);
-        Constants.LOG.info("Resetting client weather manager");
+        Constants.debug("Resetting client weather manager");
     }
 }

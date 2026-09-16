@@ -1,10 +1,12 @@
 package me.brynview.navidrohim;
 
 import me.brynview.navidrohim.client.particle.ModParticles;
+import me.brynview.navidrohim.common.DefaultConfig;
 import me.brynview.navidrohim.common.WeatherUpdatePacket;
-import me.brynview.navidrohim.common.config.FabricCommonMLConfig;
-import me.brynview.navidrohim.common.config.FabricCommonSideConfig;
-import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
+import me.brynview.navidrohim.common.config.FabricConfig;
+import me.brynview.navidrohim.common.config.FabricConfigSerializer;
+import me.brynview.navidrohim.platform.Services;
+import me.brynview.navidrohim.server.config.CommonConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
@@ -18,13 +20,15 @@ import net.minecraft.resources.Identifier;
 
 public class FabricMain implements ModInitializer {
 
+    public static boolean hasYacl = false;
+
     @Override
     public void onInitialize() {
 
         // init
         initNetwork();
         initParticles();
-        initConfig();
+        CommonConfig configToUse = initConfig();
 
         // events
 
@@ -32,7 +36,7 @@ public class FabricMain implements ModInitializer {
         ServerPlayerEvents.JOIN.register((player) -> {
             ServerPlayNetworking.send(player, WeatherUpdatePacket.fromCurrentState());
         });
-        BritishWeather.init(new FabricCommonMLConfig(), (server) -> {
+        BritishWeather.init(configToUse, (server) -> {
                 WeatherUpdatePacket packet = WeatherUpdatePacket.fromCurrentState();
                 server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));
         });
@@ -53,8 +57,14 @@ public class FabricMain implements ModInitializer {
         PayloadTypeRegistry.clientboundPlay().register(WeatherUpdatePacket.TYPE, WeatherUpdatePacket.CODEC);
     }
 
-    private void initConfig()
+    private CommonConfig initConfig()
     {
-        FabricCommonSideConfig.HANDLER.load();
+        if (Services.PLATFORM.isModLoaded(Constants.YACL_MOD_ID))
+        {
+            FabricConfigSerializer.HANDLER.load();
+            hasYacl = true;
+            return new FabricConfig();
+        }
+        return new DefaultConfig();
     }
 }

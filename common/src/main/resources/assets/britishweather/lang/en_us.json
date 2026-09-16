@@ -17,6 +17,13 @@
   "br.config.category.weather.postcode": "Postcode",
   "br.config.category.weather.postcode.description": "What postcode to use if using postcode location method. Please use a full postcode with no spaces. United Kingdom only (no zip codes or any other form of postal identifiers)",
 
+  "br.config.category.admin": "Admin",
+  "br.config.category.admin.hailShouldDealDamage": "Should hail deal damage",
+  "br.config.category.admin.hailShouldDealDamage.description": "If heavy hail conditions will deal damage to players and all mobs.",
+  "br.config.category.admin.debug": "Debug mode",
+  "br.config.category.admin.debug.description": "If to show more verbose logs, possibly early features and commands.",
+
+  "br.config.no_config": "YACL is not installed!",
   "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?",
 
   "br.command.brweather.message": "Weather is currently %s in %s",

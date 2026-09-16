@@ -44,7 +44,7 @@ public class ServerWeatherManager
 
             } catch (Exception e)
             {
-                Constants.LOG.info("Got error when trying to deserialize WeatherState from server. Json following:\n\n{}", json.toString());
+                Constants.debug("Got error when trying to deserialize WeatherState from server. Json following:\n\n{}", json.toString());
                 throw e;
             }
         }
@@ -130,7 +130,7 @@ public class ServerWeatherManager
 
     public void changeServerWeather(MinecraftServer minecraftServer, boolean sendPacket)
     {
-        Constants.LOG.info("Changing server weather state to {}", STATE.weatherCondition);
+        Constants.debug("Changing server weather state to {}", STATE.weatherCondition);
 
         // THUNDERSTORM_NO_RAIN may not do anything. I have never seen there be no rain but thunder in minecraft.
         // look into ServerLevel and ClientLevel for possible new weather states.
@@ -185,7 +185,6 @@ public class ServerWeatherManager
         {
             conditions = WeatherCondition.THUNDERSTORM;
         }
-
         return conditions;
     }
 
@@ -200,12 +199,12 @@ public class ServerWeatherManager
         return entity.level().isRainingAt(pos) || entity.level().isRainingAt(BlockPos.containing(pos.getX(), entity.getBoundingBox().maxY, pos.getZ()));
     }
 
-    public void tick(MinecraftServer server, long tick)
+    public void tickHailDamage(MinecraftServer server, long tick)
     {
-        if ( tick % 45 == 0 && STATE.getWeatherCondition().isHail() && STATE.weatherCondition.getHailLevel() == 1 )
+        if ( BritishWeather.getConfig().hailShouldDealDamage() && tick % 45 == 0 && STATE.getWeatherCondition().isHail() && STATE.weatherCondition.getHailLevel() == 1 )
         {
-            DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
 
+            DamageSource hailDamage = new DamageSource(server.registryAccess().lookupOrThrow(Registries.DAMAGE_TYPE).getOrThrow(DamageSources.HAIL_DAMAGE));
             server.getPlayerList().getPlayers().forEach(player ->
             {
                 ServerLevel level = player.level();
@@ -248,8 +247,8 @@ public class ServerWeatherManager
      */
     private void fetchWeatherState(MinecraftServer server, WeatherLocationSource.Location location, WeatherLocationSource weatherLocationSource, String cacheKey)
     {
-        Constants.LOG.info("Fetching weather for {}", location);
-        Constants.LOG.info("Current STATE is {}", STATE);
+        Constants.debug("Fetching weather for {}", location);
+        Constants.debug("Current STATE is {}", STATE);
 
         // Make request to open-mateo. No API key needed for our purposes.
         URI uriEndpoint = Util.getWeatherAPIUrl(location);
@@ -265,14 +264,14 @@ public class ServerWeatherManager
             if (statusCode == 200)
             {
                 WeatherState weatherState = GSON.fromJson(stringHttpResponse.body(), WeatherState.class);
-                Constants.LOG.debug("New STATE is {}", weatherState);
+                Constants.debug("New STATE is {}", weatherState);
 
                 if (!weatherState.equals(STATE)) // Check if weather has actually changed, if not, just ignore and carry on.
                 {
                     setState(weatherState);
                     WEATHER_CHANGE_CALLBACK.accept(server);
 
-                    Constants.LOG.info("Sent weather change packets to clients");
+                    Constants.debug("Sent weather change packets to clients");
                 }
                 STATE.setLocation(location);
                 changeServerWeather(server);
@@ -286,13 +285,13 @@ public class ServerWeatherManager
                     reason = errorObj.get("reason").getAsString();
                 }
                 Constants.LOG.warn("Got {} status code while trying to fetch WeatherState. Reason: {}",  statusCode, reason);
-                Constants.LOG.debug(stringHttpResponse.body());
+                Constants.debug(stringHttpResponse.body());
             }
 
         }).exceptionally(exc -> {
                 if (exc.getCause() instanceof ConnectException) // No internet connection
                 {
-                    Constants.LOG.debug("No internet connection. Cannot fetch weather.");
+                    Constants.LOG.error("No internet connection. Cannot fetch weather.");
                 } else
                 {
                     Constants.LOG.error("Uncatchable error while fetching the weather: ", exc);

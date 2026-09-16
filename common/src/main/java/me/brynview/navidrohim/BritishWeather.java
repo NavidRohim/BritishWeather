@@ -4,17 +4,15 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import me.brynview.navidrohim.common.WeatherCondition;
-import me.brynview.navidrohim.server.config.CommonMLConfig;
-import me.brynview.navidrohim.server.weather.WeatherCache;
+import me.brynview.navidrohim.server.config.CommonConfig;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
-import net.minecraft.commands.CommandSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.permissions.Permissions;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
@@ -22,21 +20,21 @@ import java.util.function.Consumer;
 public class BritishWeather
 {
 
-    private static CommonMLConfig CONFIG;
+    private static CommonConfig CONFIG;
     private static ServerWeatherManager WEATHER_MANAGER;
 
     /*
     Since the config is not present in the common namespace, each mod loader must provide their own config (using YACL, which doesn't have a common JAR).
     Then pass an instance of CommonModConfig to common init so all common code can use it.
      */
-    public static void init(CommonMLConfig config, Consumer<MinecraftServer> weatherRefreshCallback)
+    public static void init(@NotNull CommonConfig config, Consumer<MinecraftServer> weatherRefreshCallback)
     {
         CONFIG = config;
         WEATHER_MANAGER = new ServerWeatherManager(weatherRefreshCallback);
     }
 
     // Config getter
-    public static CommonMLConfig getConfig()
+    public static CommonConfig getConfig()
     {
         return CONFIG;
     }
@@ -61,7 +59,7 @@ public class BritishWeather
             WEATHER_MANAGER.setWeather(server);
         }
 
-        WEATHER_MANAGER.tick(server, tick);
+        WEATHER_MANAGER.tickHailDamage(server, tick);
     }
 
 
@@ -74,6 +72,11 @@ public class BritishWeather
 
     private static int changeWeather(CommandContext<CommandSourceStack> commandSourceStackCommandContext)
     {
+        if (!BritishWeather.getConfig().debug())
+        {
+            return 1;
+        }
+
         String weatherType = commandSourceStackCommandContext.getArgument("weather_condition", String.class);
         try
         {
@@ -86,7 +89,6 @@ public class BritishWeather
             }
         } catch (IllegalArgumentException e)
         {
-            Constants.LOG.info("{}", Arrays.stream(WeatherCondition.values()).toList());
             commandSourceStackCommandContext.getSource().sendFailure(Component.literal("Invalid weather condition. Options are %s".formatted(Arrays.stream(WeatherCondition.values()).toList())));
         }
 

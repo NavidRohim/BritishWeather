@@ -1,5 +1,6 @@
 package me.brynview.navidrohim;
 
+import me.brynview.navidrohim.platform.Services;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ public class Constants {
     public static final URI IP_API_ENDPOINT = URI.create("http://ip-api.com/json/%s?fields=573648".formatted(Constants.USER_IP));
 
     public static final String DEFAULT_LOCATION_NAME = "Earth";
+    public static final String YACL_MOD_ID = "yet_another_config_lib_v3";
 
     public static final class DefaultConfigValues
     {
@@ -29,7 +31,18 @@ public class Constants {
         public static final float longitude = -3.049397F;
         public static final int weatherRefreshInterval = 3600;
         public static final String postcode = "NP77LP";
-        public static final String locationOption = defaultLocationMethod.getIdentifier();
+
+        // Admin
+        public static boolean hailShouldDealDamage = true;
         public static final boolean shouldShowLocationToClients = false;
+        public static final boolean debug = false;
+    }
+
+    public static void debug(String msg, Object... args)
+    {
+        if (BritishWeather.getConfig().debug())
+        {
+            Constants.LOG.info(msg, args);
+        }
     }
 }

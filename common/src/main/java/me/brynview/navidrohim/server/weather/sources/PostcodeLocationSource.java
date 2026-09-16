@@ -57,7 +57,7 @@ public final class PostcodeLocationSource implements WeatherLocationSource
         String postcode = BritishWeather.getConfig().getPostcode();
         if (getCache().isNotCached(postcode))
         {
-            Constants.LOG.info("Cache miss on postcode. {} != {}", postcode, getCache().getKey());
+            Constants.debug("Cache miss on postcode. {} != {}", postcode, getCache().getKey());
             URI endpoint = getPostcodesIOEndpointForPostcode(postcode);
             HttpRequest request = HttpRequest.newBuilder(endpoint)
                     .POST(HttpRequest.BodyPublishers.ofString("{\"postcodes\": [\"%s\"]}".formatted(BritishWeather.getConfig().getPostcode())))
@@ -102,7 +102,7 @@ public final class PostcodeLocationSource implements WeatherLocationSource
                 }
             });
         } else {
-            Constants.LOG.info("Cache hit on postcode.");
+            Constants.debug("Cache hit on postcode.");
             callable.accept(getCache().getCachedWeatherState().getLocation(), this,  postcode);
         }
     }

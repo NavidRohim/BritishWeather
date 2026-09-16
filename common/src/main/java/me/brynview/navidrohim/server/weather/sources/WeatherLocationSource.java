@@ -47,7 +47,7 @@ public interface WeatherLocationSource
         @Override
         public void getLocation(TriConsumer<Location, WeatherLocationSource, String> callable)
         {
-            Constants.LOG.info("Getting location information via Lat/Long manual");
+            Constants.debug("Getting location information via Lat/Long manual");
             callable.accept(new Location(BritishWeather.getConfig().getLatitude(), BritishWeather.getConfig().getLongitude(), Constants.DEFAULT_LOCATION_NAME), this, "");
         }
 

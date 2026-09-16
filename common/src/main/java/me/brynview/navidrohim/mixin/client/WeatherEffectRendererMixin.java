@@ -33,7 +33,7 @@ public class WeatherEffectRendererMixin
     private @Nullable AbstractTexture rainTexture;
 
     @Inject(method = "renderWeather", at = @At("HEAD"), cancellable = true)
-    private void injectTest(RenderPass renderPass, AbstractTexture texture, int startColumn, int columnCount, CallbackInfo ci)
+    private void injectHailEffect(RenderPass renderPass, AbstractTexture texture, int startColumn, int columnCount, CallbackInfo ci)
     {
         WeatherCondition condition = ClientCommon.getWeatherManager().getWeather();
         if (condition.isHail() && rainTexture == texture)

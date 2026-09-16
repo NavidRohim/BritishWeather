@@ -8,10 +8,13 @@ import me.brynview.navidrohim.Constants;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
 
-public class FabricCommonSideConfig
+/*
+Again, separate from FabricClientConfigScreen and another classes to avoid classloading
+ */
+public class FabricConfigSerializer
 {
 
-    public static ConfigClassHandler<FabricCommonSideConfig> HANDLER = ConfigClassHandler.createBuilder(FabricCommonSideConfig.class)
+    public static ConfigClassHandler<FabricConfigSerializer> HANDLER = ConfigClassHandler.createBuilder(FabricConfigSerializer.class)
             .id(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "config"))
             .serializer(modConfigConfigClassHandler -> GsonConfigSerializerBuilder.create(modConfigConfigClassHandler)
                     .setPath(FabricLoader.getInstance().getConfigDir().resolve(Constants.DefaultConfigValues.modConfigFile))
@@ -30,6 +33,12 @@ public class FabricCommonSideConfig
     public static String postcode = Constants.DefaultConfigValues.postcode; // Default postcode
     @SerialEntry
     public static String locationOptions = Constants.DefaultConfigValues.defaultLocationMethod.getIdentifier();
+
     @SerialEntry
     public static boolean shouldShowLocationToClients = Constants.DefaultConfigValues.shouldShowLocationToClients;
+    @SerialEntry
+    public static boolean hailShouldDealDamage = Constants.DefaultConfigValues.hailShouldDealDamage;
+    @SerialEntry
+    public static boolean debug = Constants.DefaultConfigValues.debug;
+
 }

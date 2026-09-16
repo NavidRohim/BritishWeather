@@ -19,7 +19,7 @@
             "me.brynview.navidrohim.client.FabricMainClient"
         ],
         "modmenu": [
-            "me.brynview.navidrohim.client.config.FabricNativeClientConfig"
+          "me.brynview.navidrohim.client.config.FabricClientConfig"
         ]
     },
     "mixins": [
@@ -30,8 +30,7 @@
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
         "minecraft": "~${minecraft_version}",
-        "java": ">=${java_version}",
-        "yet_another_config_lib_v3": ">=${yacl_version}"
+        "java": ">=${java_version}"
     }
 }
   

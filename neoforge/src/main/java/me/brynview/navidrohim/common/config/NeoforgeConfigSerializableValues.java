@@ -8,9 +8,13 @@ import me.brynview.navidrohim.Constants;
 import net.minecraft.resources.Identifier;
 import net.neoforged.fml.loading.FMLPaths;
 
-public class NeoforgeCommonSideConfig
+/*
+These values are here to avoid classloading YACL classes if not installed
+ */
+public class NeoforgeConfigSerializableValues
 {
-    public static ConfigClassHandler<NeoforgeCommonSideConfig> HANDLER = ConfigClassHandler.createBuilder(NeoforgeCommonSideConfig.class)
+
+    public static ConfigClassHandler<NeoforgeConfigSerializableValues> HANDLER = ConfigClassHandler.createBuilder(NeoforgeConfigSerializableValues.class)
             .id(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "config"))
             .serializer(modConfigConfigClassHandler -> GsonConfigSerializerBuilder.create(modConfigConfigClassHandler)
                     .setPath(FMLPaths.CONFIGDIR.get().resolve(Constants.DefaultConfigValues.modConfigFile))
@@ -29,8 +33,11 @@ public class NeoforgeCommonSideConfig
     public static String postcode = Constants.DefaultConfigValues.postcode; // Default postcode
     @SerialEntry
     public static String locationOptions = Constants.DefaultConfigValues.defaultLocationMethod.getIdentifier();
+
     @SerialEntry
     public static boolean shouldShowLocationToClients = Constants.DefaultConfigValues.shouldShowLocationToClients;
-
-
+    @SerialEntry
+    public static boolean hailShouldDealDamage = Constants.DefaultConfigValues.hailShouldDealDamage;
+    @SerialEntry
+    public static boolean debug = Constants.DefaultConfigValues.debug;
 }

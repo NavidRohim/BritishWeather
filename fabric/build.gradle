@@ -13,6 +13,7 @@ repositories {
         url = "https://maven.terraformersmc.com/"
     }
 }
+
 dependencies {
     // Source: https://mvnrepository.com/artifact/org.quiltmc.parsers/json
     minecraft("com.mojang:minecraft:${minecraft_version}")

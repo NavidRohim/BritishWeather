@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.mixin.server;
 
+import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.Util;
 import me.brynview.navidrohim.server.ai.goals.FleeFromHailGoal;
@@ -32,6 +33,11 @@ public class AnimalAiMixin
     @Inject(method = "getWalkTargetValue", at = @At("RETURN"), cancellable = true)
     private void getWalkTargetValue(BlockPos pos, LevelReader level, CallbackInfoReturnable<Float> cir)
     {
+        if (!BritishWeather.getConfig().hailShouldDealDamage())
+        {
+            return;
+        }
+
         if (Util.isHailing() && !level.canSeeSky(pos))
         {
             cir.setReturnValue(1000F);

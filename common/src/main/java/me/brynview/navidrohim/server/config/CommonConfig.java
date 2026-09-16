@@ -2,7 +2,7 @@ package me.brynview.navidrohim.server.config;
 
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 
-public interface CommonMLConfig
+public interface CommonConfig
 {
     Float getLongitude();
 
@@ -15,4 +15,8 @@ public interface CommonMLConfig
     String getPostcode();
 
     boolean shouldShowLocationToClients();
+
+    boolean hailShouldDealDamage();
+
+    boolean debug();
 }
