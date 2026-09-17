@@ -4,24 +4,15 @@ import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.controllers.string.IStringController;
 import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
-import me.brynview.navidrohim.common.ConfigTest;
-import me.brynview.navidrohim.common.ConfigValue;
 import me.brynview.navidrohim.common.config.NeoforgeConfigSerializableValues;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 import java.util.*;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class NeoforgeClientConfigScreen
 {
-    private static Map<Class<?>, Function<Option<?>, ControllerBuilder<?>>> BUILDERS = Map.of(
-            String.class, (opt) -> StringControllerBuilder.create((Option<String>) opt),
-            Boolean.class, (opt) -> BooleanControllerBuilder.create((Option<Boolean>) opt)
-    );
-
     private record PostcodeStringController(Option<String> option) implements IStringController<String>
     {
         @Override
@@ -64,44 +55,7 @@ public class NeoforgeClientConfigScreen
 
     public static Screen getModConfigScreenFactory(Screen parent)
     {
-
-        // I always hate how configs are set up. It works great, but looks so ugly here.
-        // Also, does Component.translatable() have to be called every time, for every key, every time the config screen is rendered? Seems wasteful.
-
-        // Build categories
-        Collection<ConfigCategory> categories = new ArrayList<>();
-        for (me.brynview.navidrohim.common.ConfigCategory categoriesWithValue : ConfigTest.categoriesWithValues)
-        {
-            String categoryKey = "br.config.category.%s".formatted(categoriesWithValue.categoryName());
-            List<Option<?>> values = new ArrayList<>();
-
-            for (ConfigValue<?> value : categoriesWithValue.values())
-            {
-                String valueKey = categoryKey + ".%s".formatted(value.getKey());
-                String descriptionKey = categoryKey + ".description";
-
-                values.add(Option.createBuilder()
-                        .name(Component.translatable(valueKey))
-                        .description(OptionDescription.of(Component.translatable(descriptionKey)))
-                        .binding(value.binder.getDefault(), value.binder::get, (n) -> value.binder.set(n))
-                        .controller((opt) -> (ControllerBuilder<Object>) BUILDERS.get(value.type).apply(opt))
-                        .build()
-                );
-            }
-
-            categories.add(ConfigCategory.createBuilder()
-                    .name(Component.translatable(categoryKey))
-                    .options(values)
-                    .build()
-            );
-        }
-
-        YetAnotherConfigLib.Builder builder = YetAnotherConfigLib.createBuilder()
-                .categories(categories)
-                .save(() -> NeoforgeConfigSerializableValues.HANDLER.save())
-                .build()
-                .generateScreen();
-        /*return YetAnotherConfigLib.createBuilder()
+        return YetAnotherConfigLib.createBuilder()
                 .title(Component.translatable("br.config.title"))
                 .category(ConfigCategory.createBuilder()
                         .name(Component.translatable("br.config.category.weather"))
