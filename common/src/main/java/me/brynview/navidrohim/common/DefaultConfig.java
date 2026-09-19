@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.common;
 
+import io.netty.util.Constant;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.server.config.CommonConfig;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
@@ -60,4 +61,15 @@ public class DefaultConfig implements CommonConfig
         return Constants.DefaultConfigValues.debug;
     }
 
+    @Override
+    public boolean shouldRenderCompass()
+    {
+        return Constants.DefaultConfigValues.shouldRenderCompass;
+    }
+
+    @Override
+    public int getCompassSize()
+    {
+        return Constants.DefaultConfigValues.compassSize;
+    }
 }

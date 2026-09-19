@@ -1,8 +1,5 @@
 package me.brynview.navidrohim.util;
 
-import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
-import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 
 public class MathHelper
@@ -23,31 +20,25 @@ public class MathHelper
         return dist < -180 ? (dist + 360) : dist;
     }
 
-    public static int getCompassScreenX(float yaw, float angle, int x, int compassScaledWidth, int screenScaledWidth) {
+    public static int getCompassScreenX(float yaw, float angle, int x, int compassScaledWidth) {
         // Text is centered at the center of the screen. aDist is used as an offset
         // Return an int between -180 and +180 (360)
         // yaw: float between 0.0 and 360.0
         // angle: float between 0 and 270
         // aDist example: (yaw = 90, angle = 0) aDist = angle - yaw = -90
-        int aDist = (int) angleDistance(yaw, angle) * (compassScaledWidth / 120);
+        int aDist = (int) ((int) angleDistance(yaw, angle) * ((float) compassScaledWidth / 180));
         int csx = x + aDist;
-        // Make sure text is not rendered past the compass boundsx
+
+        // Make sure text is not rendered past the compass bounds
         if (csx > 0 && Math.abs(aDist) < (compassScaledWidth / 2)) {
             return csx; // x will be center of the screen. aDist is the offset where to render text
-        } else {
-            //Constants.LOG.info(String.valueOf(aDist));
         }
-
         // Return max int to make sure whatever is going out of bounds fucks right off so we don't see it
         return Integer.MAX_VALUE;
     }
 
     public static int getCompassX(int screenWidth, int textWidth) {
         return (screenWidth - textWidth) / 2;
-    }
-
-    public static int getCompassY() {
-        return 2;
     }
 
     public static int getDistance(Vec3 currentPos, Vec3 distantPos)

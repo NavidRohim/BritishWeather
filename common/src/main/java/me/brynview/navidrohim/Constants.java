@@ -36,6 +36,9 @@ public class Constants {
         public static boolean hailShouldDealDamage = true;
         public static final boolean shouldShowLocationToClients = false;
         public static final boolean debug = false;
+
+        public static final boolean shouldRenderCompass = true;
+        public static final int compassSize = 35;
     }
 
     public static void debug(String msg, Object... args)

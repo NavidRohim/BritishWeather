@@ -19,4 +19,8 @@ public interface CommonConfig
     boolean hailShouldDealDamage();
 
     boolean debug();
+
+    boolean shouldRenderCompass();
+
+    int getCompassSize();
 }

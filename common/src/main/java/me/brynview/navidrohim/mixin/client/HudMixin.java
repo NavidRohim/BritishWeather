@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.mixin.client;
 
+import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.gui.HudCompass;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
@@ -20,6 +21,11 @@ public abstract class HudMixin
     @Inject(method = "extractRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Hud;extractBossOverlay(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V"))
     private void injectHudCompass(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci)
     {
+        if (!BritishWeather.getConfig().shouldRenderCompass())
+        {
+            return;
+        }
+
         Minecraft mc = Minecraft.getInstance();
         int scaledWidth = mc.getWindow().getGuiScaledWidth();
         HudCompass.drawState(graphics, mc, scaledWidth, tickCount);

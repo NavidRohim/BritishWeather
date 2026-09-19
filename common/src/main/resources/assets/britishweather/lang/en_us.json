@@ -23,6 +23,12 @@
   "br.config.category.admin.debug": "Debug mode",
   "br.config.category.admin.debug.description": "If to show more verbose logs, possibly early features and commands.",
 
+  "br.config.category.compass": "Compass",
+  "br.config.category.compass.enabled": "Enable compass",
+  "br.config.category.compass.enabled.description": "If to enable the compass.",
+  "br.config.category.compass.size": "Compass width",
+  "br.config.category.compass.size.description": "Set the compass width.",
+
   "br.config.no_config": "YACL is not installed!",
   "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?",
 

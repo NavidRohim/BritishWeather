@@ -2,6 +2,7 @@ package me.brynview.navidrohim.client.config;
 
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
+import dev.isxander.yacl3.gui.controllers.TickBoxController;
 import dev.isxander.yacl3.gui.controllers.string.IStringController;
 import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
 import me.brynview.navidrohim.common.config.FabricConfigSerializer;
@@ -98,6 +99,25 @@ public class FabricClientConfigScreen
                         )
                         .build()
                 )
+                .category(ConfigCategory.createBuilder()
+                        .name(Component.translatable("br.config.category.compass"))
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.enabled"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.enabled.description")))
+                                .binding(FabricConfigSerializer.shouldRenderCompass, () -> FabricConfigSerializer.shouldRenderCompass, (bool) -> FabricConfigSerializer.shouldRenderCompass = bool)
+                                .controller(TickBoxControllerBuilder::create)
+                                .build()
+                        )
+                        .option(Option.<Integer>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.size"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.size.description")))
+                                .binding(FabricConfigSerializer.compassSize, () -> FabricConfigSerializer.compassSize, (val) -> FabricConfigSerializer.compassSize = val)
+                                .controller(opt -> IntegerSliderControllerBuilder.create(opt)
+                                        .range(1, 100)
+                                        .step(1)
+                                        .formatValue(val -> Component.literal(val + "%")))
+                                .build())
+                        .build())
 
                 .save(() -> FabricConfigSerializer.HANDLER.save()) // Save config to file everytime save button is pressed.
                 .build()
