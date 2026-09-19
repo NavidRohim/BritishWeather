@@ -2,6 +2,7 @@ package me.brynview.navidrohim.client;
 
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.config.NeoforgeClientConfigScreen;
+import me.brynview.navidrohim.client.screen.NoConfigScreen;
 import me.brynview.navidrohim.platform.Services;
 import net.minecraft.core.particles.ParticleType;
 import net.minecraft.core.particles.SimpleParticleType;

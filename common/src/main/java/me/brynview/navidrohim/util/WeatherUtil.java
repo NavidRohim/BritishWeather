@@ -1,5 +1,7 @@
-package me.brynview.navidrohim;
+package me.brynview.navidrohim.util;
 
+import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,7 +10,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URL;
 
-public class Util
+public class WeatherUtil
 {
     @Nullable
     public static String getIP()

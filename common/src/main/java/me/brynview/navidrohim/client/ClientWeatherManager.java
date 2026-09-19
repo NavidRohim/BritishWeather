@@ -3,6 +3,9 @@ package me.brynview.navidrohim.client;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.common.WeatherCondition;
 
+/*
+This seems a bit unnecessary
+ */
 public class ClientWeatherManager
 {
     private WeatherCondition WEATHER_CONDITION = WeatherCondition.CLOUDY;

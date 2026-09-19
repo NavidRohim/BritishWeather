@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class ClientLevelMixin
 {
     @ModifyVariable(method = "tickWeatherEffects", at = @At(value = "STORE"), name = "particleType")
-    private ParticleOptions changePO(ParticleOptions particleType)
+    private ParticleOptions changeParticle(ParticleOptions particleType)
     {
         return particleType == ParticleTypes.RAIN && ClientCommon.getWeatherManager().getWeather().isHail() ? ModParticles.HAIL : particleType;
     }

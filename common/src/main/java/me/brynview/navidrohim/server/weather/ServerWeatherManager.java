@@ -3,7 +3,7 @@ package me.brynview.navidrohim.server.weather;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import com.google.gson.*;
-import me.brynview.navidrohim.Util;
+import me.brynview.navidrohim.util.WeatherUtil;
 import me.brynview.navidrohim.common.WeatherCondition;
 import me.brynview.navidrohim.server.DamageSources;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
@@ -251,7 +251,7 @@ public class ServerWeatherManager
         Constants.debug("Current STATE is {}", STATE);
 
         // Make request to open-mateo. No API key needed for our purposes.
-        URI uriEndpoint = Util.getWeatherAPIUrl(location);
+        URI uriEndpoint = WeatherUtil.getWeatherAPIUrl(location);
         HttpRequest request = HttpRequest.newBuilder().uri(uriEndpoint).GET().build(); 
 
         // Send async, check for correct status etc.

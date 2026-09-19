@@ -1,8 +1,8 @@
 package me.brynview.navidrohim;
 
-import me.brynview.navidrohim.platform.Services;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
+import me.brynview.navidrohim.util.WeatherUtil;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ public class Constants {
     public static final Logger LOG = LoggerFactory.getLogger(MOD_NAME);
 
     public static final String IP_CHECK_URL = "https://checkip.amazonaws.com";
-    public static final @Nullable String USER_IP = Util.getIP();
+    public static final @Nullable String USER_IP = WeatherUtil.getIP();
     public static final URI IP_API_ENDPOINT = URI.create("http://ip-api.com/json/%s?fields=573648".formatted(Constants.USER_IP));
 
     public static final String DEFAULT_LOCATION_NAME = "Earth";

@@ -42,6 +42,6 @@ public class ModEventBus
     @SubscribeEvent
     public static void registerServerCommandsEvent(RegisterCommandsEvent event)
     {
-        BritishWeather.registerCommandsForServer(event.getDispatcher());
+        CommandDispatcher.registerCommandsForDispatcher(event.getDispatcher());
     }
 }

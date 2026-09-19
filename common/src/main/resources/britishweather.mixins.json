@@ -8,6 +8,7 @@
   ],
   "client": [
     "client.ClientLevelMixin",
+    "client.HudMixin",
     "client.WeatherEffectRendererMixin"
   ],
   "server": [],

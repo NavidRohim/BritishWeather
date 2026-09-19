@@ -1,17 +1,14 @@
 package me.brynview.navidrohim.mixin.server;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.Util;
+import me.brynview.navidrohim.util.WeatherUtil;
 import me.brynview.navidrohim.server.ai.goals.FleeFromHailGoal;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.animal.pig.Pig;
 import net.minecraft.world.level.LevelReader;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -24,24 +21,24 @@ public class AnimalAiMixin
 {
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void registerGoals(CallbackInfo ci)
+    private void injectFleeGoal(CallbackInfo ci)
     {
         Mob mob = (Mob) (Object) this;
         mob.getGoalSelector().addGoal(999, new FleeFromHailGoal((PathfinderMob) mob, 1.5));
     }
 
     @Inject(method = "getWalkTargetValue", at = @At("RETURN"), cancellable = true)
-    private void getWalkTargetValue(BlockPos pos, LevelReader level, CallbackInfoReturnable<Float> cir)
+    private void getHailWalkTargetValue(BlockPos pos, LevelReader level, CallbackInfoReturnable<Float> cir)
     {
         if (!BritishWeather.getConfig().hailShouldDealDamage())
         {
             return;
         }
 
-        if (Util.isHailing() && !level.canSeeSky(pos))
+        if (WeatherUtil.isHailing() && !level.canSeeSky(pos))
         {
             cir.setReturnValue(1000F);
-        } else if (Util.isHailing() && level.canSeeSky(pos))
+        } else if (WeatherUtil.isHailing() && level.canSeeSky(pos))
         {
             cir.setReturnValue(-1000F);
         }

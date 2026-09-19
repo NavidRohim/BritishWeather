@@ -6,6 +6,7 @@ import me.brynview.navidrohim.common.WeatherUpdatePacket;
 import me.brynview.navidrohim.common.config.FabricConfig;
 import me.brynview.navidrohim.common.config.FabricConfigSerializer;
 import me.brynview.navidrohim.platform.Services;
+import me.brynview.navidrohim.server.CommandDispatcher;
 import me.brynview.navidrohim.server.config.CommonConfig;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -42,7 +43,7 @@ public class FabricMain implements ModInitializer {
         });
 
         CommandRegistrationCallback.EVENT.register((dispatcher, _, _) -> {
-            BritishWeather.registerCommandsForServer(dispatcher);
+            CommandDispatcher.registerCommandsForDispatcher(dispatcher);
         });
     }
 

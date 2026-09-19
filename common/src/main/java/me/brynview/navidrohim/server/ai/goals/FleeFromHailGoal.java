@@ -1,7 +1,7 @@
 package me.brynview.navidrohim.server.ai.goals;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Util;
+import me.brynview.navidrohim.util.WeatherUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.PathfinderMob;
@@ -19,7 +19,7 @@ public class FleeFromHailGoal extends FleeSunGoal
     @Override
     public boolean canUse()
     {
-        if (BritishWeather.getConfig().hailShouldDealDamage() && mob.level().canSeeSky(mob.blockPosition()) && Util.isHailing())
+        if (BritishWeather.getConfig().hailShouldDealDamage() && mob.level().canSeeSky(mob.blockPosition()) && WeatherUtil.isHailing())
         {
             return this.setWantedPos();
         }
