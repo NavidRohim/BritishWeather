@@ -1,4 +1,9 @@
-- New option: “Debug” -> Enables more verbose logging and debug commands. Defaults to false
-- New option: “Should hail deal damage” -> If heavy hail should deal 0.5 hearts of damage every 45 ticks. Defaults to true
-- YACL and ModMenu are now optional. Default config values will be used if not installed (IP locating, debug false, hail will damage, refresh weather every 3 minutes, no location will be shown to clients)
-- Port to 26.3, which had some changes to how hail is rendered.
+- Added HUD compass.
+
+A lot of experience was gained from the mod SimpleTextOverlay.
+It was very useful learning from the source code, and I still have yet more to learn.
+
+The compass will look almost identical to the compass in STO, but this will change over time.
+
+Wendall911: https://github.com/wendall911
+SimpleTextOverlay: https://github.com/wendall911/SimpleTextOverlay/
