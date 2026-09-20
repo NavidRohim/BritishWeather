@@ -1,7 +1,9 @@
-package me.brynview.navidrohim.client.gui;
+package me.brynview.navidrohim.client.gui.compass;
 
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.client.gui.compass.providers.CompassProvider;
+import me.brynview.navidrohim.client.gui.compass.providers.impl.HoldingWhateverProvider;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
@@ -13,8 +15,14 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class HudCompass
 {
+
+    private static final List<CompassProvider> PROVIDERS = List.of(new HoldingWhateverProvider());
+
     private static final int CENTER_COLOR = ColorHelper.decode("#FF0000").getRGB(); // Red
     private static final int COMPASS_BG_COLOR = ColorHelper.rgb(255, 255, 255, 190);
     private static final int COMPASS_BG_SHADOW_COLOUR = ColorHelper.rgb(0, 0, 0, 100);
@@ -37,7 +45,6 @@ public class HudCompass
 
         // uncomment this if something weird happens in pause menu
         //final float partialTicks = mc.isPaused() ? 0 : _partialTicks;
-
         final int x = MathHelper.getCompassX(scaledWidth, mc.font.width(COMPASS_HEADING));
 
         final int yMiddle = (BritishWeather.getConfig().getCompassY() + mc.font.lineHeight - 1) / 2;
@@ -61,6 +68,7 @@ public class HudCompass
 
         // Draw all living entities
         drawEntities(mc, player, guiGraphics, partialTicks, yaw, x, yMiddleForText, compassScaledWidthHalf);
+        drawProviders(guiGraphics, mc, player, (int) yaw, compassScaledWidth, x, yMiddleForText, partialTicks);
 
         // Draw compass heading
         FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, x, yMiddleForText, CENTER_COLOR, false, FontHelper.TextType.NONE);
@@ -71,13 +79,13 @@ public class HudCompass
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
         int farLeftX = x - compassScaledWidthHalf;
         int farRightX = x + compassScaledWidthHalf;
+        int aY = y - 1;
 
-        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y - 1, COMPASS_BG_SHADOW_COLOUR);
-        guiGraphicsExtractor.horizontalLine(farLeftX + 1 , farRightX, y, COMPASS_BG_COLOR);
-        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y + 1, COMPASS_BG_SHADOW_COLOUR);
+        guiGraphicsExtractor.horizontalLine(farLeftX + 1 , farRightX, aY, COMPASS_BG_COLOR);
+        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, aY + 1, COMPASS_BG_SHADOW_COLOUR);
 
-        FontHelper.draw(mc, guiGraphicsExtractor, "<", farLeftX, 1 + y - mc.font.lineHeight / 2, COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
-        FontHelper.draw(mc, guiGraphicsExtractor, ">", farRightX - 2, 1 + y - mc.font.lineHeight / 2, COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, "<", farLeftX, 1 + aY - mc.font.lineHeight / 2, COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, ">", farRightX - 2, 1 + aY - mc.font.lineHeight / 2, COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
     }
 
     private static void drawEntities(Minecraft mc, LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks, float yaw, int compassX, int y, int compassScaledWidth)
@@ -110,5 +118,25 @@ public class HudCompass
     private static void drawCardinal(Minecraft mc, GuiGraphicsExtractor guiGraphics, float yaw, float angle, int x, int y, int compassScaledWidth, String text) {
         int dx = MathHelper.getCompassScreenX(yaw, angle, x, compassScaledWidth);
         FontHelper.draw(mc, guiGraphics, text, dx, y, ColorHelper.decode("#FFFFFF").getRGB(), FontHelper.TextType.NONE);
+    }
+
+    private static void drawProviders(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, LocalPlayer player, int yaw, int compassScaledWidth, int compassWindowX, int compassWindowY, float partialTick)
+    {
+        for (CompassProvider provider : PROVIDERS)
+        {
+            if (partialTick % 20 == 0)
+            {
+                provider.tick(player);
+            }
+
+            if (provider.shouldShow())
+            {
+                Vec3 providerPosition = provider.getPosition(player);
+                double angleFromPosition = MathHelper.angleFromPos(providerPosition, player.position());
+                int compassX = MathHelper.getCompassScreenX(yaw, (float) angleFromPosition, compassWindowX, compassScaledWidth, false);
+
+                FontHelper.draw(mc, guiGraphicsExtractor, provider.getText(), compassX, compassWindowY, CENTER_COLOR, FontHelper.TextType.NONE);
+            }
+        }
     }
 }

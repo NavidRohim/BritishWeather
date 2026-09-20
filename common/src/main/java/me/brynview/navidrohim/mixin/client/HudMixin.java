@@ -1,7 +1,7 @@
 package me.brynview.navidrohim.mixin.client;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.client.gui.HudCompass;
+import me.brynview.navidrohim.client.gui.compass.HudCompass;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;

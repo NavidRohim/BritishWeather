@@ -124,7 +124,7 @@ public class FabricClientConfigScreen
                         )
                         .option(Option.<Integer>createBuilder()
                                 .name(Component.translatable("br.config.category.compass.compassY"))
-                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.compass.y.description")))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.compassY.description")))
                                 .binding(FabricConfigSerializer.compassY, () -> FabricConfigSerializer.compassY, (val) -> FabricConfigSerializer.compassY = val)
                                 .controller(opt -> IntegerFieldControllerBuilder.create(opt)
                                         .formatValue(val -> Component.literal(val + "px"))

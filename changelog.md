@@ -1,9 +1,7 @@
-- Added HUD compass.
+- Added HUD compass provider.
 
-A lot of experience was gained from the mod SimpleTextOverlay.
-It was very useful learning from the source code, and I still have yet more to learn.
+A compass provider can display objectives or locations to go to. That is a basic explanation so let me give an example.
 
-The compass will look almost identical to the compass in STO, but this will change over time.
+A demo provider I added detects if an explorer map is in your inventory, if it is, it will mark the location on your compass.
 
-Wendall911: https://github.com/wendall911
-SimpleTextOverlay: https://github.com/wendall911/SimpleTextOverlay/
+I now have concerns about the compass getting cluttered, with entities, the cardinal directions, the header and now providers taking up space.
