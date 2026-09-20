@@ -44,6 +44,8 @@ public class FabricConfigSerializer
     @SerialEntry
     public static boolean shouldRenderCompass = Constants.DefaultConfigValues.shouldRenderCompass;
     @SerialEntry
-    public static int compassSize = (int) Constants.DefaultConfigValues.compassSize;
+    public static int compassSize = Constants.DefaultConfigValues.compassSize;
+    @SerialEntry
+    public static int compassY = Constants.DefaultConfigValues.compassY;
 
 }

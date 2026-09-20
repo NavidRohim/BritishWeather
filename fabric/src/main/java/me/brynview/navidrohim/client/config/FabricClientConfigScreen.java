@@ -7,8 +7,10 @@ import dev.isxander.yacl3.gui.controllers.string.IStringController;
 import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
 import me.brynview.navidrohim.common.config.FabricConfigSerializer;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.vehicle.minecart.Minecart;
 
 /*
 This class is separate to avoid classloading yacl classes if it's not installed.
@@ -20,6 +22,8 @@ public class FabricClientConfigScreen
     {
         // I always hate how configs are set up. It works great, but looks so ugly here.
         // Also, does Component.translatable() have to be called every time, for every key, every time the config screen is rendered? Seems wasteful.
+        Minecraft mc = Minecraft.getInstance();
+
         return YetAnotherConfigLib.createBuilder()
                 .title(Component.translatable("br.config.title"))
 
@@ -116,6 +120,15 @@ public class FabricClientConfigScreen
                                         .range(1, 100)
                                         .step(1)
                                         .formatValue(val -> Component.literal(val + "%")))
+                                .build()
+                        )
+                        .option(Option.<Integer>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.compassY"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.compass.y.description")))
+                                .binding(FabricConfigSerializer.compassY, () -> FabricConfigSerializer.compassY, (val) -> FabricConfigSerializer.compassY = val)
+                                .controller(opt -> IntegerFieldControllerBuilder.create(opt)
+                                        .formatValue(val -> Component.literal(val + "px"))
+                                        .max(mc.getWindow().getHeight()))
                                 .build())
                         .build())
 

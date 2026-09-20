@@ -27,7 +27,6 @@ public class HudCompass
     private static int SCALE_MAX = 255; // Max value of what the entity distance scale should be (entity further away = lower, closer = higher)
     private static int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
     private static int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
-    private static int COMPASS_Y = 2; // Where compass is placed on Y axis
 
     public static void drawState(GuiGraphicsExtractor guiGraphics, Minecraft mc, int scaledWidth, float partialTicks) {
         final LocalPlayer player = mc.player;
@@ -40,6 +39,10 @@ public class HudCompass
         //final float partialTicks = mc.isPaused() ? 0 : _partialTicks;
 
         final int x = MathHelper.getCompassX(scaledWidth, mc.font.width(COMPASS_HEADING));
+
+        final int yMiddle = (BritishWeather.getConfig().getCompassY() + mc.font.lineHeight - 1) / 2;
+        final int yMiddleForText = yMiddle - mc.font.lineHeight / 2;
+
         final int compassScaledWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) scaledWidth); // All these float are dumb
         final int compassScaledWidthHalf = compassScaledWidth / 2;
 
@@ -48,37 +51,36 @@ public class HudCompass
                 : player.getYRot()) % 360;
 
         // Compass background
-        drawBackground(guiGraphics, mc, compassScaledWidthHalf, x);
+        drawBackground(guiGraphics, mc, compassScaledWidthHalf, x, yMiddle);
 
         // Render N/E/S/W
-        drawCardinal(mc, guiGraphics, yaw, 0, x, compassScaledWidth, "S");
-        drawCardinal(mc, guiGraphics, yaw, 90, x, compassScaledWidth, "W");
-        drawCardinal(mc, guiGraphics, yaw, 180, x, compassScaledWidth, "N");
-        drawCardinal(mc, guiGraphics, yaw, 270, x, compassScaledWidth, "E");
+        drawCardinal(mc, guiGraphics, yaw, 0, x, yMiddleForText, compassScaledWidth, "S");
+        drawCardinal(mc, guiGraphics, yaw, 90, x, yMiddleForText, compassScaledWidth, "W");
+        drawCardinal(mc, guiGraphics, yaw, 180, x, yMiddleForText, compassScaledWidth, "N");
+        drawCardinal(mc, guiGraphics, yaw, 270, x, yMiddleForText, compassScaledWidth, "E");
 
         // Draw all living entities
-        drawEntities(mc, player, guiGraphics, partialTicks, yaw, x, compassScaledWidthHalf);
+        drawEntities(mc, player, guiGraphics, partialTicks, yaw, x, yMiddleForText, compassScaledWidthHalf);
 
         // Draw compass heading
-        FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, x, COMPASS_Y, CENTER_COLOR, false, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, x, yMiddleForText, CENTER_COLOR, false, FontHelper.TextType.NONE);
     }
 
-    private static void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, int compassScaledWidthHalf, int x)
+    private static void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, int compassScaledWidthHalf, int x, int y)
     {
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
-        int middleY = (COMPASS_Y + mc.font.lineHeight - 1) / 2;
         int farLeftX = x - compassScaledWidthHalf;
         int farRightX = x + compassScaledWidthHalf;
 
-        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, middleY - 1, COMPASS_BG_SHADOW_COLOUR);
-        guiGraphicsExtractor.horizontalLine(farLeftX + 1 , farRightX, middleY, COMPASS_BG_COLOR);
-        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, middleY + 1, COMPASS_BG_SHADOW_COLOUR);
+        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y - 1, COMPASS_BG_SHADOW_COLOUR);
+        guiGraphicsExtractor.horizontalLine(farLeftX + 1 , farRightX, y, COMPASS_BG_COLOR);
+        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y + 1, COMPASS_BG_SHADOW_COLOUR);
 
-        FontHelper.draw(mc, guiGraphicsExtractor, "<", farLeftX, 1 + middleY - mc.font.lineHeight / 2, COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
-        FontHelper.draw(mc, guiGraphicsExtractor, ">", farRightX - 2, 1 + middleY - mc.font.lineHeight / 2, COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, "<", farLeftX, 1 + y - mc.font.lineHeight / 2, COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, ">", farRightX - 2, 1 + y - mc.font.lineHeight / 2, COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
     }
 
-    private static void drawEntities(Minecraft mc, LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks, float yaw, int compassX, int compassScaledWidth)
+    private static void drawEntities(Minecraft mc, LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks, float yaw, int compassX, int y, int compassScaledWidth)
     {
         // Where player is looking
         Vec3 look = player.getViewVector(partialTicks).scale(DETECTION_DISTANCE);
@@ -100,13 +102,13 @@ public class HudCompass
 
                     // Entity x offset on screen
                     int ex = MathHelper.getCompassScreenX(yaw, (float) angleFromEntity, compassX, compassScaledWidth);
-                    FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, COMPASS_Y, ColorHelper.rgb(255, 255, 255, iconScale), true, FontHelper.TextType.NONE);
+                    FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, y, ColorHelper.rgb(255, 255, 255, iconScale), true, FontHelper.TextType.NONE);
                 }
         );
     }
 
-    private static void drawCardinal(Minecraft mc, GuiGraphicsExtractor guiGraphics, float yaw, float angle, int x, int compassScaledWidth, String text) {
+    private static void drawCardinal(Minecraft mc, GuiGraphicsExtractor guiGraphics, float yaw, float angle, int x, int y, int compassScaledWidth, String text) {
         int dx = MathHelper.getCompassScreenX(yaw, angle, x, compassScaledWidth);
-        FontHelper.draw(mc, guiGraphics, text, dx, COMPASS_Y, ColorHelper.decode("#FFFFFF").getRGB(), FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphics, text, dx, y, ColorHelper.decode("#FFFFFF").getRGB(), FontHelper.TextType.NONE);
     }
 }

@@ -72,4 +72,10 @@ public class DefaultConfig implements CommonConfig
     {
         return Constants.DefaultConfigValues.compassSize;
     }
+
+    @Override
+    public int getCompassY()
+    {
+        return Constants.DefaultConfigValues.compassY;
+    }
 }
