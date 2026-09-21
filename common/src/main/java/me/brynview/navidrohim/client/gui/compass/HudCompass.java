@@ -1,9 +1,9 @@
 package me.brynview.navidrohim.client.gui.compass;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.gui.compass.providers.CompassProvider;
 import me.brynview.navidrohim.client.gui.compass.providers.impl.HoldingWhateverProvider;
+import me.brynview.navidrohim.platform.Services;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
@@ -15,7 +15,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class HudCompass
@@ -35,6 +34,8 @@ public class HudCompass
     private static int SCALE_MAX = 255; // Max value of what the entity distance scale should be (entity further away = lower, closer = higher)
     private static int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
     private static int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
+
+    private static boolean wasHeld = false;
 
     public static void drawState(GuiGraphicsExtractor guiGraphics, Minecraft mc, int scaledWidth, float partialTicks) {
         final LocalPlayer player = mc.player;
@@ -60,15 +61,21 @@ public class HudCompass
         // Compass background
         drawBackground(guiGraphics, mc, compassScaledWidthHalf, x, yMiddle);
 
-        // Render N/E/S/W
-        drawCardinal(mc, guiGraphics, yaw, 0, x, yMiddleForText, compassScaledWidth, "S");
-        drawCardinal(mc, guiGraphics, yaw, 90, x, yMiddleForText, compassScaledWidth, "W");
-        drawCardinal(mc, guiGraphics, yaw, 180, x, yMiddleForText, compassScaledWidth, "N");
-        drawCardinal(mc, guiGraphics, yaw, 270, x, yMiddleForText, compassScaledWidth, "E");
-
         // Draw all living entities
-        drawEntities(mc, player, guiGraphics, partialTicks, yaw, x, yMiddleForText, compassScaledWidthHalf);
-        drawProviders(guiGraphics, mc, player, (int) yaw, compassScaledWidth, x, yMiddleForText, partialTicks);
+        if (!Services.PLATFORM.isProviderKeyHeld())
+        {
+            // Render N/E/S/W
+            drawCardinal(mc, guiGraphics, yaw, 0, x, yMiddleForText, compassScaledWidth, "S");
+            drawCardinal(mc, guiGraphics, yaw, 90, x, yMiddleForText, compassScaledWidth, "W");
+            drawCardinal(mc, guiGraphics, yaw, 180, x, yMiddleForText, compassScaledWidth, "N");
+            drawCardinal(mc, guiGraphics, yaw, 270, x, yMiddleForText, compassScaledWidth, "E");
+
+            drawEntities(mc, player, guiGraphics, partialTicks, yaw, x, yMiddleForText, compassScaledWidthHalf);
+            wasHeld = false;
+        } else {
+            drawProviders(guiGraphics, mc, player, (int) yaw, compassScaledWidth, x, yMiddleForText);
+            wasHeld = true;
+        }
 
         // Draw compass heading
         FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, x, yMiddleForText, CENTER_COLOR, false, FontHelper.TextType.NONE);
@@ -120,11 +127,12 @@ public class HudCompass
         FontHelper.draw(mc, guiGraphics, text, dx, y, ColorHelper.decode("#FFFFFF").getRGB(), FontHelper.TextType.NONE);
     }
 
-    private static void drawProviders(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, LocalPlayer player, int yaw, int compassScaledWidth, int compassWindowX, int compassWindowY, float partialTick)
+    private static void drawProviders(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, LocalPlayer player, int yaw, int compassScaledWidth, int compassWindowX, int compassWindowY)
     {
+        // Todo tomorrow: add distance from provider under provider text icon
         for (CompassProvider provider : PROVIDERS)
         {
-            if (partialTick % 20 == 0)
+            if (!wasHeld)
             {
                 provider.tick(player);
             }

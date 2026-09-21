@@ -36,5 +36,8 @@
   "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?",
 
   "br.command.brweather.message": "Weather is currently %s in %s",
-  "br.command.brweather.message_no_location": "Weather is currently %s"
+  "br.command.brweather.message_no_location": "Weather is currently %s",
+
+  "key.category.britishweather.keybinds": "British Weather",
+  "br.keybind.showProviders": "Show compass objectives"
 }

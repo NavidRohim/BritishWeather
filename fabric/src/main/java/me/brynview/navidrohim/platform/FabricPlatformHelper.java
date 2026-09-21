@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.platform;
 
+import me.brynview.navidrohim.client.keybinds.ModKeybinds;
 import me.brynview.navidrohim.platform.services.IPlatformHelper;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -20,5 +21,11 @@ public class FabricPlatformHelper implements IPlatformHelper {
     public boolean isDevelopmentEnvironment() {
 
         return FabricLoader.getInstance().isDevelopmentEnvironment();
+    }
+
+    @Override
+    public boolean isProviderKeyHeld()
+    {
+        return ModKeybinds.showProvidersKey.isDown();
     }
 }

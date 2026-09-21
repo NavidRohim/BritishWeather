@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client;
 
 import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.client.keybinds.ModKeybinds;
 import me.brynview.navidrohim.client.particle.HailParticle;
 import me.brynview.navidrohim.client.particle.ModParticles;
 import me.brynview.navidrohim.common.WeatherCondition;
@@ -27,6 +28,7 @@ public class FabricMainClient implements ClientModInitializer
         ClientPlayNetworking.registerGlobalReceiver(WeatherUpdatePacket.TYPE, ((payload, _) ->
                 ClientCommon.getWeatherManager().setWeather(payload.condition())));
 
+        ModKeybinds.init();
         ClientCommon.init();
     }
 }
