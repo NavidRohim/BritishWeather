@@ -3,18 +3,26 @@ package me.brynview.navidrohim.mixin.client;
 import me.brynview.navidrohim.client.gui.compass.HudCompass;
 import me.brynview.navidrohim.client.gui.compass.providers.builtin.DeathpointTimedProvider;
 import net.minecraft.client.gui.screens.DeathScreen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(DeathScreen.class)
 public class DeathScreenMixin
 {
-    @Inject(method = "<init>", at = @At("TAIL"))
-    private void handlePlayerDeath(Component causeOfDeath, boolean hardcore, LocalPlayer player, CallbackInfo ci)
+    @Shadow
+    @Final
+    private LocalPlayer player;
+
+    @Inject(method = "mouseClicked", at = @At("TAIL"))
+    private void handlePlayerDeath(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir)
     {
         HudCompass.addProvider(new DeathpointTimedProvider(player));
     }

@@ -50,7 +50,10 @@ public class HudCompass
         public static void tick(LocalPlayer player)
         {
             PROVIDERS.removeIf(DefaultCompassProvider::hasExpired);
+            SINGLETON_PROVIDERS.values().removeIf(DefaultCompassProvider::hasExpired);
+
             PROVIDERS.forEach((p) -> p.tick(player));
+            SINGLETON_PROVIDERS.values().forEach((p) -> p.tick(player));
         }
 
         public static List<DefaultCompassProvider> getProviders()
@@ -219,10 +222,10 @@ public class HudCompass
                 int distance = MathHelper.getDistance(entryPos, playerPos);
 
                 String suffix = "m";
-                if (distance <= 10 && playerPos.y - entryPos.y >= 5)
+                if (distance <= 100 && playerPos.y - entryPos.y >= 1)
                 {
                     suffix += " ↓";
-                } else if (distance <= 10 && entryPos.y - playerPos.y >= 5)
+                } else if (distance <= 100 && entryPos.y - playerPos.y >= 1)
                 {
                     suffix += " ↑";
                 }

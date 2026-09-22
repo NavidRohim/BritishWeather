@@ -18,9 +18,4 @@ public abstract class DefaultCompassProvider implements CompassProvider
     {
         this.entries.put(entry.getPosition(),  entry);
     }
-
-    public boolean isSingleton()
-    {
-        return false;
-    }
 }
