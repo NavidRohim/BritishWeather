@@ -40,4 +40,11 @@ public class NeoforgeConfigSerializableValues
     public static boolean hailShouldDealDamage = Constants.DefaultConfigValues.hailShouldDealDamage;
     @SerialEntry
     public static boolean debug = Constants.DefaultConfigValues.debug;
+
+    @SerialEntry
+    public static boolean shouldRenderCompass = Constants.DefaultConfigValues.shouldRenderCompass;
+    @SerialEntry
+    public static int compassSize = Constants.DefaultConfigValues.compassSize;
+    @SerialEntry
+    public static int compassY = Constants.DefaultConfigValues.compassY;
 }

@@ -8,6 +8,10 @@ repositories {
         name = "Quilt Releases"
         url = "https://maven.quiltmc.org/repository/release/"
     }
+    maven {
+        name 'Xander Maven'
+        url 'https://maven.isxander.dev/releases'
+    }
 }
 
 neoForge {

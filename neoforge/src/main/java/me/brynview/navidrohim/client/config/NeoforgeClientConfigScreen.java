@@ -1,11 +1,13 @@
 package me.brynview.navidrohim.client.config;
 
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.*;
 import dev.isxander.yacl3.gui.controllers.string.IStringController;
 import dev.isxander.yacl3.impl.controller.AbstractControllerBuilderImpl;
 import me.brynview.navidrohim.common.config.NeoforgeConfigSerializableValues;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -55,6 +57,7 @@ public class NeoforgeClientConfigScreen
 
     public static Screen getModConfigScreenFactory(Screen parent)
     {
+        Minecraft mc = Minecraft.getInstance();
         return YetAnotherConfigLib.createBuilder()
                 .title(Component.translatable("br.config.title"))
                 .category(ConfigCategory.createBuilder()
@@ -132,7 +135,35 @@ public class NeoforgeClientConfigScreen
                                 .build()
                         )
                         .build()
-                )
+
+                ).category(ConfigCategory.createBuilder()
+                        .name(Component.translatable("br.config.category.compass"))
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.enabled"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.enabled.description")))
+                                .binding(NeoforgeConfigSerializableValues.shouldRenderCompass, () -> NeoforgeConfigSerializableValues.shouldRenderCompass, (bool) -> NeoforgeConfigSerializableValues.shouldRenderCompass = bool)
+                                .controller(TickBoxControllerBuilder::create)
+                                .build()
+                        )
+                        .option(Option.<Integer>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.size"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.size.description")))
+                                .binding(NeoforgeConfigSerializableValues.compassSize, () -> NeoforgeConfigSerializableValues.compassSize, (val) -> NeoforgeConfigSerializableValues.compassSize = val)
+                                .controller(opt -> IntegerSliderControllerBuilder.create(opt)
+                                        .range(1, 100)
+                                        .step(1)
+                                        .formatValue(val -> Component.literal(val + "%")))
+                                .build()
+                        )
+                        .option(Option.<Integer>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.compassY"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.compassY.description")))
+                                .binding(NeoforgeConfigSerializableValues.compassY, () -> NeoforgeConfigSerializableValues.compassY, (val) -> NeoforgeConfigSerializableValues.compassY = val)
+                                .controller(opt -> IntegerFieldControllerBuilder.create(opt)
+                                        .formatValue(val -> Component.literal(val + "px"))
+                                        .max(mc.getWindow().getHeight()))
+                                .build())
+                        .build())
 
                 .save(() -> NeoforgeConfigSerializableValues.HANDLER.save()) // Save config to file everytime save button is pressed.
                 .build()

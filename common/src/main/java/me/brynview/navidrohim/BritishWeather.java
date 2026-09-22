@@ -1,5 +1,6 @@
 package me.brynview.navidrohim;
 
+import me.brynview.navidrohim.client.gui.compass.HudCompass;
 import me.brynview.navidrohim.server.config.CommonConfig;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;

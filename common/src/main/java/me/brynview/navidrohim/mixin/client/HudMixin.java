@@ -18,7 +18,7 @@ public abstract class HudMixin
     @Shadow
     private int tickCount;
 
-    @Inject(method = "extractRenderState", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Hud;extractBossOverlay(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V"))
+    @Inject(method = "extractBossOverlay", at = @At("TAIL"))
     private void injectHudCompass(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci)
     {
         if (!BritishWeather.getConfig().shouldRenderCompass())

@@ -53,4 +53,22 @@ public class NeoforgeConfig implements CommonConfig
     {
         return NeoforgeConfigSerializableValues.debug;
     }
+
+    @Override
+    public boolean shouldRenderCompass()
+    {
+        return NeoforgeConfigSerializableValues.shouldRenderCompass;
+    }
+
+    @Override
+    public int getCompassSize()
+    {
+        return NeoforgeConfigSerializableValues.compassSize;
+    }
+
+    @Override
+    public int getCompassY()
+    {
+        return NeoforgeConfigSerializableValues.compassY;
+    }
 }
