@@ -61,6 +61,12 @@ public class NeoforgeConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldRenderHeading()
+    {
+        return NeoforgeConfigSerializableValues.shouldRenderHeading;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return NeoforgeConfigSerializableValues.compassSize;

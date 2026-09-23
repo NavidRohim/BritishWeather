@@ -22,6 +22,8 @@ public interface CommonConfig
 
     boolean shouldRenderCompass();
 
+    boolean shouldRenderHeading();
+
     int getCompassSize();
 
     int getCompassY();

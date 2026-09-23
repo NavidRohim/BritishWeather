@@ -68,6 +68,12 @@ public class DefaultConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldRenderHeading()
+    {
+        return Constants.DefaultConfigValues.shouldRenderHeading;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return Constants.DefaultConfigValues.compassSize;

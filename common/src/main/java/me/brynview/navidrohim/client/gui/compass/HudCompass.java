@@ -125,11 +125,15 @@ public class HudCompass
             drawCardinal(mc, guiGraphics, yaw, 180, x, yMiddleForText, compassScaledWidth, "N");
             drawCardinal(mc, guiGraphics, yaw, 270, x, yMiddleForText, compassScaledWidth, "E");
 
-            String friendlyDeg = getActualDegreesFromYaw(yawi);
-            FontHelper.draw(mc, guiGraphics, friendlyDeg, x - (mc.font.width(friendlyDeg) / 2), getTextLocationY(mc, yMiddleForText), CENTER_COLOR, true, FontHelper.TextType.LABEL);
-
             // Draw all living entities
             drawEntities(mc, player, guiGraphics, partialTicks, yaw, x, yMiddleForText, compassScaledWidthHalf);
+
+            if (BritishWeather.getConfig().shouldRenderHeading())
+            {
+                String friendlyDeg = getActualDegreesFromYaw(yawi);
+                FontHelper.draw(mc, guiGraphics, friendlyDeg, x - (mc.font.width(friendlyDeg) / 2), getTextLocationY(mc, yMiddleForText), CENTER_COLOR, true, FontHelper.TextType.LABEL);
+            }
+
             didRenderProviders = false;
         } else {
             drawProviders(guiGraphics, mc, player, yawi, compassScaledWidth, x, yMiddleForText, compassScaledWidthHalf);

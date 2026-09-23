@@ -38,8 +38,10 @@ public class Constants {
         public static final boolean debug = false;
 
         public static final boolean shouldRenderCompass = true;
+        public static final boolean shouldRenderHeading = false;
         public static final int compassSize = 35;
         public static int compassY = 32;
+
     }
 
     public static void debug(String msg, Object... args)

@@ -62,6 +62,12 @@ public class FabricConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldRenderHeading()
+    {
+        return FabricConfigSerializer.shouldRenderHeading;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return FabricConfigSerializer.compassSize;
