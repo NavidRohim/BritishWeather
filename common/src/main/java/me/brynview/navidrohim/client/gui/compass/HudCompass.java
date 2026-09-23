@@ -222,10 +222,10 @@ public class HudCompass
                 int distance = MathHelper.getDistance(entryPos, playerPos);
 
                 String suffix = "m";
-                if (distance <= 100 && playerPos.y - entryPos.y >= 1)
+                if (distance <= 200 && playerPos.y - entryPos.y >= 1)
                 {
                     suffix += " ↓";
-                } else if (distance <= 100 && entryPos.y - playerPos.y >= 1)
+                } else if (distance <= 200 && entryPos.y - playerPos.y >= 1)
                 {
                     suffix += " ↑";
                 }
