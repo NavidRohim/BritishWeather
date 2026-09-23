@@ -28,8 +28,8 @@ public class ClientCommon
         return WEATHER_MANAGER;
     }
 
-    public static void tickClient(LocalPlayer player)
+    public static void tickClient()
     {
-        HudCompass.tick(player);
+        HudCompass.tick();
     }
 }

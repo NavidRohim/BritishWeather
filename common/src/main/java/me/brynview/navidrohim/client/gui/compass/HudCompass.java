@@ -1,17 +1,15 @@
 package me.brynview.navidrohim.client.gui.compass;
 
+import com.google.common.collect.Sets;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.ClientCommon;
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.AbandonedCampMapObjectiveProvider;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.DefaultCompassProvider;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.DefaultCompassProviderEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
-import me.brynview.navidrohim.platform.Services;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.CompassEntry;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup.DefaultEntryGroup;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -25,58 +23,36 @@ public class HudCompass
 {
     private final static class ProviderRegistry
     {
-        private static final List<DefaultCompassProvider> PROVIDERS = new ArrayList<>();
-        private static final Map<Class, DefaultCompassProvider> SINGLETON_PROVIDERS = new HashMap<>();
+        private static final Set<DefaultEntry> PROVIDERS = Sets.newHashSet();
+        private static final Set<DefaultEntryGroup> PROVIDER_GROUPS = Sets.newHashSet();
 
-        static
+        public static void tick()
         {
-            PROVIDERS.add(new AbandonedCampMapObjectiveProvider());
+            PROVIDERS.removeIf(CompassEntry::hasExpired);
+            PROVIDERS.forEach(CompassEntry::tick);
+
+            PROVIDER_GROUPS.removeIf(DefaultEntryGroup::hasExpired);
+            PROVIDER_GROUPS.forEach(DefaultEntryGroup::tick);
         }
 
-        public static void add(DefaultCompassProvider provider)
-        {
-
-            if (provider instanceof Singleton)
-            {
-                if (!SINGLETON_PROVIDERS.containsKey(provider.getClass()) || ((Singleton) provider).isAbsolute())
-                {
-                    SINGLETON_PROVIDERS.put(provider.getClass(), provider);
-                }
-            } else  {
-                PROVIDERS.add(provider);
-            }
-        }
-
-        public static void tick(LocalPlayer player)
-        {
-            PROVIDERS.removeIf(DefaultCompassProvider::hasExpired);
-            SINGLETON_PROVIDERS.values().removeIf(DefaultCompassProvider::hasExpired);
-
-            PROVIDERS.forEach((p) -> p.tick(player));
-            SINGLETON_PROVIDERS.values().forEach((p) -> p.tick(player));
-        }
-
-        public static List<DefaultCompassProvider> getProviders()
+        public static Set<DefaultEntry> getEntries()
         {
             return PROVIDERS;
         }
-
-        public static Collection<DefaultCompassProvider> getSingletonProviders()
+        public static void addEntry(DefaultEntry entry)
         {
-            return SINGLETON_PROVIDERS.values();
+            PROVIDERS.add(entry);
         }
 
-        public static void stopTickAll(LocalPlayer player)
+        public static void stopTickAll()
         {
-            PROVIDERS.forEach((p) -> p.stopTick(player));
-            SINGLETON_PROVIDERS.values().forEach((p) -> p.stopTick(player));
+            PROVIDERS.forEach((p) -> p.endTick());
         }
     }
 
     private static final int CENTER_COLOR = ColorHelper.decode("#FF0000").getRGB(); // Red
     private static final int COMPASS_BG_COLOR = ColorHelper.rgb(255, 255, 255, 190);
     private static final int COMPASS_BG_SHADOW_COLOUR = ColorHelper.rgb(0, 0, 0, 100);
-    public static final int OBJECTIVE_MARKER_COLOUR =  ColorHelper.rgb(243, 238, 159, 255);
     public static final int WHITE = ColorHelper.decode("#FFFFFF").getRGB();
 
     private static final String COMPASS_HEADING = "|";
@@ -118,7 +94,7 @@ public class HudCompass
         {
             if (didRenderProviders)
             {
-                ProviderRegistry.stopTickAll(player);
+                ProviderRegistry.stopTickAll();
             }
 
             // Render N/E/S/W
@@ -194,7 +170,7 @@ public class HudCompass
     private static void drawProvider(
             GuiGraphicsExtractor guiGraphicsExtractor,
             Minecraft mc,
-            DefaultCompassProvider provider,
+            DefaultEntry entry,
             Vec3 playerPos,
             int yaw,
             int compassScaledWidth,
@@ -203,36 +179,34 @@ public class HudCompass
             int compassScaledWidthHalf
     )
     {
-        if (!provider.shouldRender())
+        if (!entry.shouldRender())
         {
             return;
         }
 
-        for (DefaultCompassProviderEntry entry : provider.getEntries())
+
+        Vec3 entryPos = entry.getPosition();
+
+        double angleFromPosition = MathHelper.angleFromPos(entryPos, playerPos);
+        int compassX = MathHelper.getCompassScreenX(yaw, (float) angleFromPosition, compassWindowX, compassScaledWidth, false);
+
+        FontHelper.draw(mc, guiGraphicsExtractor, entry.getMarker(), compassX - (entry.getMarkerWidthHalf()), compassWindowY, entry.getColour(), FontHelper.TextType.NONE);
+
+        if (entry.shouldShowDistance() && !MathHelper.isXOutOfBounds(compassX, compassScaledWidthHalf, compassWindowX))
         {
-            Vec3 entryPos = entry.getPosition();
+            int distance = MathHelper.getDistance(entryPos, playerPos);
 
-            double angleFromPosition = MathHelper.angleFromPos(entryPos, playerPos);
-            int compassX = MathHelper.getCompassScreenX(yaw, (float) angleFromPosition, compassWindowX, compassScaledWidth, false);
-
-            FontHelper.draw(mc, guiGraphicsExtractor, entry.getMarker(), compassX - (entry.getMarkerWidthHalf()), compassWindowY, provider.getColor(), FontHelper.TextType.NONE);
-
-            if (provider.shouldShowDistance() && !MathHelper.isXOutOfBounds(compassX, compassScaledWidthHalf, compassWindowX))
+            String suffix = "m";
+            if (distance <= 200 && playerPos.y - entryPos.y >= 1)
             {
-                int distance = MathHelper.getDistance(entryPos, playerPos);
-
-                String suffix = "m";
-                if (distance <= 200 && playerPos.y - entryPos.y >= 1)
-                {
-                    suffix += " ↓";
-                } else if (distance <= 200 && entryPos.y - playerPos.y >= 1)
-                {
-                    suffix += " ↑";
-                }
-
-                String distanceFromObjective = MathHelper.getDistance(playerPos, entryPos) + suffix;
-                FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compassX - (mc.font.width(distanceFromObjective) / 2) + 2, compassWindowY + mc.font.lineHeight + 3, provider.getColor(), FontHelper.TextType.LABEL);
+                suffix += " ↓";
+            } else if (distance <= 200 && entryPos.y - playerPos.y >= 1)
+            {
+                suffix += " ↑";
             }
+
+            String distanceFromObjective = MathHelper.getDistance(playerPos, entryPos) + suffix;
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compassX - (mc.font.width(distanceFromObjective) / 2) + 2, compassWindowY + mc.font.lineHeight + 3, entry.getColour(), FontHelper.TextType.LABEL);
         }
     }
 
@@ -249,32 +223,23 @@ public class HudCompass
     {
         Vec3 playerPos = player.position();
 
-        for (DefaultCompassProvider provider : ProviderRegistry.getProviders())
+        for (DefaultEntry entry : ProviderRegistry.getEntries())
         {
             if (!didRenderProviders)
             {
-                provider.startTick(player);
+                entry.displayTick();
             }
-            drawProvider(guiGraphicsExtractor, mc, provider, playerPos, yaw, compassScaledWidth, compassWindowX, compassWindowY, compassScaledWidthHalf);
-        }
-
-        for (DefaultCompassProvider provider : ProviderRegistry.getSingletonProviders())
-        {
-            if (!didRenderProviders)
-            {
-                provider.startTick(player);
-            }
-            drawProvider(guiGraphicsExtractor, mc, provider, playerPos, yaw, compassScaledWidth, compassWindowX, compassWindowY, compassScaledWidthHalf);
+            drawProvider(guiGraphicsExtractor, mc, entry, playerPos, yaw, compassScaledWidth, compassWindowX, compassWindowY, compassScaledWidthHalf);
         }
     }
 
-    public static void addProvider(DefaultCompassProvider provider)
+    public static void addProvider(DefaultEntry provider)
     {
-        ProviderRegistry.add(provider);
+        ProviderRegistry.addEntry(provider);
     }
 
-    public static void tick(LocalPlayer player)
+    public static void tick()
     {
-        HudCompass.ProviderRegistry.tick(player);
+        HudCompass.ProviderRegistry.tick();
     }
 }

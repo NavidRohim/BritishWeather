@@ -57,8 +57,7 @@ public class NeoforgeMainClient
     @SubscribeEvent
     public void clientLevelTickEvent(ClientTickEvent.Post event)
     {
-        LocalPlayer player = Minecraft.getInstance().player;
-        ClientCommon.tickClient(player);
+        ClientCommon.tickClient();
     }
 
 }
