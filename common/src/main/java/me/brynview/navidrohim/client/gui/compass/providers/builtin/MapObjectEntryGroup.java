@@ -14,18 +14,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class MapObjectEntryGroup extends DefaultEntryGroup
 {
-    private static final String MARKER = "C";
+    private static final String MARKER = "⌘";
 
     @Override
     public void startTick(@NotNull LocalPlayer player)
     {
         Inventory inventory = player.getInventory();
-        if (inventory.isEmpty())
-        {
-            return;
-        }
-
-        for (ItemStack itemStack : player.getInventory())
+        for (ItemStack itemStack : inventory)
         {
             try
             {
@@ -46,6 +41,7 @@ public class MapObjectEntryGroup extends DefaultEntryGroup
     @Override
     public void endTick(@NotNull LocalPlayer player)
     {
+        super.endTick(player);
         this.clearEntries();
     }
 }

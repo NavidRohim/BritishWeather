@@ -68,6 +68,7 @@ public class HudCompass
         public static void stopTickAll(@NotNull LocalPlayer player)
         {
             PROVIDERS.values().forEach((p) -> p.endTick(player));
+            PROVIDER_GROUPS.forEach((pg) -> pg.endTick(player));
         }
     }
 
@@ -120,10 +121,11 @@ public class HudCompass
             }
 
             // Render N/E/S/W
-            drawCardinal(mc, guiGraphics, yaw, 0, x, yMiddleForText, compassScaledWidth, "S");
-            drawCardinal(mc, guiGraphics, yaw, 90, x, yMiddleForText, compassScaledWidth, "W");
-            drawCardinal(mc, guiGraphics, yaw, 180, x, yMiddleForText, compassScaledWidth, "N");
-            drawCardinal(mc, guiGraphics, yaw, 270, x, yMiddleForText, compassScaledWidth, "E");
+            int cardinalDirectionY = yMiddleForText - (mc.font.lineHeight + 3);
+            drawCardinal(mc, guiGraphics, yaw, 0, x - 3, cardinalDirectionY, compassScaledWidth, "S");
+            drawCardinal(mc, guiGraphics, yaw, 90, x - 3, cardinalDirectionY, compassScaledWidth, "W");
+            drawCardinal(mc, guiGraphics, yaw, 180, x - 3, cardinalDirectionY, compassScaledWidth, "N");
+            drawCardinal(mc, guiGraphics, yaw, 270, x - 3, cardinalDirectionY, compassScaledWidth, "E");
 
             // Draw all living entities
             drawEntities(mc, player, guiGraphics, partialTicks, yaw, x, yMiddleForText, compassScaledWidthHalf);
@@ -230,13 +232,14 @@ public class HudCompass
         {
             int distance = MathHelper.getDistance(entryPos, playerPos);
 
-            String suffix = "m";
-            if (distance <= 200 && playerPos.y - entryPos.y >= 1)
+            String suffix = "m ";
+            double heightDiff = playerPos.y - entryPos.y;
+            if (distance <= 200 && heightDiff >= 3)
             {
-                suffix += " ↓";
-            } else if (distance <= 200 && entryPos.y - playerPos.y >= 1)
+                suffix = "↓";
+            } else if (distance <= 200 && heightDiff <= -3)
             {
-                suffix += " ↑";
+                suffix = "↑";
             }
 
             String distanceFromObjective = MathHelper.getDistance(playerPos, entryPos) + suffix;
