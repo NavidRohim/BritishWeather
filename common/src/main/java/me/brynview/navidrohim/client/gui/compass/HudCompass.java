@@ -2,7 +2,10 @@ package me.brynview.navidrohim.client.gui.compass;
 
 import com.google.common.collect.Sets;
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
+import me.brynview.navidrohim.client.gui.compass.providers.builtin.MapObjectEntryGroup;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.CompassEntry;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup.DefaultEntryGroup;
@@ -16,6 +19,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -23,30 +27,47 @@ public class HudCompass
 {
     private final static class ProviderRegistry
     {
-        private static final Set<DefaultEntry> PROVIDERS = Sets.newHashSet();
+        private static final HashMap<Class, DefaultEntry> PROVIDERS = new HashMap<>();
         private static final Set<DefaultEntryGroup> PROVIDER_GROUPS = Sets.newHashSet();
 
-        public static void tick()
+        static
         {
-            PROVIDERS.removeIf(CompassEntry::hasExpired);
-            PROVIDERS.forEach(CompassEntry::tick);
+            PROVIDER_GROUPS.add(new MapObjectEntryGroup());
+        }
+
+        public static void tick(@NotNull LocalPlayer player)
+        {
+            PROVIDERS.values().removeIf(CompassEntry::hasExpired);
+            PROVIDERS.values().forEach((p) -> p.tick(player));
 
             PROVIDER_GROUPS.removeIf(DefaultEntryGroup::hasExpired);
-            PROVIDER_GROUPS.forEach(DefaultEntryGroup::tick);
+            PROVIDER_GROUPS.forEach((pg) -> pg.tick(player));
         }
 
-        public static Set<DefaultEntry> getEntries()
+        public static Collection<DefaultEntry> getEntries()
         {
-            return PROVIDERS;
+            return PROVIDERS.values();
         }
+
         public static void addEntry(DefaultEntry entry)
         {
-            PROVIDERS.add(entry);
+            if (entry instanceof Singleton)
+            {
+                if (!PROVIDERS.containsKey(entry.getClass()) || ((Singleton) entry).isAbsolute())
+                {
+                    PROVIDERS.put(entry.getClass(), entry);
+                }
+            }
         }
 
-        public static void stopTickAll()
+        public static void addEntryGroup(DefaultEntryGroup group)
         {
-            PROVIDERS.forEach((p) -> p.endTick());
+            PROVIDER_GROUPS.add(group);
+        }
+
+        public static void stopTickAll(@NotNull LocalPlayer player)
+        {
+            PROVIDERS.values().forEach((p) -> p.endTick(player));
         }
     }
 
@@ -86,6 +107,7 @@ public class HudCompass
         final float yaw = (!player.isPassenger() ?
                 Mth.lerp(partialTicks, player.yRotO, player.getYRot())
                 : player.getYRot()) % 360;
+        final int yawi = (int) yaw;
 
         // Compass background
         drawBackground(guiGraphics, mc, compassScaledWidthHalf, x, yMiddle);
@@ -94,7 +116,7 @@ public class HudCompass
         {
             if (didRenderProviders)
             {
-                ProviderRegistry.stopTickAll();
+                ProviderRegistry.stopTickAll(player);
             }
 
             // Render N/E/S/W
@@ -103,11 +125,14 @@ public class HudCompass
             drawCardinal(mc, guiGraphics, yaw, 180, x, yMiddleForText, compassScaledWidth, "N");
             drawCardinal(mc, guiGraphics, yaw, 270, x, yMiddleForText, compassScaledWidth, "E");
 
+            String friendlyDeg = getActualDegreesFromYaw(yawi);
+            FontHelper.draw(mc, guiGraphics, friendlyDeg, x - (mc.font.width(friendlyDeg) / 2), getTextLocationY(mc, yMiddleForText), CENTER_COLOR, true, FontHelper.TextType.LABEL);
+
             // Draw all living entities
             drawEntities(mc, player, guiGraphics, partialTicks, yaw, x, yMiddleForText, compassScaledWidthHalf);
             didRenderProviders = false;
         } else {
-            drawProviders(guiGraphics, mc, player, (int) yaw, compassScaledWidth, x, yMiddleForText, compassScaledWidthHalf);
+            drawProviders(guiGraphics, mc, player, yawi, compassScaledWidth, x, yMiddleForText, compassScaledWidthHalf);
             didRenderProviders = true;
         }
 
@@ -171,7 +196,7 @@ public class HudCompass
             GuiGraphicsExtractor guiGraphicsExtractor,
             Minecraft mc,
             DefaultEntry entry,
-            Vec3 playerPos,
+            LocalPlayer player,
             int yaw,
             int compassScaledWidth,
             int compassWindowX,
@@ -184,7 +209,12 @@ public class HudCompass
             return;
         }
 
+        if (!didRenderProviders)
+        {
+            entry.startTick(player);
+        }
 
+        Vec3 playerPos = player.position();
         Vec3 entryPos = entry.getPosition();
 
         double angleFromPosition = MathHelper.angleFromPos(entryPos, playerPos);
@@ -206,7 +236,7 @@ public class HudCompass
             }
 
             String distanceFromObjective = MathHelper.getDistance(playerPos, entryPos) + suffix;
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compassX - (mc.font.width(distanceFromObjective) / 2) + 2, compassWindowY + mc.font.lineHeight + 3, entry.getColour(), FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compassX - (mc.font.width(distanceFromObjective) / 2) + 2, getTextLocationY(mc, compassWindowY), entry.getColour(), FontHelper.TextType.LABEL);
         }
     }
 
@@ -221,15 +251,21 @@ public class HudCompass
             int compassScaledWidthHalf
     )
     {
-        Vec3 playerPos = player.position();
-
         for (DefaultEntry entry : ProviderRegistry.getEntries())
+        {
+            drawProvider(guiGraphicsExtractor, mc, entry, player, yaw, compassScaledWidth, compassWindowX, compassWindowY, compassScaledWidthHalf);
+        }
+
+        for (DefaultEntryGroup group : ProviderRegistry.PROVIDER_GROUPS)
         {
             if (!didRenderProviders)
             {
-                entry.displayTick();
+                group.startTick(player);
             }
-            drawProvider(guiGraphicsExtractor, mc, entry, playerPos, yaw, compassScaledWidth, compassWindowX, compassWindowY, compassScaledWidthHalf);
+
+            group.getEntries().forEach(groupEntry -> {
+                drawProvider(guiGraphicsExtractor, mc, groupEntry, player, yaw, compassScaledWidth, compassWindowX, compassWindowY, compassScaledWidthHalf);
+            });
         }
     }
 
@@ -238,8 +274,18 @@ public class HudCompass
         ProviderRegistry.addEntry(provider);
     }
 
-    public static void tick()
+    public static void tick(@NotNull LocalPlayer player)
     {
-        HudCompass.ProviderRegistry.tick();
+        HudCompass.ProviderRegistry.tick(player);
+    }
+
+    private static String getActualDegreesFromYaw(int yawi)
+    {
+        return (Mth.wrapDegrees(yawi) + 180) % 360 + "°";
+    }
+
+    private static int getTextLocationY(Minecraft mc, int compassWindowY)
+    {
+        return compassWindowY + mc.font.lineHeight + 3;
     }
 }

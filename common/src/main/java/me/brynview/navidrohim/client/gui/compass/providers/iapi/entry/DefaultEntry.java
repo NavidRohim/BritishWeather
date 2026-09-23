@@ -3,7 +3,7 @@ package me.brynview.navidrohim.client.gui.compass.providers.iapi.entry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 
-public abstract class DefaultEntry implements CompassEntry
+public class DefaultEntry implements CompassEntry
 {
     private final Vec3 position;
     private final Minecraft mc;
@@ -41,4 +41,8 @@ public abstract class DefaultEntry implements CompassEntry
         return markerWidthHalf;
     }
 
+    public static DefaultEntry of(Vec3 position, String marker)
+    {
+        return new DefaultEntry(position, marker);
+    }
 }

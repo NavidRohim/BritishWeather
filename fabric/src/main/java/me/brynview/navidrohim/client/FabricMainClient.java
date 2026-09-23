@@ -35,7 +35,8 @@ public class FabricMainClient implements ClientModInitializer
                 ClientCommon.getWeatherManager().setWeather(payload.condition())));
 
         ClientTickEvents.START_LEVEL_TICK.register((_) -> {
-            ClientCommon.tickClient();
+            LocalPlayer player = Minecraft.getInstance().player;
+            ClientCommon.tickClient(player);
         });
 
         ModKeybinds.init();
