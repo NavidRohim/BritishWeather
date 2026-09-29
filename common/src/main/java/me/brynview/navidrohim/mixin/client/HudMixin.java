@@ -28,6 +28,6 @@ public abstract class HudMixin
 
         Minecraft mc = Minecraft.getInstance();
         int scaledWidth = mc.getWindow().getGuiScaledWidth();
-        HudCompass.drawState(graphics, mc, scaledWidth, tickCount);
+        HudCompass.render(graphics, mc, scaledWidth, tickCount);
     }
 }

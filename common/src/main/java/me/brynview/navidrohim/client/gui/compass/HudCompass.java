@@ -5,6 +5,8 @@ import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.gui.compass.providers.builtin.MapObjectEntryGroup;
+import me.brynview.navidrohim.client.gui.compass.providers.builtin.PinEntry;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.PersistentEntriesManager;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.CompassEntry;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
@@ -14,12 +16,17 @@ import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.Hud;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -27,7 +34,8 @@ public class HudCompass
 {
     private final static class ProviderRegistry
     {
-        private static final HashMap<Class, DefaultEntry> PROVIDERS = new HashMap<>();
+
+        private static final HashMap<String, DefaultEntry> PROVIDERS = new HashMap<>();
         private static final Set<DefaultEntryGroup> PROVIDER_GROUPS = Sets.newHashSet();
 
         static
@@ -35,7 +43,7 @@ public class HudCompass
             PROVIDER_GROUPS.add(new MapObjectEntryGroup());
         }
 
-        public static void tick(@NotNull LocalPlayer player)
+        private static void tick(@NotNull LocalPlayer player)
         {
             PROVIDERS.values().removeIf(CompassEntry::hasExpired);
             PROVIDERS.values().forEach((p) -> p.tick(player));
@@ -51,12 +59,17 @@ public class HudCompass
 
         public static void addEntry(DefaultEntry entry)
         {
-            if (entry instanceof Singleton)
+            String id = entry.getId();
+            Constants.LOG.info(id);
+            if (entry instanceof Singleton && !((Singleton) entry).isAbsolute())
             {
-                if (!PROVIDERS.containsKey(entry.getClass()) || ((Singleton) entry).isAbsolute())
+                if (!PROVIDERS.containsKey(id))
                 {
-                    PROVIDERS.put(entry.getClass(), entry);
+                    PROVIDERS.put(id, entry);
                 }
+            } else
+            {
+                PROVIDERS.put(id, entry);
             }
         }
 
@@ -72,23 +85,32 @@ public class HudCompass
         }
     }
 
+    // Colours for compass elements
     private static final int CENTER_COLOR = ColorHelper.decode("#FF0000").getRGB(); // Red
     private static final int COMPASS_BG_COLOR = ColorHelper.rgb(255, 255, 255, 190);
     private static final int COMPASS_BG_SHADOW_COLOUR = ColorHelper.rgb(0, 0, 0, 100);
-    public static final int WHITE = ColorHelper.decode("#FFFFFF").getRGB();
+    private static final int WHITE = ColorHelper.decode("#FFFFFF").getRGB();
 
+    // Colours for entity markers
+    private static final int PLAYER = ColorHelper.rgb(125, 255, 125, 255);
+    private static final int NEUTRAL = ColorHelper.rgb(255, 255, 255, 255);
+    private static final int HOSTILE = ColorHelper.rgb(255, 125, 125, 255);
+    private static final int ALLY = ColorHelper.rgb(125, 125, 255, 255);
+
+    // Text used for compass decorations
     private static final String COMPASS_HEADING = "|";
     private static final String ENTITY_LABEL = "⏺";
 
-    private static double EXPAND_INFLATE_WITH_FOV_CONST = 0.119; // value at lowest fov (30): 3.477 blocks value at highest (110): 13.07
+    // Math constants used for rendering
+    private static final double EXPAND_INFLATE_WITH_FOV_CONST = 0.119; // value at lowest fov (30): 3.477 blocks value at highest (110): 13.07
+    private static final int SCALE_MAX = 255; // Max value of what the entity distance scale should be (entity further away = lower, closer = higher)
+    private static final int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
+    private static final int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
 
-    private static int SCALE_MAX = 255; // Max value of what the entity distance scale should be (entity further away = lower, closer = higher)
-    private static int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
-    private static int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
-
+    // Non-final general variables
     private static boolean didRenderProviders = false;
 
-    public static void drawState(GuiGraphicsExtractor guiGraphics, Minecraft mc, int scaledWidth, float partialTicks) {
+    public static void render(GuiGraphicsExtractor guiGraphics, Minecraft mc, int scaledWidth, float partialTicks) {
         final LocalPlayer player = mc.player;
 
         if (player == null) {
@@ -118,6 +140,9 @@ public class HudCompass
             if (didRenderProviders)
             {
                 ProviderRegistry.stopTickAll(player);
+                HudCompass.addEntry(new PinEntry(player.position()));
+
+                PersistentEntriesManager.save();
             }
 
             // Render N/E/S/W
@@ -144,6 +169,21 @@ public class HudCompass
 
         // Draw compass heading
         FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, x, yMiddleForText, CENTER_COLOR, false, FontHelper.TextType.NONE);
+    }
+
+    public static void addEntry(DefaultEntry provider)
+    {
+        ProviderRegistry.addEntry(provider);
+    }
+
+    public static void tick(@NotNull LocalPlayer player)
+    {
+        HudCompass.ProviderRegistry.tick(player);
+    }
+
+    public static Collection<DefaultEntry> getEntries()
+    {
+        return HudCompass.ProviderRegistry.getEntries();
     }
 
     private static void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, int compassScaledWidthHalf, int x, int y)
@@ -176,15 +216,17 @@ public class HudCompass
         // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
         mc.level.getEntitiesOfClass(LivingEntity.class, inFrontOfPlayer, (en) -> (en != player.asLivingEntity() && !en.getBoundingBox().intersects(normalBB))).stream().limit(MAX_ALLOWED_ENTITIES_ON_COMPASS).forEach(entity ->
                 {
+
                     double angleFromEntity = MathHelper.angleFromPos(entity.position(), player.position());
                     int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
                     int iconScale = Math.abs(SCALE_MAX - (SCALE_MAX / DETECTION_DISTANCE * distanceFromEntity));
+                    int livingEntity = getColourForEntity(entity, player, iconScale);
 
                     // Entity x offset on screen
                     int ex = MathHelper.getCompassScreenX(yaw, (float) angleFromEntity, compassX, compassScaledWidth);
                     if (ex != Integer.MAX_VALUE)
                     {
-                        FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, y, ColorHelper.rgb(255, 255, 255, iconScale), true, FontHelper.TextType.NONE);
+                        FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, y, livingEntity, true, FontHelper.TextType.NONE);
                     }
                 }
         );
@@ -276,16 +318,6 @@ public class HudCompass
         }
     }
 
-    public static void addProvider(DefaultEntry provider)
-    {
-        ProviderRegistry.addEntry(provider);
-    }
-
-    public static void tick(@NotNull LocalPlayer player)
-    {
-        HudCompass.ProviderRegistry.tick(player);
-    }
-
     private static String getActualDegreesFromYaw(int yawi)
     {
         return (Mth.wrapDegrees(yawi) + 180) % 360 + "°";
@@ -294,5 +326,36 @@ public class HudCompass
     private static int getTextLocationY(Minecraft mc, int compassWindowY)
     {
         return compassWindowY + mc.font.lineHeight + 3;
+    }
+
+    private static int shiftColourToOpacity(int colour, int opacity)
+    {
+        return (colour & 0x00FFFFFF) | (opacity << 24);
+    }
+
+    private static int getColourForEntity(LivingEntity entity, @Nullable LocalPlayer owner, int opacity)
+    {
+        switch (entity)
+        {
+            case Player _ ->
+            {
+                return shiftColourToOpacity(PLAYER, opacity);
+            }
+            case Monster _ ->
+            {
+                return shiftColourToOpacity(HOSTILE, opacity);
+            }
+            case TamableAnimal tamableAnimal ->
+            {
+                if (tamableAnimal.getOwnerReference() != null && tamableAnimal.getOwnerReference().getUUID().equals(owner.getUUID()))
+                {
+                    return shiftColourToOpacity(ALLY, opacity);
+                }
+            }
+            default ->
+            {
+            }
+        }
+        return shiftColourToOpacity(NEUTRAL, opacity);
     }
 }

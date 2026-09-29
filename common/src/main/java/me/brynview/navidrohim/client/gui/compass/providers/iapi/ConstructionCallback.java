@@ -1,0 +1,9 @@
+package me.brynview.navidrohim.client.gui.compass.providers.iapi;
+
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
+import net.minecraft.world.phys.Vec3;
+
+public interface ConstructionCallback
+{
+    DefaultEntry getEntryFromValues(String marker, Vec3 pos, String id);
+}

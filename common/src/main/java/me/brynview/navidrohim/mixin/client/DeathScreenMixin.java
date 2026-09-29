@@ -22,6 +22,6 @@ public class DeathScreenMixin
     @Inject(method = "mouseClicked", at = @At("TAIL"))
     private void handlePlayerDeath(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir)
     {
-        HudCompass.addProvider(new DeathEntry(player.position()));
+        HudCompass.addEntry(new DeathEntry(player.position()));
     }
 }

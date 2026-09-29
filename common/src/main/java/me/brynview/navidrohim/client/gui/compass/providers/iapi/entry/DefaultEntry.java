@@ -1,7 +1,10 @@
 package me.brynview.navidrohim.client.gui.compass.providers.iapi.entry;
 
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.level.saveddata.SavedDataType;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 public class DefaultEntry implements CompassEntry
 {
@@ -44,5 +47,19 @@ public class DefaultEntry implements CompassEntry
     public static DefaultEntry of(Vec3 position, String marker)
     {
         return new DefaultEntry(position, marker);
+    }
+
+    public boolean isPersistent()
+    {
+        return false;
+    }
+
+    public final String getId()
+    {
+        if (!(this instanceof Singleton))
+        {
+            return "%s.%s.%s".formatted(this.getClass().getSimpleName(), (int) this.position.x, (int) this.position.z);
+        }
+        return this.getClass().getSimpleName();
     }
 }

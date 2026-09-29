@@ -31,10 +31,8 @@ public class MapObjectEntryGroup extends DefaultEntryGroup
 
                     this.addEntry(DefaultEntry.of(pos, MARKER));
                 }
-            } catch (NullPointerException error)
-            {
-                Constants.debug("ItemStack is MapItem but MAP_DECORATIONS DataComponent does not have expected key!");
-            }
+            } catch (NullPointerException _)
+            {}
         }
     }
 

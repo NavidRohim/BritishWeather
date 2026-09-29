@@ -34,7 +34,7 @@ public class FabricMainClient implements ClientModInitializer
         ClientPlayNetworking.registerGlobalReceiver(WeatherUpdatePacket.TYPE, ((payload, _) ->
                 ClientCommon.getWeatherManager().setWeather(payload.condition())));
 
-        ClientTickEvents.START_LEVEL_TICK.register((_) -> {
+        ClientTickEvents.START_LEVEL_TICK.register((lvl) -> {
             LocalPlayer player = Minecraft.getInstance().player;
             ClientCommon.tickClient(player);
         });

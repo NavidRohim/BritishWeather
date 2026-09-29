@@ -1,6 +1,8 @@
 package me.brynview.navidrohim;
 
 import me.brynview.navidrohim.client.gui.compass.HudCompass;
+import me.brynview.navidrohim.client.gui.compass.providers.builtin.PinEntry;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.PersistentEntriesManager;
 import me.brynview.navidrohim.server.config.CommonConfig;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
@@ -23,6 +25,8 @@ public class BritishWeather
     {
         CONFIG = config;
         WEATHER_MANAGER = new ServerWeatherManager(weatherRefreshCallback);
+
+        PersistentEntriesManager.registerPersistentConstructor(PinEntry.class, ((marker, pos) -> new PinEntry(pos, marker)));
     }
 
     // Config getter
@@ -42,6 +46,8 @@ public class BritishWeather
         {
             // Call on first tick
             WeatherLocationSources.initCachesForMethods(server);
+            PersistentEntriesManager.load();
+
             getWeatherManager().getWeatherChangeCallback().accept(server);
         }
 
