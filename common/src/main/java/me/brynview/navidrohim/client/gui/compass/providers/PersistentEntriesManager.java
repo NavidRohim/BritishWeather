@@ -1,26 +1,20 @@
-package me.brynview.navidrohim.client.gui.compass.providers.iapi;
+package me.brynview.navidrohim.client.gui.compass.providers;
 
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
-import io.netty.buffer.ByteBufUtil;
 import io.netty.buffer.Unpooled;
-import io.netty.util.NettyRuntime;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.gui.compass.HudCompass;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.PersistentEntryConstructor;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
-import org.apache.logging.log4j.util.internal.SerializationUtil;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class PersistentEntriesManager
@@ -63,10 +57,11 @@ public class PersistentEntriesManager
                     String marker = friendlyByteBuf.readUtf();
                     String type = friendlyByteBuf.readUtf();
                     Vec3 pos = new Vec3(friendlyByteBuf.readVector3f());
+                    String level = friendlyByteBuf.readUtf();
 
                     if (CONSTRUCTORS.containsKey(type))
                     {
-                        HudCompass.addEntry(CONSTRUCTORS.get(type).constructEntry(marker, pos));
+                        HudCompass.addEntry(CONSTRUCTORS.get(type).constructEntryWithExtraData(marker, pos, level, friendlyByteBuf));
                     } else {
                         Constants.LOG.error("Marker present in persistence cache does not have a registered constructor! This is perhaps due to a version mismatch. {}", type);
                     }
@@ -75,19 +70,20 @@ public class PersistentEntriesManager
 
         } catch (IOException err)
         {
-            //err.printStackTrace();
+            err.printStackTrace();
         }
     }
 
     public static void save()
     {
-        CompoundTag tag = new CompoundTag();
         Collection<DefaultEntry> defaultEntries = HudCompass.getEntries();
 
         if (defaultEntries.isEmpty())
         {
             return;
         }
+
+        CompoundTag master = new CompoundTag();
 
         for (DefaultEntry entry : defaultEntries)
         {
@@ -107,20 +103,23 @@ public class PersistentEntriesManager
             buffer.writeUtf(entry.getMarker());
             buffer.writeUtf(entry.getClass().getSimpleName());
             buffer.writeVector3f(entry.getPosition().toVector3f());
+            buffer.writeUtf(entry.getLevel());
 
-            tag.putByteArray(entry.getId(), buffer.array());
+            entry.serialise(buffer);
+
+            master.putByteArray(entry.getId(), buffer.array());
         }
 
         try
         {
-            NbtIo.write(tag, getCurrentPath());
+            NbtIo.write(master, getCurrentPath());
         } catch (IOException e)
         {
             e.printStackTrace();
         }
     }
 
-    public static void registerPersistentConstructor(Class classy, PersistentEntryConstructor constructor)
+    public static void registerPersistentConstructor(Class<?> classy, PersistentEntryConstructor constructor)
     {
         CONSTRUCTORS.put(classy.getSimpleName(), constructor);
     }

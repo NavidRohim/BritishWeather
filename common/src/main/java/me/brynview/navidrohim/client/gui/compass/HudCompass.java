@@ -4,19 +4,19 @@ import com.google.common.collect.Sets;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.MapObjectEntryGroup;
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.PinEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.PersistentEntriesManager;
+import me.brynview.navidrohim.client.gui.compass.providers.builtin.TimedPinEntry;
+import me.brynview.navidrohim.client.gui.compass.providers.builtin.entrygroup.MapObjectiveEntryGroup;
+import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.CompassEntry;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultTimedEntry;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup.DefaultEntryGroup;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.Hud;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 public class HudCompass
 {
@@ -40,7 +41,7 @@ public class HudCompass
 
         static
         {
-            PROVIDER_GROUPS.add(new MapObjectEntryGroup());
+            ProviderRegistry.addEntryGroup(new MapObjectiveEntryGroup());
         }
 
         private static void tick(@NotNull LocalPlayer player)
@@ -140,7 +141,7 @@ public class HudCompass
             if (didRenderProviders)
             {
                 ProviderRegistry.stopTickAll(player);
-                HudCompass.addEntry(new PinEntry(player.position()));
+                HudCompass.addEntry(new TimedPinEntry(player.position(), player.level().dimension().identifier().toString(), "TP", TimeUnit.SECONDS, 240));
 
                 PersistentEntriesManager.save();
             }
@@ -252,7 +253,7 @@ public class HudCompass
             int compassScaledWidthHalf
     )
     {
-        if (!entry.shouldRender())
+        if (!entry.shouldRender() || !entry.getLevel().equals(player.level().dimension().identifier().toString()))
         {
             return;
         }
@@ -282,6 +283,11 @@ public class HudCompass
             } else if (distance <= 200 && heightDiff <= -3)
             {
                 suffix = "↑";
+            }
+
+            if (entry instanceof DefaultTimedEntry)
+            {
+                FontHelper.draw(mc, guiGraphicsExtractor, ((DefaultTimedEntry) entry).timeMethod.timeLeft() + "s", compassX, compassWindowY - 8, entry.getColour(), FontHelper.TextType.NONE);
             }
 
             String distanceFromObjective = MathHelper.getDistance(playerPos, entryPos) + suffix;

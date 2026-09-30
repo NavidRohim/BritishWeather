@@ -2,6 +2,7 @@ package me.brynview.navidrohim.client;
 
 import com.mojang.authlib.minecraft.client.MinecraftClient;
 import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
 import me.brynview.navidrohim.client.keybinds.ModKeybinds;
 import me.brynview.navidrohim.client.particle.HailParticle;
 import me.brynview.navidrohim.client.particle.ModParticles;
@@ -33,6 +34,8 @@ public class FabricMainClient implements ClientModInitializer
 
         ClientPlayNetworking.registerGlobalReceiver(WeatherUpdatePacket.TYPE, ((payload, _) ->
                 ClientCommon.getWeatherManager().setWeather(payload.condition())));
+
+        ClientLevelEvents.AFTER_CLIENT_LEVEL_CHANGE.register((_, _) -> ClientCommon.changeLevel());
 
         ClientTickEvents.START_LEVEL_TICK.register((lvl) -> {
             LocalPlayer player = Minecraft.getInstance().player;

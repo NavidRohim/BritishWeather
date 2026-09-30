@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.gui.compass.HudCompass;
+import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
@@ -32,5 +33,10 @@ public class ClientCommon
     public static void tickClient(@NotNull LocalPlayer player)
     {
         HudCompass.tick(player);
+    }
+
+    public static void changeLevel()
+    {
+        PersistentEntriesManager.load();
     }
 }
