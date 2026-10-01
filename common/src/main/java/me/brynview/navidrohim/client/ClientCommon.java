@@ -19,10 +19,12 @@ public class ClientCommon
     );
 
     private static ClientWeatherManager WEATHER_MANAGER;
+    public static HudCompass hudCompass;
 
     public static void init()
     {
         WEATHER_MANAGER = new ClientWeatherManager();
+        hudCompass = HudCompass.init();
     }
 
     public static ClientWeatherManager getWeatherManager()

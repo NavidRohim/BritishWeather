@@ -7,10 +7,13 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.UUID;
+
 public class DefaultEntry implements CompassEntry
 {
     private final Vec3 position;
     private final String level;
+    private final String entryId;
 
     private final Minecraft mc;
 
@@ -20,13 +23,17 @@ public class DefaultEntry implements CompassEntry
     public DefaultEntry(Vec3 position, String level, String marker)
     {
         this.mc = Minecraft.getInstance();
-
         this.level = level;
         this.position = position;
-        this.marker = marker;
 
+        if (!(this instanceof Singleton))
+        {
+            this.entryId = "%s.%s.%s.%s.%s".formatted(this.getClass().getSimpleName(), (int) this.position.x, (int) this.position.y, (int) this.position.z, level);
+        } else {
+            this.entryId = this.getClass().getSimpleName();
+        }
 
-        this.markerWidthHalf = mc.font.width(marker) / 2;
+        this.setMarker(marker);
     }
 
     public Vec3 getPosition()
@@ -55,26 +62,22 @@ public class DefaultEntry implements CompassEntry
         return markerWidthHalf;
     }
 
-    public static DefaultEntry of(Vec3 position, String level, String marker)
-    {
-        return new DefaultEntry(position, level, marker);
-    }
-
     public boolean isPersistent()
     {
         return false;
+    }
+
+    public final String getId()
+    {
+        return this.entryId;
     }
 
     public void serialise(FriendlyByteBuf friendlyByteBuf)
     {
     }
 
-    public final String getId()
+    public static DefaultEntry of(Vec3 position, String level, String marker)
     {
-        if (!(this instanceof Singleton))
-        {
-            return "%s.%s.%s.%s".formatted(this.getClass().getSimpleName(), (int) this.position.x, (int) this.position.z, level);
-        }
-        return this.getClass().getSimpleName();
+        return new DefaultEntry(position, level, marker);
     }
 }

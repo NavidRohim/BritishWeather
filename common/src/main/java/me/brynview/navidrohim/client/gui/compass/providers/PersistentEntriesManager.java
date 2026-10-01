@@ -1,21 +1,29 @@
 package me.brynview.navidrohim.client.gui.compass.providers;
 
+import com.google.common.collect.Sets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.gui.compass.HudCompass;
+import me.brynview.navidrohim.client.gui.compass.providers.builtin.entrygroup.MapObjectiveEntryGroup;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.PersistentEntryConstructor;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.CompassEntry;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup.DefaultEntryGroup;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.*;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class PersistentEntriesManager
 {
@@ -122,5 +130,57 @@ public class PersistentEntriesManager
     public static void registerPersistentConstructor(Class<?> classy, PersistentEntryConstructor constructor)
     {
         CONSTRUCTORS.put(classy.getSimpleName(), constructor);
+    }
+
+    public final static class ProviderRegistry
+    {
+
+        private static final HashMap<String, DefaultEntry> PROVIDERS = new HashMap<>();
+        public static final Set<DefaultEntryGroup> PROVIDER_GROUPS = Sets.newHashSet();
+
+        static
+        {
+            ProviderRegistry.addEntryGroup(new MapObjectiveEntryGroup());
+        }
+
+        public static void tick(@NotNull LocalPlayer player)
+        {
+            PROVIDERS.values().removeIf(CompassEntry::hasExpired);
+            PROVIDERS.values().forEach((p) -> p.tick(player));
+
+            PROVIDER_GROUPS.removeIf(DefaultEntryGroup::hasExpired);
+            PROVIDER_GROUPS.forEach((pg) -> pg.tick(player));
+        }
+
+        public static Collection<DefaultEntry> getEntries()
+        {
+            return PROVIDERS.values();
+        }
+
+        public static void addEntry(DefaultEntry entry)
+        {
+            String id = entry.getId();
+            if (entry instanceof Singleton && !((Singleton) entry).isAbsolute())
+            {
+                if (!PROVIDERS.containsKey(id))
+                {
+                    PROVIDERS.put(id, entry);
+                }
+            } else
+            {
+                PROVIDERS.put(id, entry);
+            }
+        }
+
+        public static void addEntryGroup(DefaultEntryGroup group)
+        {
+            PROVIDER_GROUPS.add(group);
+        }
+
+        public static void stopTickAll(@NotNull LocalPlayer player)
+        {
+            PROVIDERS.values().forEach((p) -> p.endTick(player));
+            PROVIDER_GROUPS.forEach((pg) -> pg.endTick(player));
+        }
     }
 }
