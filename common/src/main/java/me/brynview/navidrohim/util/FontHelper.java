@@ -1,5 +1,7 @@
 package me.brynview.navidrohim.util;
 
+import me.brynview.navidrohim.client.gui.compass.Compass;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.ARGB;

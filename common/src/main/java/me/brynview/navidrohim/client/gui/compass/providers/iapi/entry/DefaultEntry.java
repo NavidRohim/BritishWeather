@@ -1,11 +1,18 @@
 package me.brynview.navidrohim.client.gui.compass.providers.iapi.entry;
 
+import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.client.gui.compass.Compass;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
+import me.brynview.navidrohim.util.FontHelper;
+import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
@@ -63,9 +70,58 @@ public class DefaultEntry implements CompassEntry
         this.markerWidthHalf = mc.font.width(marker) / 2; // Calculate the markers width here, so it does not have to be calculated every render pass.
     }
 
-    public int getMarkerWidthHalf()
+    public final void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick)
     {
-        return markerWidthHalf;
+        Compass compass = Compass.getInstance();
+
+        // Check if the entry should be rendered and the entry dimension matches the players current dimension
+        if (!shouldRender() || !getLevel().equals(player.level().dimension().identifier().toString()))
+        {
+            return;
+        }
+
+        // Do start tick
+        if (shouldStartTick)
+        {
+            startTick(player);
+        }
+
+        Vec3 playerPos = player.position();
+
+        double angleFromPosition = MathHelper.angleFromPos(position, playerPos);
+        int compassX = compass.util.getCompassScreenX((float) angleFromPosition, false);
+
+        // Draw entry marker
+        //FontHelper.drawEntry(mc, guiGraphicsExtractor, entry.getMarker(), entry.centerRelativeTo(compassX), this.yTextMiddle, entry.getColour(), FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, marker, compassX - markerWidthHalf, compass.yTextMiddle, getColour(), true, FontHelper.TextType.NONE);
+
+        // If in view, render the distance from entry and if the player should go up or down to reach it
+        if (shouldShowDistance() && !compass.util.isXOutOfBounds(compassX))
+        {
+            int distance = MathHelper.getDistance(position, playerPos);
+
+            String suffix = "m ";
+            double heightDiff = playerPos.y - position.y;
+            // Both indicators check if the player is within 200 blocks, if not, just ignore.
+            if (distance <= 200 && heightDiff >= 3) // down
+            {
+                suffix += "↓";
+            } else if (distance <= 200 && heightDiff <= -3) // up
+            {
+                suffix += "↑";
+            }
+
+            // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
+            if (this instanceof DefaultTimedEntry && BritishWeather.getConfig().debug())
+            {
+                String label = ((DefaultTimedEntry) this).timeMethod.timeLeft() + "s";
+                FontHelper.draw(mc, guiGraphicsExtractor, label, compass.util.getCenteredXForString(label, compassX), compass.yTextMiddle - 10, getColour(), FontHelper.TextType.NONE);
+            }
+
+            // Draw distance from entry
+            String distanceFromObjective = MathHelper.getDistance(playerPos, position) + suffix;
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compass.util.getCenteredXForString(distanceFromObjective, compassX) + 2, compass.util.getTextLocationY(), getColour(), FontHelper.TextType.LABEL);
+        }
     }
 
     /*

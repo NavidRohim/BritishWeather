@@ -1,7 +1,6 @@
 package me.brynview.navidrohim.client.gui.compass;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
@@ -12,11 +11,8 @@ import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.extract.LevelExtractor;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.monster.Monster;
@@ -36,20 +32,20 @@ public class Compass
         util = new RenderUtils();
     }
 
-    private final class RenderUtils
+    public final class RenderUtils
     {
 
-        private int getTextLocationY()
+        public int getTextLocationY()
         {
             return yTextMiddle + mc.font.lineHeight + 3;
         }
 
-        private int shiftColourToOpacity(int colour, int opacity)
+        public int shiftColourToOpacity(int colour, int opacity)
         {
             return (colour & 0x00FFFFFF) | (opacity << 24);
         }
 
-        private int getColourForEntity(Entity entity, @Nullable LocalPlayer owner, int opacity)
+        public int getColourForEntity(LivingEntity entity, @Nullable LocalPlayer owner, int opacity)
         {
             switch (entity)
             {
@@ -75,7 +71,7 @@ public class Compass
             return shiftColourToOpacity(ColorHelper.NEUTRAL, opacity);
         }
 
-        private String getActualDegreesFromYaw()
+        public String getActualDegreesFromYaw()
         {
             return (Mth.wrapDegrees(yawInt) + 180) % 360 + "°";
         }
@@ -83,9 +79,9 @@ public class Compass
         /*
         Get centered X position for a string, accounting for the width of the string. Only do in render thread
          */
-        private int getCenteredXForString(String str)
+        public int getCenteredXForString(String str, int xPlacement)
         {
-            return compassX - (mc.font.width(str) / 2);
+            return xPlacement - (mc.font.width(str) / 2);
         }
 
         public int getCompassScreenX(float angle, boolean shouldDisappearWhenOOB)
@@ -153,7 +149,7 @@ public class Compass
     // Set to true right after the entry HUD has been rendered
     // Set to false on the first render pass when the entry HUD disappears.
     // Used to call tick methods like endTick and startTick
-    private boolean didRenderProviders = false;
+    private boolean shouldStartTick = false;
 
 
     // Yaw at the current render pass
@@ -166,10 +162,10 @@ public class Compass
 
     // x coordinate of the compass. Can change due to scaling
     private int compassX;
-    private int yTextMiddle;
+    public int yTextMiddle;
 
-    private Minecraft mc;
-    private RenderUtils util;
+    public Minecraft mc;
+    public RenderUtils util;
 
     public void render(GuiGraphicsExtractor guiGraphics, Minecraft mc, int scaledWidth, float partialTicks)
     {
@@ -203,11 +199,14 @@ public class Compass
         if (!ClientCommon.PROVIDER.isDown())
         {
             // Will be true on the first render pass after entry HUD disappears.
-            if (didRenderProviders)
+            if (!shouldStartTick)
             {
                 PersistentEntriesManager.ProviderRegistry.stopTickAll(player);
                 PersistentEntriesManager.save();
             }
+
+            // Draw all living entities
+            drawEntities(player, guiGraphics, partialTicks);
 
             // Render N/E/S/W
             drawCardinal(guiGraphics, 0,  "S");
@@ -215,23 +214,20 @@ public class Compass
             drawCardinal(guiGraphics, 180,   "N");
             drawCardinal(guiGraphics, 270,   "E");
 
-            // Draw all living entities
-            drawEntities(player, guiGraphics, partialTicks);
-
             // Render current heading in degrees if config allows
             if (BritishWeather.getConfig().shouldRenderHeading())
             {
                 String friendlyDeg = util.getActualDegreesFromYaw(); // Number from 0 to 360
-                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.getCenteredXForString(friendlyDeg), util.getTextLocationY(), ColorHelper.CENTER_COLOR, true, FontHelper.TextType.LABEL);
+                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.getCenteredXForString(friendlyDeg, this.compassX), util.getTextLocationY(), ColorHelper.CENTER_COLOR, false, FontHelper.TextType.LABEL);
             }
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
-            didRenderProviders = false;
+            shouldStartTick = true;
         } else
         {
             // Draw entry groups and entries.
             drawEntries(guiGraphics, player);
-            didRenderProviders = true;
+            shouldStartTick = false;
         }
 
         // Draw compass heading
@@ -257,19 +253,19 @@ public class Compass
 
     private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks)
     {
-        if (player.level() instanceof ClientLevel && !ClientCommon.DEBUG_ON_PRESS.isDown())
-        {
-            ClientLevel level = (ClientLevel) player.level();
-            Minecraft mc = Minecraft.getInstance();
-            Entity camera = mc.getCameraEntity();
+        // Where player is looking
+        Vec3 look = player.getViewVector(partialTicks).scale(DETECTION_DISTANCE);
 
-            double camX = camera.getX();
-            double camZ = camera.getY();
-            double camY = camera.getZ();
+        // Get bounding box 40m infront of where player is looking
+        int fov = mc.options.fov().get();
 
-            for (Entity entity : level.entitiesForRendering())
-            {
-                if (mc.levelExtractor.isEntityVisible(entity, mc.gameRenderer.mainCamera().getCullFrustum(), camX, camY, camZ, 0, 0))
+        AABB normalBB = player.getBoundingBox();
+        AABB inFrontOfPlayer = normalBB
+                .expandTowards(look.x, 0, look.z)
+                .inflate(EXPAND_INFLATE_WITH_FOV_CONST * fov); // inflate so entities don't get cut off from compass
+
+        // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
+        mc.level.getEntitiesOfClass(LivingEntity.class, inFrontOfPlayer, (en) -> (en != player.asLivingEntity() && !en.getBoundingBox().intersects(normalBB))).stream().limit(MAX_ALLOWED_ENTITIES_ON_COMPASS).forEach(entity ->
                 {
                     // Angle from us to the entity
                     double angleFromEntity = MathHelper.angleFromPos(entity.position(), player.position());
@@ -282,39 +278,9 @@ public class Compass
                     // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
                     int ex = util.getCompassScreenX((float) angleFromEntity);
                     FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, true, FontHelper.TextType.NONE);
+
                 }
-            }
-
-        } else if (ClientCommon.DEBUG_ON_PRESS.isDown()) {
-            // Where player is looking
-            Vec3 look = player.getViewVector(partialTicks).scale(DETECTION_DISTANCE);
-
-            // Get bounding box 40m infront of where player is looking
-            int fov = mc.options.fov().get();
-
-            AABB normalBB = player.getBoundingBox();
-            AABB inFrontOfPlayer = normalBB
-                    .expandTowards(look.x, 0, look.z)
-                    .inflate(EXPAND_INFLATE_WITH_FOV_CONST * fov); // inflate so entities don't get cut off from compass
-
-            // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
-            mc.level.getEntitiesOfClass(LivingEntity.class, inFrontOfPlayer, (en) -> (en != player.asLivingEntity() && !en.getBoundingBox().intersects(normalBB))).stream().limit(MAX_ALLOWED_ENTITIES_ON_COMPASS).forEach(entity ->
-                    {
-                        // Angle from us to the entity
-                        double angleFromEntity = MathHelper.angleFromPos(entity.position(), player.position());
-                        // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
-                        int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
-                        // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
-                        int iconScale = Math.abs(SCALE_MAX - (SCALE_MAX / DETECTION_DISTANCE * distanceFromEntity));
-                        int livingEntity = util.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
-
-                        // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
-                        int ex = util.getCompassScreenX((float) angleFromEntity);
-                        FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, true, FontHelper.TextType.NONE);
-
-                    }
-            );
-        }
+        );
     }
 
     /*
@@ -325,67 +291,6 @@ public class Compass
         int dx = util.getCompassScreenX(angle) - 3;
         FontHelper.draw(mc, guiGraphics, text, dx, yTextMiddle, ColorHelper.WHITE, FontHelper.TextType.NONE);
     }
-
-    /*
-    Draw an entry.
-     */
-    private void drawEntry(
-            GuiGraphicsExtractor guiGraphicsExtractor,
-            DefaultEntry entry,
-            LocalPlayer player
-    )
-    {
-        // Check if the entry should be rendered and the entry dimension matches the players current dimension
-        if (!entry.shouldRender() || !entry.getLevel().equals(player.level().dimension().identifier().toString()))
-        {
-            return;
-        }
-
-        // Do start tick
-        if (!didRenderProviders)
-        {
-            entry.startTick(player);
-        }
-
-        Vec3 playerPos = player.position();
-        Vec3 entryPos = entry.getPosition();
-
-        double angleFromPosition = MathHelper.angleFromPos(entryPos, playerPos);
-        int compassX = util.getCompassScreenX((float) angleFromPosition, false);
-
-        // Draw entry marker
-        FontHelper.draw(mc, guiGraphicsExtractor, entry.getMarker(), compassX - (entry.getMarkerWidthHalf()), this.yTextMiddle, entry.getColour(), FontHelper.TextType.NONE);
-
-        // If in view, render the distance from entry and if the player should go up or down to reach it
-        if (entry.shouldShowDistance() && !util.isXOutOfBounds(compassX))
-        {
-            int distance = MathHelper.getDistance(entryPos, playerPos);
-
-            String suffix = "m ";
-            double heightDiff = playerPos.y - entryPos.y;
-            // Both indicators check if the player is within 200 blocks, if not, just ignore.
-            if (distance <= 200 && heightDiff >= 3) // down
-            {
-                suffix = "↓";
-            } else if (distance <= 200 && heightDiff <= -3) // up
-            {
-                suffix = "↑";
-            }
-
-            // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
-            if (entry instanceof DefaultTimedEntry && BritishWeather.getConfig().debug())
-            {
-                String label = ((DefaultTimedEntry) entry).timeMethod.timeLeft() + "s";
-                FontHelper.draw(mc, guiGraphicsExtractor, label, util.getCenteredXForString(label), this.yTextMiddle - 10, entry.getColour(), FontHelper.TextType.NONE);
-            }
-
-            // Draw distance from entry
-            String distanceFromObjective = MathHelper.getDistance(playerPos, entryPos) + suffix;
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, util.getCenteredXForString(distanceFromObjective) + 2, util.getTextLocationY(), entry.getColour(), FontHelper.TextType.LABEL);
-
-        }
-    }
-
     /*
     Draw all entries and entry groups
      */
@@ -394,19 +299,19 @@ public class Compass
         // Draw normal entries.
         for (DefaultEntry entry : PersistentEntriesManager.ProviderRegistry.getEntries())
         {
-            drawEntry(guiGraphicsExtractor, entry, player);
+            entry.draw(guiGraphicsExtractor, player, shouldStartTick);
         }
 
         // Draw entries inside of entry groups.
         for (DefaultEntryGroup group : PersistentEntriesManager.ProviderRegistry.PROVIDER_GROUPS)
         {
-            if (!didRenderProviders)
+            if (shouldStartTick)
             {
                 group.startTick(player);
             }
 
             group.getEntries().forEach(groupEntry -> {
-                drawEntry(guiGraphicsExtractor, groupEntry, player);
+                groupEntry.draw(guiGraphicsExtractor, player, shouldStartTick);
             });
         }
     }

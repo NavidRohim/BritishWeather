@@ -20,7 +20,7 @@ without having to hold the map out.
  */
 public class MapObjectiveEntryGroup extends DefaultEntryGroup
 {
-    private static final String MARKER = "⌘";
+    private static final String MARKER = "\uD83C\uDFF0";
 
     /*
     Only get the maps the player currently has at the start tick (When the player first activates the entry HUD)
