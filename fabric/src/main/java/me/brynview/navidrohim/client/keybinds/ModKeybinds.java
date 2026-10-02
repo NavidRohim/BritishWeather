@@ -8,5 +8,6 @@ public class ModKeybinds
     public static void init()
     {
         KeyMappingHelper.registerKeyMapping(ClientCommon.PROVIDER);
+        KeyMappingHelper.registerKeyMapping(ClientCommon.DEBUG_ON_PRESS);
     }
 }

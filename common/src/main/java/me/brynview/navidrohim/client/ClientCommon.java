@@ -2,7 +2,7 @@ package me.brynview.navidrohim.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.client.gui.compass.HudCompass;
+import me.brynview.navidrohim.client.gui.compass.Compass;
 import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.player.LocalPlayer;
@@ -18,13 +18,19 @@ public class ClientCommon
             CATEGORY // The category of the mapping.
     );
 
+    public static final KeyMapping DEBUG_ON_PRESS = new KeyMapping(
+            "br.keybind.debug",
+            InputConstants.KEY_COMMA,
+            CATEGORY
+    );
+
     private static ClientWeatherManager WEATHER_MANAGER;
-    public static HudCompass hudCompass;
+    public static Compass compass;
 
     public static void init()
     {
         WEATHER_MANAGER = new ClientWeatherManager();
-        hudCompass = HudCompass.init();
+        compass = Compass.init();
     }
 
     public static ClientWeatherManager getWeatherManager()
@@ -34,7 +40,7 @@ public class ClientCommon
 
     public static void tickClient(@NotNull LocalPlayer player)
     {
-        HudCompass.tick(player);
+        Compass.tick(player);
     }
 
     /*

@@ -4,7 +4,7 @@ import com.google.common.collect.Sets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.client.gui.compass.HudCompass;
+import me.brynview.navidrohim.client.gui.compass.Compass;
 import me.brynview.navidrohim.client.gui.compass.providers.builtin.entrygroup.MapObjectiveEntryGroup;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.PersistentEntryConstructor;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
@@ -83,7 +83,7 @@ public class PersistentEntriesManager
 
                     if (CONSTRUCTORS.containsKey(type)) // Check if the entry has a valid deserializer constructor
                     {
-                        HudCompass.addEntry(CONSTRUCTORS.get(type).constructEntryWithExtraData(marker, pos, level, friendlyByteBuf));
+                        Compass.addEntry(CONSTRUCTORS.get(type).constructEntryWithExtraData(marker, pos, level, friendlyByteBuf));
                     } else {
                         Constants.LOG.error("Marker present in persistence cache does not have a registered constructor! This is perhaps due to a version mismatch. {}", type);
                     }
@@ -103,7 +103,7 @@ public class PersistentEntriesManager
     public static void save()
     {
         // Current entries
-        Collection<DefaultEntry> defaultEntries = HudCompass.getEntries();
+        Collection<DefaultEntry> defaultEntries = Compass.getEntries();
 
         if (defaultEntries.isEmpty())
         {

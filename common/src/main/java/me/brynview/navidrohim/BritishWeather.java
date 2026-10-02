@@ -8,6 +8,7 @@ import me.brynview.navidrohim.server.config.CommonConfig;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.debug.DebugEntryEntityRenderStats;
 import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.NotNull;
 

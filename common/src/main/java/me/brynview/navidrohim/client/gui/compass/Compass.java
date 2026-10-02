@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.gui.compass;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
@@ -11,8 +12,11 @@ import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.extract.LevelExtractor;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.monster.Monster;
@@ -24,9 +28,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class HudCompass
+public class Compass
 {
-    public HudCompass()
+    public Compass()
     {
         mc = Minecraft.getInstance();
         util = new RenderUtils();
@@ -45,7 +49,7 @@ public class HudCompass
             return (colour & 0x00FFFFFF) | (opacity << 24);
         }
 
-        private int getColourForEntity(LivingEntity entity, @Nullable LocalPlayer owner, int opacity)
+        private int getColourForEntity(Entity entity, @Nullable LocalPlayer owner, int opacity)
         {
             switch (entity)
             {
@@ -142,7 +146,7 @@ public class HudCompass
     private static final int SCALE_MAX = 255; // Max value of what the entity distance scale should be (entity further away = lower, closer = higher)
     private static final int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
     private static final int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
-    private static HudCompass INSTANCE;
+    private static Compass INSTANCE;
 
     // Non-final general variables
 
@@ -243,7 +247,7 @@ public class HudCompass
         int farRightX = this.compassX + this.compassScaledWidthHalf;
 
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
-        guiGraphicsExtractor.horizontalLine(farLeftX + 1, farRightX, y + 1, ColorHelper.COMPASS_BG_COLOR);
+        guiGraphicsExtractor.horizontalLine(farLeftX + 1, farRightX, y - 1, ColorHelper.COMPASS_BG_COLOR);
         guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
 
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
@@ -253,19 +257,19 @@ public class HudCompass
 
     private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks)
     {
-        // Where player is looking
-        Vec3 look = player.getViewVector(partialTicks).scale(DETECTION_DISTANCE);
+        if (player.level() instanceof ClientLevel && !ClientCommon.DEBUG_ON_PRESS.isDown())
+        {
+            ClientLevel level = (ClientLevel) player.level();
+            Minecraft mc = Minecraft.getInstance();
+            Entity camera = mc.getCameraEntity();
 
-        // Get bounding box 40m infront of where player is looking
-        int fov = mc.options.fov().get();
+            double camX = camera.getX();
+            double camZ = camera.getY();
+            double camY = camera.getZ();
 
-        AABB normalBB = player.getBoundingBox();
-        AABB inFrontOfPlayer = normalBB
-                .expandTowards(look.x, 0, look.z)
-                .inflate(EXPAND_INFLATE_WITH_FOV_CONST * fov); // inflate so entities don't get cut off from compass
-
-        // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
-        mc.level.getEntitiesOfClass(LivingEntity.class, inFrontOfPlayer, (en) -> (en != player.asLivingEntity() && !en.getBoundingBox().intersects(normalBB))).stream().limit(MAX_ALLOWED_ENTITIES_ON_COMPASS).forEach(entity ->
+            for (Entity entity : level.entitiesForRendering())
+            {
+                if (mc.levelExtractor.isEntityVisible(entity, mc.gameRenderer.mainCamera().getCullFrustum(), camX, camY, camZ, 0, 0))
                 {
                     // Angle from us to the entity
                     double angleFromEntity = MathHelper.angleFromPos(entity.position(), player.position());
@@ -278,9 +282,39 @@ public class HudCompass
                     // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
                     int ex = util.getCompassScreenX((float) angleFromEntity);
                     FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, true, FontHelper.TextType.NONE);
-
                 }
-        );
+            }
+
+        } else if (ClientCommon.DEBUG_ON_PRESS.isDown()) {
+            // Where player is looking
+            Vec3 look = player.getViewVector(partialTicks).scale(DETECTION_DISTANCE);
+
+            // Get bounding box 40m infront of where player is looking
+            int fov = mc.options.fov().get();
+
+            AABB normalBB = player.getBoundingBox();
+            AABB inFrontOfPlayer = normalBB
+                    .expandTowards(look.x, 0, look.z)
+                    .inflate(EXPAND_INFLATE_WITH_FOV_CONST * fov); // inflate so entities don't get cut off from compass
+
+            // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
+            mc.level.getEntitiesOfClass(LivingEntity.class, inFrontOfPlayer, (en) -> (en != player.asLivingEntity() && !en.getBoundingBox().intersects(normalBB))).stream().limit(MAX_ALLOWED_ENTITIES_ON_COMPASS).forEach(entity ->
+                    {
+                        // Angle from us to the entity
+                        double angleFromEntity = MathHelper.angleFromPos(entity.position(), player.position());
+                        // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
+                        int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
+                        // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
+                        int iconScale = Math.abs(SCALE_MAX - (SCALE_MAX / DETECTION_DISTANCE * distanceFromEntity));
+                        int livingEntity = util.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
+
+                        // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
+                        int ex = util.getCompassScreenX((float) angleFromEntity);
+                        FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, true, FontHelper.TextType.NONE);
+
+                    }
+            );
+        }
     }
 
     /*
@@ -379,11 +413,11 @@ public class HudCompass
 
     // Static methods
 
-    public static HudCompass init()
+    public static Compass init()
     {
         if (INSTANCE == null)
         {
-            INSTANCE = new HudCompass();
+            INSTANCE = new Compass();
             return INSTANCE;
         }
 
@@ -391,7 +425,7 @@ public class HudCompass
         throw new RuntimeException("HudCompass already initialized.");
     }
 
-    public static HudCompass getInstance()
+    public static Compass getInstance()
     {
         return INSTANCE;
     }
