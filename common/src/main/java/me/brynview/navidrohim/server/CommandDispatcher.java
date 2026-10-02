@@ -16,13 +16,16 @@ public class CommandDispatcher
 {
     public static void registerCommandsForDispatcher(com.mojang.brigadier.CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        dispatcher.register(Commands.literal("brweather")
+        dispatcher.register(Commands.literal("brweather") // Base
+                        // Change BR weather (debug only)
                         .then(Commands.literal("change").requires((c) -> !c.isPlayer() || c.getPlayer().permissions().hasPermission(Permissions.COMMANDS_ADMIN)).then(Commands.argument("weather_condition", StringArgumentType.string()).executes(CommandDispatcher::getWeather)))
+                        // Get current BR weather
                         .then(Commands.literal("get").executes(CommandDispatcher::changeWeather)));
     }
 
     private static int changeWeather(CommandContext<CommandSourceStack> commandSourceStackCommandContext)
     {
+        // debug check
         if (!BritishWeather.getConfig().debug())
         {
             return 1;
@@ -32,13 +35,16 @@ public class CommandDispatcher
         try
         {
             {
+                // Get weather condition from WeatherCondition enum
                 WeatherCondition weatherCondition = WeatherCondition.valueOf(weatherType);
+
+                // Set new state, sent weather packet to all clients. Will be overridden when the next weather check is done though. Which is why it's debug only
                 BritishWeather.getWeatherManager().setState(new ServerWeatherManager.WeatherState(0, weatherCondition, BritishWeather.getWeatherManager().getState().getLocation()));
                 BritishWeather.getWeatherManager().changeServerWeather(commandSourceStackCommandContext.getSource().getServer(), true);
                 commandSourceStackCommandContext.getSource().sendSuccess(() -> Component.literal("Changed weather to %s".formatted(weatherCondition.toString())), false);
 
             }
-        } catch (IllegalArgumentException e)
+        } catch (IllegalArgumentException e) // Invalid weather condition
         {
             commandSourceStackCommandContext.getSource().sendFailure(Component.literal("Invalid weather condition. Options are %s".formatted(Arrays.stream(WeatherCondition.values()).toList())));
         }

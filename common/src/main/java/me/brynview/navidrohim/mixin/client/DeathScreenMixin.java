@@ -19,6 +19,10 @@ public class DeathScreenMixin
     @Final
     private LocalPlayer player;
 
+    /*
+    There seems to be no event listener on Fabric for a LocalPlayer's death, so do it here.
+    Shouldn't cause issues as I don't believe this code is changed often
+     */
     @Inject(method = "mouseClicked", at = @At("TAIL"))
     private void handlePlayerDeath(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir)
     {

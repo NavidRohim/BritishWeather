@@ -1,11 +1,11 @@
 package me.brynview.navidrohim.client.gui.compass.providers.iapi.entry;
 
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.TickableAndCanExpire;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.TickableAndExpirable;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.world.phys.Vec3;
 
 // Maybe get rid of this interface. Is useless.
-public interface CompassEntry extends TickableAndCanExpire
+public interface CompassEntry extends TickableAndExpirable
 {
     int OBJECTIVE_MARKER_COLOUR = ColorHelper.rgb(243, 238, 159, 255);
 

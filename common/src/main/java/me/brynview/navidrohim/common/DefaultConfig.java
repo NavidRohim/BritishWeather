@@ -5,6 +5,10 @@ import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.server.config.CommonConfig;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 
+/*
+Default config that will be used if YACL is not installed.
+Values in this config cannot be changed as there is no interface to do so.
+ */
 public class DefaultConfig implements CommonConfig
 {
 

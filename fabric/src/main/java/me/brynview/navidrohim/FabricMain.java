@@ -32,7 +32,6 @@ public class FabricMain implements ModInitializer {
         CommonConfig configToUse = initConfig();
 
         // events
-
         ServerTickEvents.END_SERVER_TICK.register(BritishWeather::onTick);
         ServerPlayerEvents.JOIN.register((player) -> {
             ServerPlayNetworking.send(player, WeatherUpdatePacket.fromCurrentState());

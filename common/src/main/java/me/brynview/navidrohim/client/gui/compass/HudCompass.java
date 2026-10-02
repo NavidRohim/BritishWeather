@@ -26,24 +26,6 @@ import java.util.*;
 
 public class HudCompass
 {
-
-    private static HudCompass INSTANCE;
-
-    public static HudCompass init()
-    {
-        if (INSTANCE == null)
-        {
-            INSTANCE = new HudCompass();
-            return INSTANCE;
-        }
-        throw new RuntimeException("HudCompass already initialized.");
-    }
-
-    public static HudCompass getInstance()
-    {
-        return INSTANCE;
-    }
-
     public HudCompass()
     {
         mc = Minecraft.getInstance();
@@ -94,7 +76,10 @@ public class HudCompass
             return (Mth.wrapDegrees(yawInt) + 180) % 360 + "°";
         }
 
-        private int getXForString(String str)
+        /*
+        Get centered X position for a string, accounting for the width of the string. Only do in render thread
+         */
+        private int getCenteredXForString(String str)
         {
             return compassX - (mc.font.width(str) / 2);
         }
@@ -119,10 +104,11 @@ public class HudCompass
                 return csx; // x will be center of the screen. aDist is the offset where to render text
             }
 
+            // If element should stay on right edge of compass
             if (!shouldDisappearWhenOOB && (aDist >= compassScaledWidthHalf))
             {
                 return compassX + compassScaledWidthHalf;
-            } else if (!shouldDisappearWhenOOB && aDist <= -compassScaledWidthHalf)
+            } else if (!shouldDisappearWhenOOB && aDist <= -compassScaledWidthHalf) // Same but left edge
             {
                 return compassX - compassScaledWidthHalf;
             }
@@ -156,15 +142,25 @@ public class HudCompass
     private static final int SCALE_MAX = 255; // Max value of what the entity distance scale should be (entity further away = lower, closer = higher)
     private static final int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
     private static final int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
+    private static HudCompass INSTANCE;
 
     // Non-final general variables
+
+    // Set to true right after the entry HUD has been rendered
+    // Set to false on the first render pass when the entry HUD disappears.
+    // Used to call tick methods like endTick and startTick
     private boolean didRenderProviders = false;
 
+
+    // Yaw at the current render pass
     private float yaw;
     private int yawInt;
+
+    // Compass width scaled with the compass size config value
     private int compassScaledWidth;
     private int compassScaledWidthHalf;
 
+    // x coordinate of the compass. Can change due to scaling
     private int compassX;
     private int yTextMiddle;
 
@@ -175,6 +171,7 @@ public class HudCompass
     {
         final LocalPlayer player = mc.player;
 
+        // Not sure if this can ever be null when this is rendered.
         if (player == null)
         {
             return;
@@ -198,8 +195,10 @@ public class HudCompass
         // Compass background
         drawBackground(guiGraphics, mc, yMiddle);
 
+        // Check if the entry HUD key is pressed.
         if (!ClientCommon.PROVIDER.isDown())
         {
+            // Will be true on the first render pass after entry HUD disappears.
             if (didRenderProviders)
             {
                 PersistentEntriesManager.ProviderRegistry.stopTickAll(player);
@@ -215,15 +214,18 @@ public class HudCompass
             // Draw all living entities
             drawEntities(player, guiGraphics, partialTicks);
 
+            // Render current heading in degrees if config allows
             if (BritishWeather.getConfig().shouldRenderHeading())
             {
-                String friendlyDeg = util.getActualDegreesFromYaw();
-                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.getXForString(friendlyDeg), util.getTextLocationY(), ColorHelper.CENTER_COLOR, true, FontHelper.TextType.LABEL);
+                String friendlyDeg = util.getActualDegreesFromYaw(); // Number from 0 to 360
+                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.getCenteredXForString(friendlyDeg), util.getTextLocationY(), ColorHelper.CENTER_COLOR, true, FontHelper.TextType.LABEL);
             }
 
+            // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
             didRenderProviders = false;
         } else
         {
+            // Draw entry groups and entries.
             drawEntries(guiGraphics, player);
             didRenderProviders = true;
         }
@@ -234,16 +236,19 @@ public class HudCompass
 
     private void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, int y)
     {
-        // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
+        // End of the compass on far left
         int farLeftX = this.compassX - this.compassScaledWidthHalf;
+
+        // End of the compass on far right
         int farRightX = this.compassX + this.compassScaledWidthHalf;
-        int aY = y - 1;
 
-        guiGraphicsExtractor.horizontalLine(farLeftX + 1, farRightX, aY, ColorHelper.COMPASS_BG_COLOR);
-        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, aY + 1, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
+        // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
+        guiGraphicsExtractor.horizontalLine(farLeftX + 1, farRightX, y + 1, ColorHelper.COMPASS_BG_COLOR);
+        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
 
-        FontHelper.draw(mc, guiGraphicsExtractor, "<", farLeftX, 1 + aY - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
-        FontHelper.draw(mc, guiGraphicsExtractor, ">", farRightX - 2, 1 + aY - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
+        // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
+        FontHelper.draw(mc, guiGraphicsExtractor, "<", farLeftX, y - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, ">", farRightX - 2, y - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
     }
 
     private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks)
@@ -262,42 +267,47 @@ public class HudCompass
         // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
         mc.level.getEntitiesOfClass(LivingEntity.class, inFrontOfPlayer, (en) -> (en != player.asLivingEntity() && !en.getBoundingBox().intersects(normalBB))).stream().limit(MAX_ALLOWED_ENTITIES_ON_COMPASS).forEach(entity ->
                 {
-
+                    // Angle from us to the entity
                     double angleFromEntity = MathHelper.angleFromPos(entity.position(), player.position());
+                    // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
                     int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
+                    // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
                     int iconScale = Math.abs(SCALE_MAX - (SCALE_MAX / DETECTION_DISTANCE * distanceFromEntity));
-                    int livingEntity = util.getColourForEntity(entity, player, iconScale);
+                    int livingEntity = util.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
 
-                    // Entity x offset on screen
+                    // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
                     int ex = util.getCompassScreenX((float) angleFromEntity);
-                    if (ex != Integer.MAX_VALUE)
-                    {
-                        FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, true, FontHelper.TextType.NONE);
-                    }
+                    FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, true, FontHelper.TextType.NONE);
+
                 }
         );
     }
 
+    /*
+    Draw a cardinal direction label at specified angle
+     */
     private void drawCardinal(GuiGraphicsExtractor guiGraphics, float angle, String text)
     {
         int dx = util.getCompassScreenX(angle) - 3;
-        if (dx != Integer.MAX_VALUE)
-        {
-            FontHelper.draw(mc, guiGraphics, text, dx, yTextMiddle, ColorHelper.WHITE, FontHelper.TextType.NONE);
-        }
+        FontHelper.draw(mc, guiGraphics, text, dx, yTextMiddle, ColorHelper.WHITE, FontHelper.TextType.NONE);
     }
 
+    /*
+    Draw an entry.
+     */
     private void drawEntry(
             GuiGraphicsExtractor guiGraphicsExtractor,
             DefaultEntry entry,
             LocalPlayer player
     )
     {
+        // Check if the entry should be rendered and the entry dimension matches the players current dimension
         if (!entry.shouldRender() || !entry.getLevel().equals(player.level().dimension().identifier().toString()))
         {
             return;
         }
 
+        // Do start tick
         if (!didRenderProviders)
         {
             entry.startTick(player);
@@ -309,44 +319,51 @@ public class HudCompass
         double angleFromPosition = MathHelper.angleFromPos(entryPos, playerPos);
         int compassX = util.getCompassScreenX((float) angleFromPosition, false);
 
+        // Draw entry marker
         FontHelper.draw(mc, guiGraphicsExtractor, entry.getMarker(), compassX - (entry.getMarkerWidthHalf()), this.yTextMiddle, entry.getColour(), FontHelper.TextType.NONE);
 
+        // If in view, render the distance from entry and if the player should go up or down to reach it
         if (entry.shouldShowDistance() && !util.isXOutOfBounds(compassX))
         {
             int distance = MathHelper.getDistance(entryPos, playerPos);
 
             String suffix = "m ";
             double heightDiff = playerPos.y - entryPos.y;
-            if (distance <= 200 && heightDiff >= 3)
+            // Both indicators check if the player is within 200 blocks, if not, just ignore.
+            if (distance <= 200 && heightDiff >= 3) // down
             {
                 suffix = "↓";
-            } else if (distance <= 200 && heightDiff <= -3)
+            } else if (distance <= 200 && heightDiff <= -3) // up
             {
                 suffix = "↑";
             }
 
+            // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
             if (entry instanceof DefaultTimedEntry && BritishWeather.getConfig().debug())
             {
                 String label = ((DefaultTimedEntry) entry).timeMethod.timeLeft() + "s";
-                FontHelper.draw(mc, guiGraphicsExtractor, label, util.getXForString(label), this.yTextMiddle - 10, entry.getColour(), FontHelper.TextType.NONE);
+                FontHelper.draw(mc, guiGraphicsExtractor, label, util.getCenteredXForString(label), this.yTextMiddle - 10, entry.getColour(), FontHelper.TextType.NONE);
             }
 
+            // Draw distance from entry
             String distanceFromObjective = MathHelper.getDistance(playerPos, entryPos) + suffix;
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, util.getXForString(distanceFromObjective) + 2, util.getTextLocationY(), entry.getColour(), FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, util.getCenteredXForString(distanceFromObjective) + 2, util.getTextLocationY(), entry.getColour(), FontHelper.TextType.LABEL);
 
         }
     }
 
-    private void drawEntries(
-            GuiGraphicsExtractor guiGraphicsExtractor,
-            LocalPlayer player
-    )
+    /*
+    Draw all entries and entry groups
+     */
+    private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player)
     {
+        // Draw normal entries.
         for (DefaultEntry entry : PersistentEntriesManager.ProviderRegistry.getEntries())
         {
             drawEntry(guiGraphicsExtractor, entry, player);
         }
 
+        // Draw entries inside of entry groups.
         for (DefaultEntryGroup group : PersistentEntriesManager.ProviderRegistry.PROVIDER_GROUPS)
         {
             if (!didRenderProviders)
@@ -358,6 +375,25 @@ public class HudCompass
                 drawEntry(guiGraphicsExtractor, groupEntry, player);
             });
         }
+    }
+
+    // Static methods
+
+    public static HudCompass init()
+    {
+        if (INSTANCE == null)
+        {
+            INSTANCE = new HudCompass();
+            return INSTANCE;
+        }
+
+        // HudCompass is a singleton
+        throw new RuntimeException("HudCompass already initialized.");
+    }
+
+    public static HudCompass getInstance()
+    {
+        return INSTANCE;
     }
 
     public static void addEntry(DefaultEntry provider)

@@ -18,6 +18,12 @@ public abstract class HudMixin
     @Shadow
     private int tickCount;
 
+    /*
+    Inject compass rendering when the boss overlay is rendered.
+
+    This is good because when the boss overlay is rendered, all checks for screen behaviour and other HUD elements have been done,
+    so I do not have to do them myself.
+     */
     @Inject(method = "extractBossOverlay", at = @At("TAIL"))
     private void injectHudCompass(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci)
     {

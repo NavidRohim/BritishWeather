@@ -37,6 +37,9 @@ public class ClientCommon
         HudCompass.tick(player);
     }
 
+    /*
+    Call then when the client level changes (transferring dimension, loading into a world or server)
+     */
     public static void changeLevel()
     {
         PersistentEntriesManager.load();

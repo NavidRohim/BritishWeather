@@ -33,14 +33,21 @@ public class WeatherEffectRendererMixin
     private void injectHailEffect(RenderPass renderPass, AbstractTexture texture, int startColumn, int columnCount, CallbackInfo ci)
     {
         WeatherCondition condition = ClientCommon.getWeatherManager().getWeather();
+
+        // Check if it's hailing, and we are in an area that will hail (not snowing)
+        // By checking if the current texture for the weather is the rain.
         if (condition.isHail() && rainTexture == texture)
         {
+            // Not sure what the following lines do. I am not versed in rendering
             renderPass.setUniform("Sampler0", britishweather$hailTexture.getTextureView(), britishweather$hailTexture.getSampler());
             renderPass.drawIndexed(columnCount * 6, 1, 0, 0, 0);
             ci.cancel();
         }
     }
 
+    /*
+    Correct stage to load the hail texture.
+     */
     @Inject(method = "prepare", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;requestIndexCount(I)V"))
     private void prepareHailTexture(CallbackInfo ci)
     {

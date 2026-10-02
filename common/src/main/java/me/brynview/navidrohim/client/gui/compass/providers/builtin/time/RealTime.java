@@ -35,14 +35,11 @@ public class RealTime implements TimeMethod
     public void encode(FriendlyByteBuf friendlyByteBuf)
     {
         friendlyByteBuf.writeLong(endTime);
-        friendlyByteBuf.writeLong(System.nanoTime());
     }
 
     public static RealTime decode(FriendlyByteBuf friendlyByteBuf)
     {
         long expiryMillis = friendlyByteBuf.readLong();
-        long _currentTimeMillis_ = friendlyByteBuf.readLong();
-
         return new RealTime(expiryMillis);
     }
 }

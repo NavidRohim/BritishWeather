@@ -15,6 +15,8 @@ public class ClientLevelMixin
     @ModifyVariable(method = "tickWeatherEffects", at = @At(value = "STORE"), name = "particleType")
     private ParticleOptions changeParticle(ParticleOptions particleType)
     {
+
+        // If the particle type being returned is rain, and it's hailing, swap rain particle out for hail
         return particleType == ParticleTypes.RAIN && ClientCommon.getWeatherManager().getWeather().isHail() ? ModParticles.HAIL : particleType;
     }
 }

@@ -2,6 +2,9 @@ package me.brynview.navidrohim.server.config;
 
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 
+/*
+Any new mod loaders should implement this
+ */
 public interface CommonConfig
 {
     Float getLongitude();

@@ -47,7 +47,7 @@ public class FabricClientConfigScreen
                                 .controller(FloatFieldControllerBuilder::create)
                                 .build()
 
-                        ).option(Option.<String>createBuilder()
+                        ).option(Option.<String>createBuilder() // Postcode text box
                                 .name(Component.translatable("br.config.category.weather.postcode"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.weather.postcode.description")))
                                 .binding(FabricConfigSerializer.postcode,
@@ -66,7 +66,7 @@ public class FabricClientConfigScreen
                                 .controller(IntegerFieldControllerBuilder::create)
                                 .build()
 
-                        ).option(Option.<String>createBuilder()
+                        ).option(Option.<String>createBuilder() // Weather location method
                                 .name(Component.translatable("br.config.category.weather.locationMethod"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.weather.locationMethod.description")))
                                 .binding(FabricConfigSerializer.locationOptions, () -> FabricConfigSerializer.locationOptions, (val) -> FabricConfigSerializer.locationOptions = val)
@@ -87,14 +87,14 @@ public class FabricClientConfigScreen
                                 .controller(TickBoxControllerBuilder::create)
                                 .build()
                         )
-                        .option(Option.<Boolean>createBuilder()
+                        .option(Option.<Boolean>createBuilder() // If hail should deal damage
                                 .name(Component.translatable("br.config.category.admin.hailShouldDealDamage"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.admin.hailShouldDealDamage.description")))
                                 .binding(FabricConfigSerializer.hailShouldDealDamage, () -> FabricConfigSerializer.hailShouldDealDamage, (val) -> FabricConfigSerializer.hailShouldDealDamage = val)
                                 .controller(TickBoxControllerBuilder::create)
                                 .build()
                         )
-                        .option(Option.<Boolean>createBuilder()
+                        .option(Option.<Boolean>createBuilder() // Debug mode
                                 .name(Component.translatable("br.config.category.admin.debug"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.admin.debug.description")))
                                 .binding(FabricConfigSerializer.debug, () -> FabricConfigSerializer.debug, (bool) -> FabricConfigSerializer.debug = bool)
@@ -105,21 +105,21 @@ public class FabricClientConfigScreen
                 )
                 .category(ConfigCategory.createBuilder()
                         .name(Component.translatable("br.config.category.compass"))
-                        .option(Option.<Boolean>createBuilder()
+                        .option(Option.<Boolean>createBuilder() // If compass should be enabled
                                 .name(Component.translatable("br.config.category.compass.enabled"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.compass.enabled.description")))
                                 .binding(FabricConfigSerializer.shouldRenderCompass, () -> FabricConfigSerializer.shouldRenderCompass, (bool) -> FabricConfigSerializer.shouldRenderCompass = bool)
                                 .controller(TickBoxControllerBuilder::create)
                                 .build()
                         )
-                        .option(Option.<Boolean>createBuilder()
+                        .option(Option.<Boolean>createBuilder() // If current heading should be shown
                                 .name(Component.translatable("br.config.category.compass.shouldRenderHeading"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.compass.shouldRenderHeading.description")))
                                 .binding(FabricConfigSerializer.shouldRenderHeading, () -> FabricConfigSerializer.shouldRenderHeading, (val) -> FabricConfigSerializer.shouldRenderHeading = val)
                                 .controller(TickBoxControllerBuilder::create)
                                 .build()
                         )
-                        .option(Option.<Integer>createBuilder()
+                        .option(Option.<Integer>createBuilder() // Compass width. Percentage of screen width
                                 .name(Component.translatable("br.config.category.compass.size"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.compass.size.description")))
                                 .binding(FabricConfigSerializer.compassSize, () -> FabricConfigSerializer.compassSize, (val) -> FabricConfigSerializer.compassSize = val)
@@ -130,7 +130,7 @@ public class FabricClientConfigScreen
                                 .build()
                         )
 
-                        .option(Option.<Integer>createBuilder()
+                        .option(Option.<Integer>createBuilder() // Compass Y position
                                 .name(Component.translatable("br.config.category.compass.compassY"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.compass.compassY.description")))
                                 .binding(FabricConfigSerializer.compassY, () -> FabricConfigSerializer.compassY, (val) -> FabricConfigSerializer.compassY = val)

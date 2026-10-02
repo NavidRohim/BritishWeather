@@ -1,6 +1,6 @@
 package me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup;
 
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.TickableAndCanExpire;
+import me.brynview.navidrohim.client.gui.compass.providers.iapi.TickableAndExpirable;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
 import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class DefaultEntryGroup implements TickableAndCanExpire
+/*
+An entry group is just a list of entries. Each entry is normal and can be a subclass of DefaultEntry.
+But, the entries will only have the end tick and not any other tick in the TickableAndExpirable interface.
+Instead, the EntryGroup will tick which can dictate behaviour for the child entries.
+ */
+public abstract class DefaultEntryGroup implements TickableAndExpirable
 {
     private final List<DefaultEntry> entries = new ArrayList<>();
 

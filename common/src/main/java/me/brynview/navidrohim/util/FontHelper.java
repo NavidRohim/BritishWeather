@@ -5,16 +5,23 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.ARGB;
 
 public class FontHelper {
-    
+
     public static void draw(Minecraft mc, GuiGraphicsExtractor guiGraphics, String label, int x, int y, int color, TextType textType) {
         draw(mc, guiGraphics, label, x, y, color, true, textType);
     }
 
     public static void draw(Minecraft mc, GuiGraphicsExtractor guiGraphics, String label, int x, int y, int color, boolean shadow, TextType textType) {
-        drawBackdrop(mc, guiGraphics, mc.font.width(label), x, y, color, textType);
-        guiGraphics.text(mc.font, label, x, y, color, shadow);
+        // Using MAX_VALUE as a flag to not render
+        if (x != Integer.MAX_VALUE)
+        {
+            drawBackdrop(mc, guiGraphics, mc.font.width(label), x, y, color, textType);
+            guiGraphics.text(mc.font, label, x, y, color, shadow);
+        }
     }
 
+    /*
+    Function not written by me.
+     */
     private static void drawBackdrop(Minecraft mc, GuiGraphicsExtractor guiGraphics, int textWidth, int x, int y, int color, TextType textType) {
         int leftOffset = 2;
         int rightOffset = 2;

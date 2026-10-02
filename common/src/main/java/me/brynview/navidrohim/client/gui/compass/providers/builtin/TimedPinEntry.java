@@ -3,12 +3,13 @@ package me.brynview.navidrohim.client.gui.compass.providers.builtin;
 import me.brynview.navidrohim.client.gui.compass.providers.builtin.time.GameTime;
 import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultTimedEntry;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 
 import java.util.concurrent.TimeUnit;
 
+/*
+Same as PinEntry but timed.
+ */
 public class TimedPinEntry extends DefaultTimedEntry
 {
     public TimedPinEntry(Vec3 position, String level, String marker, TimeUnit unit, int duration)

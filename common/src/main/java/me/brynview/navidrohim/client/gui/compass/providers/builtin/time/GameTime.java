@@ -7,6 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 public class GameTime implements TimeMethod
 {
+    // GameTime uses ticks instead of nanos like RealTime.
     public int currentTick;
     public int endTick;
 
@@ -16,6 +17,9 @@ public class GameTime implements TimeMethod
         this.endTick = endTick;
     }
 
+    /*
+    Deserialisation constructor
+     */
     public GameTime(TimeUnit unit, int duration)
     {
         currentTick = 0;
@@ -37,6 +41,7 @@ public class GameTime implements TimeMethod
     @Override
     public long timeLeft()
     {
+        // timeLeft return value should be in seconds.
         return (endTick - currentTick) / 20;
     }
 

@@ -14,6 +14,7 @@ Again, separate from FabricClientConfigScreen and another classes to avoid class
 public class FabricConfigSerializer
 {
 
+    // Serialization handler
     public static ConfigClassHandler<FabricConfigSerializer> HANDLER = ConfigClassHandler.createBuilder(FabricConfigSerializer.class)
             .id(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "config"))
             .serializer(modConfigConfigClassHandler -> GsonConfigSerializerBuilder.create(modConfigConfigClassHandler)
