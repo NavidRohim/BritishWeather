@@ -1,6 +1,6 @@
-package me.brynview.navidrohim.client.gui.compass.providers.iapi.entry;
+package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.TickableAndExpirable;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.world.phys.Vec3;
 

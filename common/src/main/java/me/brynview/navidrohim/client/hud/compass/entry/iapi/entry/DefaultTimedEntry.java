@@ -1,15 +1,10 @@
-package me.brynview.navidrohim.client.gui.compass.providers.iapi.entry;
+package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.TimeMethod;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.concurrent.TimeUnit;
 
 /*
 Normal entry but will expire after specified amount of time.
@@ -53,5 +48,11 @@ public abstract class DefaultTimedEntry extends DefaultEntry
     public boolean hasExpired()
     {
         return timeMethod.isExpired();
+    }
+
+    @Override
+    public String getDebugString()
+    {
+        return "%ss %s %s".formatted(this.timeMethod.timeLeft(), this.timeMethod.getClass().getSimpleName(), super.getDebugString());
     }
 }

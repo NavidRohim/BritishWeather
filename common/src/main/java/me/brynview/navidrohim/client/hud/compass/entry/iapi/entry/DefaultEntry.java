@@ -1,20 +1,17 @@
-package me.brynview.navidrohim.client.gui.compass.providers.iapi.entry;
+package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.client.gui.compass.Compass;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
+import me.brynview.navidrohim.client.hud.compass.Compass;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.UUID;
+import org.jetbrains.annotations.Nullable;
 
 /*
 * DefaultEntry should be extended but is not abstract as it does have functionality by itself.
@@ -31,11 +28,19 @@ public class DefaultEntry implements CompassEntry
     private String marker; // What text will be rendered on the compass.
     private int markerWidthHalf; // The markers width halved.
 
+    protected int colour;
+
     public DefaultEntry(Vec3 position, String level, String marker)
+    {
+        this(position, level, marker, CompassEntry.OBJECTIVE_MARKER_COLOUR);
+    }
+
+    public DefaultEntry(Vec3 position, String level, String marker, int colour)
     {
         this.mc = Minecraft.getInstance();
         this.level = level;
         this.position = position;
+        this.colour = colour;
 
         if (!(this instanceof Singleton))
         {
@@ -70,33 +75,71 @@ public class DefaultEntry implements CompassEntry
         this.markerWidthHalf = mc.font.width(marker) / 2; // Calculate the markers width here, so it does not have to be calculated every render pass.
     }
 
+    @Override
+    public int getColour()
+    {
+        return colour;
+    }
+
     public final void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick)
     {
-        Compass compass = Compass.getInstance();
-
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
-        if (!shouldRender() || !getLevel().equals(player.level().dimension().identifier().toString()))
+        if (!shouldRender() || !level.equals(player.level().dimension().identifier().toString()))
         {
             return;
         }
 
-        // Do start tick
         if (shouldStartTick)
         {
             startTick(player);
         }
 
+        DefaultEntry.drawRawEntry(
+                guiGraphicsExtractor,
+                mc,
+                player,
+                position,
+                marker,
+                getColour(),
+                markerWidthHalf,
+                shouldShowDistance(),
+                getDebugString(),
+                null
+        );
+    }
+
+    public static void drawRawEntry(
+            GuiGraphicsExtractor guiGraphicsExtractor,
+            Minecraft mc,
+            @NotNull LocalPlayer player,
+            @NotNull Vec3 position,
+            String marker,
+            int colour,
+            int markerWidthHalf,
+            boolean shouldShowDistance,
+            String debugString,
+            @Nullable Integer posOnCompass
+    )
+    {
+        Compass compass = Compass.getInstance();
+
         Vec3 playerPos = player.position();
 
-        double angleFromPosition = MathHelper.angleFromPos(position, playerPos);
-        int compassX = compass.util.getCompassScreenX((float) angleFromPosition, false);
+        int compassX;
+        if (posOnCompass == null)
+        {
+            double angleFromPosition = MathHelper.angleFromPos(position, playerPos);
+            compassX = compass.util.getCompassScreenX((float) angleFromPosition, false);
+        } else {
+            compassX = compass.compassX + posOnCompass;
+        }
 
         // Draw entry marker
         //FontHelper.drawEntry(mc, guiGraphicsExtractor, entry.getMarker(), entry.centerRelativeTo(compassX), this.yTextMiddle, entry.getColour(), FontHelper.TextType.NONE);
-        FontHelper.draw(mc, guiGraphicsExtractor, marker, compassX - markerWidthHalf, compass.yTextMiddle, getColour(), true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, marker, compassX - markerWidthHalf, compass.yTextMiddle, colour, true, FontHelper.TextType.NONE);
 
         // If in view, render the distance from entry and if the player should go up or down to reach it
-        if (shouldShowDistance() && !compass.util.isXOutOfBounds(compassX))
+        if (shouldShowDistance && !compass.util.isXOutOfBounds(compassX))
         {
             int distance = MathHelper.getDistance(position, playerPos);
 
@@ -112,18 +155,16 @@ public class DefaultEntry implements CompassEntry
             }
 
             // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
-            if (this instanceof DefaultTimedEntry && BritishWeather.getConfig().debug())
+            if (BritishWeather.getConfig().debug())
             {
-                String label = ((DefaultTimedEntry) this).timeMethod.timeLeft() + "s";
-                FontHelper.draw(mc, guiGraphicsExtractor, label, compass.util.getCenteredXForString(label, compassX), compass.yTextMiddle - 10, getColour(), FontHelper.TextType.NONE);
+                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.getCenteredXForString(debugString, compassX), compass.yTextMiddle - 10, colour, FontHelper.TextType.NONE);
             }
 
             // Draw distance from entry
             String distanceFromObjective = MathHelper.getDistance(playerPos, position) + suffix;
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compass.util.getCenteredXForString(distanceFromObjective, compassX) + 2, compass.util.getTextLocationY(), getColour(), FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compass.util.getCenteredXForString(distanceFromObjective, compassX) + 2, compass.util.getTextLocationY(), colour, FontHelper.TextType.LABEL);
         }
     }
-
     /*
     If the entry is persistent through game sessions.
     If true, the entry will be stored in an NBT file in the root .minecraft directory, and the filename will be the world folder name.
@@ -144,6 +185,11 @@ public class DefaultEntry implements CompassEntry
      */
     public void serialise(FriendlyByteBuf friendlyByteBuf)
     {
+    }
+
+    public String getDebugString()
+    {
+        return "P=%s".formatted(this.isPersistent());
     }
 
     public static DefaultEntry of(Vec3 position, String level, String marker)

@@ -2,10 +2,13 @@ package me.brynview.navidrohim.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.client.gui.compass.Compass;
-import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
+import me.brynview.navidrohim.client.hud.compass.Compass;
+import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
+import me.brynview.navidrohim.client.screen.PinCreationScreen;
 import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,6 +44,12 @@ public class ClientCommon
     public static void tickClient(@NotNull LocalPlayer player)
     {
         Compass.tick(player);
+
+        if (DEBUG_ON_PRESS.isDown())
+        {
+            Minecraft mc = Minecraft.getInstance();
+            mc.setScreenAndShow(new PinCreationScreen(mc, player));
+        }
     }
 
     /*
@@ -48,6 +57,7 @@ public class ClientCommon
      */
     public static void changeLevel()
     {
+        PersistentEntriesManager.ProviderRegistry.clear();
         PersistentEntriesManager.load();
     }
 }

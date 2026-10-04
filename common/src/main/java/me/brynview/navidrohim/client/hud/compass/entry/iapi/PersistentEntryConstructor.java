@@ -1,6 +1,6 @@
-package me.brynview.navidrohim.client.gui.compass.providers.iapi;
+package me.brynview.navidrohim.client.hud.compass.entry.iapi;
 
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 

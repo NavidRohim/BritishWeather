@@ -1,10 +1,10 @@
-package me.brynview.navidrohim.client.gui.compass.providers.builtin.entrygroup;
+package me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup;
 
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MapItem;
@@ -39,7 +39,7 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
                     MapDecorations.Entry saved = itemStack.get(DataComponents.MAP_DECORATIONS).decorations().get("+"); // What is this key?
                     Vec3 pos = new Vec3(saved.x(), 0, saved.z());
 
-                    this.addEntry(DefaultEntry.of(pos, player.level().dimension().identifier().toString(), MARKER));
+                    this.addEntry(DefaultEntry.of(pos, GeneralUtils.getDimensionFromPlayer(player), MARKER));
                 }
             } catch (NullPointerException _) // Will be thrown if the map doesn't have a decoration. Which will be the case if the map is just a normal map. Ignore.
             {}
@@ -54,5 +54,11 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
     {
         super.endTick(player);
         this.clearEntries();
+    }
+
+    @Override
+    public boolean isBuiltin()
+    {
+        return true;
     }
 }

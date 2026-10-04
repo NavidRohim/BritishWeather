@@ -1,16 +1,16 @@
-package me.brynview.navidrohim.client.gui.compass.providers;
+package me.brynview.navidrohim.client.hud.compass.entry;
 
 import com.google.common.collect.Sets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.client.gui.compass.Compass;
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.entrygroup.MapObjectiveEntryGroup;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.PersistentEntryConstructor;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.CompassEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.Compass;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapObjectiveEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.PersistentEntryConstructor;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.CompassEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.*;
@@ -218,6 +218,12 @@ public class PersistentEntriesManager
         {
             PROVIDERS.values().forEach((p) -> p.endTick(player));
             PROVIDER_GROUPS.forEach((pg) -> pg.endTick(player));
+        }
+
+        public static void clear()
+        {
+            PROVIDERS.clear();
+            PROVIDER_GROUPS.removeIf((g) -> !g.isBuiltin());
         }
     }
 }

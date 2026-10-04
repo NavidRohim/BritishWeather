@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.client.gui.compass.providers.iapi;
+package me.brynview.navidrohim.client.hud.compass.entry.iapi;
 
 /*
 Singleton interface which, if implemented, means an entry can only have one instance on the compass at a time.

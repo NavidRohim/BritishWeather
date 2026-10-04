@@ -1,16 +1,12 @@
-package me.brynview.navidrohim.client.gui.compass.providers.builtin;
+package me.brynview.navidrohim.client.hud.compass.entry.builtin;
 
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.time.GameTime;
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.time.RealTime;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultTimedEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.Singleton;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.time.RealTime;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultTimedEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Vec3i;
-import net.minecraft.data.worldgen.biome.NetherBiomes;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 

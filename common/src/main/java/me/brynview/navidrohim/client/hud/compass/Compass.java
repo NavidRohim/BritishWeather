@@ -1,15 +1,16 @@
-package me.brynview.navidrohim.client.gui.compass;
+package me.brynview.navidrohim.client.hud.compass;
 
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.ClientCommon;
-import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultTimedEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.client.screen.PinCreationScreen;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -61,7 +62,7 @@ public class Compass
                 {
                     if (tamableAnimal.getOwnerReference() != null && tamableAnimal.getOwnerReference().getUUID().equals(owner.getUUID()))
                     {
-                        return shiftColourToOpacity(ColorHelper.ALLY, opacity);
+                        return shiftColourToOpacity(ColorHelper.WHITE, opacity);
                     }
                 }
                 default ->
@@ -161,27 +162,31 @@ public class Compass
     private int compassScaledWidthHalf;
 
     // x coordinate of the compass. Can change due to scaling
-    private int compassX;
+    public int compassX;
     public int yTextMiddle;
 
     public Minecraft mc;
     public RenderUtils util;
 
-    public void render(GuiGraphicsExtractor guiGraphics, Minecraft mc, int scaledWidth, float partialTicks)
+    public void render(GuiGraphicsExtractor graphics, int scaledWidth, float partialTicks)
+    {
+        render(graphics, scaledWidth, partialTicks, null, BritishWeather.getConfig().getCompassY());
+    }
+
+    public void render(GuiGraphicsExtractor guiGraphics, int scaledWidth, float partialTicks, @Nullable PinCreationScreen dummyEntryProvider, int y)
     {
         final LocalPlayer player = mc.player;
 
         // Not sure if this can ever be null when this is rendered.
-        if (player == null)
+        if ((mc.gui.screen() instanceof PinCreationScreen && dummyEntryProvider == null) || player == null)
         {
             return;
         }
-
         // uncomment this if something weird happens in pause menu
         //final float partialTicks = mc.isPaused() ? 0 : _partialTicks;
         this.compassX = RenderUtils.getCompassX(scaledWidth, mc.font.width(COMPASS_HEADING));
 
-        final int yMiddle = (BritishWeather.getConfig().getCompassY() + mc.font.lineHeight - 1) / 2;
+        final int yMiddle = (y + mc.font.lineHeight - 1) / 2;
         this.yTextMiddle = yMiddle - mc.font.lineHeight / 2;
 
         this.compassScaledWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) scaledWidth); // All these float are dumb
@@ -196,7 +201,7 @@ public class Compass
         drawBackground(guiGraphics, mc, yMiddle);
 
         // Check if the entry HUD key is pressed.
-        if (!ClientCommon.PROVIDER.isDown())
+        if (!ClientCommon.PROVIDER.isDown() && dummyEntryProvider == null)
         {
             // Will be true on the first render pass after entry HUD disappears.
             if (!shouldStartTick)
@@ -226,7 +231,7 @@ public class Compass
         } else
         {
             // Draw entry groups and entries.
-            drawEntries(guiGraphics, player);
+            drawEntries(guiGraphics, player, dummyEntryProvider);
             shouldStartTick = false;
         }
 
@@ -243,12 +248,15 @@ public class Compass
         int farRightX = this.compassX + this.compassScaledWidthHalf;
 
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
+
+        //int brightnessChange = Math.abs(SCALE_MAX - (SCALE_MAX / 10 * rawBrightness));
+        //Constants.LOG.info(String.valueOf(brightnessChange));
         guiGraphicsExtractor.horizontalLine(farLeftX + 1, farRightX, y - 1, ColorHelper.COMPASS_BG_COLOR);
         guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
 
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
-        FontHelper.draw(mc, guiGraphicsExtractor, "<", farLeftX, y - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
-        FontHelper.draw(mc, guiGraphicsExtractor, ">", farRightX - 2, y - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, false, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, ">", farLeftX - 3, y - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, "<", farRightX, y - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
     }
 
     private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks)
@@ -277,7 +285,7 @@ public class Compass
 
                     // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
                     int ex = util.getCompassScreenX((float) angleFromEntity);
-                    FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, true, FontHelper.TextType.NONE);
+                    FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, false, FontHelper.TextType.NONE);
 
                 }
         );
@@ -289,13 +297,31 @@ public class Compass
     private void drawCardinal(GuiGraphicsExtractor guiGraphics, float angle, String text)
     {
         int dx = util.getCompassScreenX(angle) - 3;
-        FontHelper.draw(mc, guiGraphics, text, dx, yTextMiddle, ColorHelper.WHITE, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphics, text, dx, yTextMiddle, ColorHelper.WHITE, true, FontHelper.TextType.NONE);
     }
+
     /*
     Draw all entries and entry groups
      */
-    private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player)
+    private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player, @Nullable PinCreationScreen dummyProvider)
     {
+        if (dummyProvider != null)
+        {
+            DefaultEntry.drawRawEntry(
+                    guiGraphicsExtractor,
+                    mc,
+                    player,
+                    player.position().add(5, 0, 5),
+                    dummyProvider.getMarker(),
+                    dummyProvider.getColour(),
+                    1,
+                    true,
+                    "DEMO",
+                    50
+            );
+            return;
+        }
+
         // Draw normal entries.
         for (DefaultEntry entry : PersistentEntriesManager.ProviderRegistry.getEntries())
         {

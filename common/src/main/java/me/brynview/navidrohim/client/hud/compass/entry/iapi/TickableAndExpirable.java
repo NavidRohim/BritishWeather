@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.client.gui.compass.providers.iapi;
+package me.brynview.navidrohim.client.hud.compass.entry.iapi;
 
 import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.NotNull;

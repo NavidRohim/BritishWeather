@@ -1,14 +1,12 @@
 package me.brynview.navidrohim;
 
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.DeathEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.PinEntry;
-import me.brynview.navidrohim.client.gui.compass.providers.PersistentEntriesManager;
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.TimedPinEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.DeathEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.PinEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.TimedPinEntry;
 import me.brynview.navidrohim.server.config.CommonConfig;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.debug.DebugEntryEntityRenderStats;
 import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.NotNull;
 

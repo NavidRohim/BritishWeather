@@ -1,7 +1,7 @@
 package me.brynview.navidrohim.mixin.client;
 
-import me.brynview.navidrohim.client.gui.compass.Compass;
-import me.brynview.navidrohim.client.gui.compass.providers.builtin.DeathEntry;
+import me.brynview.navidrohim.client.hud.compass.Compass;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.DeathEntry;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;

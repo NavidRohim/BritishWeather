@@ -1,7 +1,7 @@
 package me.brynview.navidrohim.mixin.client;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.client.gui.compass.Compass;
+import me.brynview.navidrohim.client.hud.compass.Compass;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -34,6 +34,6 @@ public abstract class HudMixin
 
         Minecraft mc = Minecraft.getInstance();
         int scaledWidth = mc.getWindow().getGuiScaledWidth();
-        Compass.getInstance().render(graphics, mc, scaledWidth, tickCount);
+        Compass.getInstance().render(graphics, scaledWidth, tickCount);
     }
 }

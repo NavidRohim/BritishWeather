@@ -1,6 +1,6 @@
-package me.brynview.navidrohim.client.gui.compass.providers.builtin.time;
+package me.brynview.navidrohim.client.hud.compass.entry.builtin.time;
 
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.TimeMethod;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.concurrent.TimeUnit;

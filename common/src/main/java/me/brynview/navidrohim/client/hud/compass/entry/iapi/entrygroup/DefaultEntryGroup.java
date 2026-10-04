@@ -1,7 +1,7 @@
-package me.brynview.navidrohim.client.gui.compass.providers.iapi.entrygroup;
+package me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup;
 
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.TickableAndExpirable;
-import me.brynview.navidrohim.client.gui.compass.providers.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.NotNull;
 
@@ -41,5 +41,10 @@ public abstract class DefaultEntryGroup implements TickableAndExpirable
     public void endTick(@NotNull LocalPlayer player)
     {
         getEntries().forEach(entry -> entry.endTick(player));
+    }
+
+    public boolean isBuiltin()
+    {
+        return false;
     }
 }
