@@ -41,5 +41,8 @@
   "br.command.brweather.message_no_location": "Weather is currently %s",
 
   "key.category.britishweather.keybinds": "British Weather",
-  "br.keybind.showProviders": "Show compass objectives"
+  "br.keybind.showProviders": "Show compass objectives",
+
+  "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
+  "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline."
 }

@@ -1,11 +1,9 @@
 package me.brynview.navidrohim.client.hud.compass.entry.builtin;
 
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.time.GameTime;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultTimedEntry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
-
-import java.util.concurrent.TimeUnit;
 
 /*
 Same as PinEntry but timed.
@@ -14,18 +12,21 @@ public class TimedPinEntry extends DefaultTimedEntry
 {
     private boolean isPersistent;
 
-    public TimedPinEntry(Vec3 position, String level, String marker, TimeUnit unit, int duration, boolean isPersistent)
+    public TimedPinEntry(Vec3 position, String level, String marker, TimeMethod timeMethod, boolean isPersistent, int colour)
     {
-        super(position, level, marker, new GameTime(unit, duration));
+        super(position, level, marker, timeMethod, colour);
         this.isPersistent = isPersistent;
     }
 
-    public TimedPinEntry(String s, Vec3 vec3, String level, FriendlyByteBuf friendlyByteBuf)
+    public TimedPinEntry(String s, int colour, Vec3 vec3, String level, FriendlyByteBuf friendlyByteBuf)
     {
-        GameTime gameTime = GameTime.decode(friendlyByteBuf);
+        String savedTimeMethod = friendlyByteBuf.readUtf();
+        TimeMethod.TimeMethods tm = TimeMethod.TimeMethods.valueOf(savedTimeMethod);
+        TimeMethod remainingTimeMethod = tm.getFromBuffer(friendlyByteBuf);
+
         this.isPersistent = friendlyByteBuf.readBoolean();
 
-        super(vec3, level, s, gameTime);
+        super(vec3, level, s, remainingTimeMethod, colour);
 
     }
 

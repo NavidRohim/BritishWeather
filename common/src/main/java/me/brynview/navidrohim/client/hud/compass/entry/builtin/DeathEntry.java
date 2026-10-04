@@ -29,17 +29,17 @@ public final class DeathEntry extends DefaultTimedEntry implements Singleton
      */
     public DeathEntry(Vec3 position, String level)
     {
-        super(position, level, SKULL, new RealTime(TimeUnit.MINUTES, 30));
+        super(position, level, SKULL, new RealTime(TimeUnit.MINUTES, 30), RED);
         this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
     }
 
     /*
     Constructor if being deserialized from NBT.
      */
-    public DeathEntry(String marker, Vec3 pos, String level, FriendlyByteBuf friendlyByteBuf)
+    public DeathEntry(String marker, int ignored, Vec3 pos, String level, FriendlyByteBuf friendlyByteBuf)
     {
         RealTime realTime = RealTime.decode(friendlyByteBuf); // Decode the RealTime instance.
-        super(pos, level, marker, realTime);
+        super(pos, level, marker, realTime, RED);
         this.deathpoint = new Vec3i((int) pos.x, (int) pos.y, (int) pos.z);
     }
 

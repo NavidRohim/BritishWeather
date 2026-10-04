@@ -34,7 +34,14 @@ public class RealTime implements TimeMethod
     @Override
     public void encode(FriendlyByteBuf friendlyByteBuf)
     {
+        friendlyByteBuf.writeUtf(getKey().name());
         friendlyByteBuf.writeLong(endTime);
+    }
+
+    @Override
+    public TimeMethods getKey()
+    {
+        return TimeMethod.TimeMethods.REALTIME;
     }
 
     public static RealTime decode(FriendlyByteBuf friendlyByteBuf)

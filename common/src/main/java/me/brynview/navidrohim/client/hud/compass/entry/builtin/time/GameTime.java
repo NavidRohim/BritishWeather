@@ -48,8 +48,15 @@ public class GameTime implements TimeMethod
     @Override
     public void encode(FriendlyByteBuf friendlyByteBuf)
     {
+        friendlyByteBuf.writeUtf(getKey().name());
         friendlyByteBuf.writeInt(endTick);
         friendlyByteBuf.writeInt(currentTick);
+    }
+
+    @Override
+    public TimeMethods getKey()
+    {
+        return TimeMethod.TimeMethods.GAMETIME;
     }
 
     public static GameTime decode(FriendlyByteBuf friendlyByteBuf)

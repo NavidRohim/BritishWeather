@@ -3,6 +3,8 @@ package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
+import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
@@ -14,10 +16,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /*
-* DefaultEntry should be extended but is not abstract as it does have functionality by itself.
-* An "entry" in HudCompass context is something that can be rendered on the compass. Perhaps a pin, objective or waypoint.
-*/
-public class DefaultEntry implements CompassEntry
+ * DefaultEntry should be extended but is not abstract as it does have functionality by itself.
+ * An "entry" in HudCompass context is something that can be rendered on the compass. Perhaps a pin, objective or waypoint.
+ */
+public class DefaultEntry implements TickableAndExpirable, EntryRenderable
 {
     private final Vec3 position; // Position of the entry in-game.
     private final String level; // What dimension the entry was made in.
@@ -32,7 +34,7 @@ public class DefaultEntry implements CompassEntry
 
     public DefaultEntry(Vec3 position, String level, String marker)
     {
-        this(position, level, marker, CompassEntry.OBJECTIVE_MARKER_COLOUR);
+        this(position, level, marker, ColorHelper.OBJECTIVE_MARKER_COLOUR);
     }
 
     public DefaultEntry(Vec3 position, String level, String marker, int colour)
@@ -46,7 +48,8 @@ public class DefaultEntry implements CompassEntry
         {
             // Non-singleton ID is made up of the entries class, then xyz position, then dimension.
             this.entryId = "%s.%s.%s.%s.%s".formatted(this.getClass().getSimpleName(), (int) this.position.x, (int) this.position.y, (int) this.position.z, level);
-        } else {
+        } else
+        {
             // If singleton, it is just the class name so it can be overridden.
             this.entryId = this.getClass().getSimpleName();
         }
@@ -54,6 +57,7 @@ public class DefaultEntry implements CompassEntry
         this.setMarker(marker);
     }
 
+    @Override
     public Vec3 getPosition()
     {
         return position;
@@ -64,9 +68,16 @@ public class DefaultEntry implements CompassEntry
         return level;
     }
 
+    @Override
     public String getMarker()
     {
         return marker;
+    }
+
+    @Override
+    public int getMarkerHalfWidth()
+    {
+        return markerWidthHalf;
     }
 
     public void setMarker(String marker)
@@ -98,13 +109,10 @@ public class DefaultEntry implements CompassEntry
                 guiGraphicsExtractor,
                 mc,
                 player,
-                position,
-                marker,
-                getColour(),
-                markerWidthHalf,
                 shouldShowDistance(),
                 getDebugString(),
-                null
+                false,
+                this
         );
     }
 
@@ -112,66 +120,81 @@ public class DefaultEntry implements CompassEntry
             GuiGraphicsExtractor guiGraphicsExtractor,
             Minecraft mc,
             @NotNull LocalPlayer player,
-            @NotNull Vec3 position,
-            String marker,
-            int colour,
-            int markerWidthHalf,
             boolean shouldShowDistance,
-            String debugString,
-            @Nullable Integer posOnCompass
+            @Nullable String debugString,
+            boolean showAtCenter,
+            EntryRenderable entryRenderable
     )
     {
         Compass compass = Compass.getInstance();
-
         Vec3 playerPos = player.position();
 
         int compassX;
-        if (posOnCompass == null)
+        if (!showAtCenter)
         {
-            double angleFromPosition = MathHelper.angleFromPos(position, playerPos);
+            double angleFromPosition = MathHelper.angleFromPos(entryRenderable.getPosition(), playerPos);
             compassX = compass.util.getCompassScreenX((float) angleFromPosition, false);
-        } else {
-            compassX = compass.compassX + posOnCompass;
+        } else
+        {
+            compassX = compass.compassX;
         }
 
         // Draw entry marker
         //FontHelper.drawEntry(mc, guiGraphicsExtractor, entry.getMarker(), entry.centerRelativeTo(compassX), this.yTextMiddle, entry.getColour(), FontHelper.TextType.NONE);
-        FontHelper.draw(mc, guiGraphicsExtractor, marker, compassX - markerWidthHalf, compass.yTextMiddle, colour, true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, entryRenderable.getMarker(), compassX - entryRenderable.getMarkerHalfWidth(), compass.util.getYRowOnCompass(-1), entryRenderable.getColour(), true, FontHelper.TextType.NONE);
 
         // If in view, render the distance from entry and if the player should go up or down to reach it
         if (shouldShowDistance && !compass.util.isXOutOfBounds(compassX))
         {
-            int distance = MathHelper.getDistance(position, playerPos);
+            int distance = MathHelper.getDistance(entryRenderable.getPosition(), playerPos);
 
             String suffix = "m ";
-            double heightDiff = playerPos.y - position.y;
+            double heightDiff = playerPos.y - entryRenderable.getPosition().y;
             // Both indicators check if the player is within 200 blocks, if not, just ignore.
-            if (distance <= 200 && heightDiff >= 3) // down
+            if (distance <= 200)
             {
-                suffix += "↓";
-            } else if (distance <= 200 && heightDiff <= -3) // up
-            {
-                suffix += "↑";
+                if (heightDiff >= 3) // down
+                {
+                    suffix += "↓";
+                } else if (heightDiff <= -3) // up
+                {
+                    suffix += "↑";
+                } else if ( heightDiff == 0)
+                {
+                    suffix += "-";
+                }
             }
 
             // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
-            if (BritishWeather.getConfig().debug())
+            if (BritishWeather.getConfig().debug() && debugString != null)
             {
-                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.getCenteredXForString(debugString, compassX), compass.yTextMiddle - 10, colour, FontHelper.TextType.NONE);
+                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.getCenteredXForString(debugString, compassX), compass.util.getYRowOnCompass(2), entryRenderable.getColour(), FontHelper.TextType.NONE);
             }
 
             // Draw distance from entry
-            String distanceFromObjective = MathHelper.getDistance(playerPos, position) + suffix;
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compass.util.getCenteredXForString(distanceFromObjective, compassX) + 2, compass.util.getTextLocationY(), colour, FontHelper.TextType.LABEL);
+            String distanceFromObjective = MathHelper.getDistance(playerPos, entryRenderable.getPosition()) + suffix;
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compass.util.getCenteredXForString(distanceFromObjective, compassX) + 2, compass.util.getYRowOnCompass(1), entryRenderable.getColour(), FontHelper.TextType.LABEL);
         }
     }
+
     /*
     If the entry is persistent through game sessions.
     If true, the entry will be stored in an NBT file in the root .minecraft directory, and the filename will be the world folder name.
      */
+    @Override
     public boolean isPersistent()
     {
         return false;
+    }
+
+    public boolean shouldRender()
+    {
+        return true;
+    }
+
+    public boolean shouldShowDistance()
+    {
+        return true;
     }
 
     public final String getId()

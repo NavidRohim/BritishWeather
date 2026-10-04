@@ -12,5 +12,5 @@ public interface PersistentEntryConstructor
     /*
     This should be used in lambda, and return an instance of whatever entry is persistent. See BritishWeather class for more info.
      */
-    DefaultEntry constructEntryWithExtraData(String marker, Vec3 pos, String level, FriendlyByteBuf extraData);
+    DefaultEntry constructEntryWithExtraData(String marker, int colour, Vec3 pos, String level, FriendlyByteBuf extraData);
 }

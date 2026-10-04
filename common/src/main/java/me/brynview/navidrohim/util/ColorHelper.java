@@ -16,6 +16,7 @@ public class ColorHelper {
     public static final int PLAYER = rgb(125, 255, 125, 255);
     public static final int NEUTRAL = rgb(255, 255, 255, 255);
     public static final int HOSTILE = rgb(255, 125, 125, 255);
+    public static final int OBJECTIVE_MARKER_COLOUR = rgb(243, 238, 159, 255);
 
     public static int rgb(int r, int g, int b, int a) {
         return new Color(r, g, b, a).getRGB();

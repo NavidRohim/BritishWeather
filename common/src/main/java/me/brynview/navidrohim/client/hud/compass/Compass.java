@@ -4,6 +4,7 @@ import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
 import me.brynview.navidrohim.client.screen.PinCreationScreen;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -35,12 +36,6 @@ public class Compass
 
     public final class RenderUtils
     {
-
-        public int getTextLocationY()
-        {
-            return yTextMiddle + mc.font.lineHeight + 3;
-        }
-
         public int shiftColourToOpacity(int colour, int opacity)
         {
             return (colour & 0x00FFFFFF) | (opacity << 24);
@@ -128,6 +123,11 @@ public class Compass
             return x <= compassX - compassScaledWidthHalf || x >= compassX + compassScaledWidthHalf;
         }
 
+        public int getYRowOnCompass(int row)
+        {
+            return yTextMiddle + (mc.font.lineHeight * row);
+        }
+
         public static int getCompassX(int screenWidth, int textWidth)
         {
             return (screenWidth - textWidth) / 2;
@@ -173,7 +173,7 @@ public class Compass
         render(graphics, scaledWidth, partialTicks, null, BritishWeather.getConfig().getCompassY());
     }
 
-    public void render(GuiGraphicsExtractor guiGraphics, int scaledWidth, float partialTicks, @Nullable PinCreationScreen dummyEntryProvider, int y)
+    public void render(GuiGraphicsExtractor guiGraphics, int scaledWidth, float partialTicks, @Nullable EntryRenderable dummyEntryProvider, int y)
     {
         final LocalPlayer player = mc.player;
 
@@ -223,7 +223,7 @@ public class Compass
             if (BritishWeather.getConfig().shouldRenderHeading())
             {
                 String friendlyDeg = util.getActualDegreesFromYaw(); // Number from 0 to 360
-                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.getCenteredXForString(friendlyDeg, this.compassX), util.getTextLocationY(), ColorHelper.CENTER_COLOR, false, FontHelper.TextType.LABEL);
+                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.getCenteredXForString(friendlyDeg, this.compassX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false, FontHelper.TextType.LABEL);
             }
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
@@ -303,7 +303,7 @@ public class Compass
     /*
     Draw all entries and entry groups
      */
-    private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player, @Nullable PinCreationScreen dummyProvider)
+    private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player, @Nullable EntryRenderable dummyProvider)
     {
         if (dummyProvider != null)
         {
@@ -311,13 +311,10 @@ public class Compass
                     guiGraphicsExtractor,
                     mc,
                     player,
-                    player.position().add(5, 0, 5),
-                    dummyProvider.getMarker(),
-                    dummyProvider.getColour(),
-                    1,
                     true,
-                    "DEMO",
-                    50
+                    null,
+                    true,
+                    dummyProvider
             );
             return;
         }

@@ -1,10 +1,10 @@
 package me.brynview.navidrohim.client.screen;
 
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.TimedPinEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.time.GameTime;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.Minecraft;
@@ -16,7 +16,6 @@ import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
@@ -26,65 +25,13 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
-public class PinCreationScreen extends Screen
+public class PinCreationScreen extends Screen implements EntryRenderable
 {
-    private final class TimeUnitSelectionList extends ObjectSelectionList<TimeUnitSelectionList.UnitEntry>
+    private static class BaseIntegerEditBox extends EditBox
     {
-        private final class UnitEntry extends Entry<TimeUnitSelectionList.UnitEntry>
-        {
-            private final TimeUnit unit;
-            private final String unitDisplayName;
-
-            private UnitEntry(TimeUnit unit)
-            {
-                this.unit = unit;
-                this.unitDisplayName = unit.name().toLowerCase();
-            }
-
-            @Override
-            public Component getNarration()
-            {
-                return Component.literal(unit.toString());
-            }
-
-            @Override
-            public void extractContent(GuiGraphicsExtractor guiGraphicsExtractor, int i, int i1, boolean b, float v)
-            {
-                guiGraphicsExtractor.centeredText(minecraft.font, this.unitDisplayName, this.getContentXMiddle(), this.getContentYMiddle() - (minecraft.font.lineHeight / 2), ColorHelper.WHITE);
-            }
-
-            @Override
-            public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick)
-            {
-                PinCreationScreen.this.selectedTimeUnit = this.unit;
-                return true;
-            }
-        }
-
-        public TimeUnitSelectionList(Minecraft minecraft, int width, int height, int y, int itemHeight)
-        {
-            super(minecraft, width, height, y, itemHeight);
-
-            for (TimeUnit unit : TimeUnit.values())
-            {
-                this.addEntryToTop(new TimeUnitSelectionList.UnitEntry(unit));
-            }
-        }
-
-        @Override
-        public int getRowWidth()
-        {
-            return width;
-        }
-    }
-
-    private final class IntegerEditBox extends EditBox
-    {
-
-        public IntegerEditBox(Font font, Component narration)
+        public BaseIntegerEditBox(Font font, Component narration)
         {
             super(font, narration);
-            this.setHint(Component.literal("Expire in..."));
         }
 
         @Override
@@ -111,7 +58,22 @@ public class PinCreationScreen extends Screen
         @Nullable
         public Integer getIntValue()
         {
+            String value = getValue();
+            if (value.isEmpty())
+            {
+                return 0;
+            }
             return Integer.valueOf(this.getValue());
+        }
+    }
+
+    private final class IntegerEditBox extends BaseIntegerEditBox
+    {
+
+        public IntegerEditBox(Font font, Component narration)
+        {
+            super(font, narration);
+            this.setHint(Component.literal("Expire in..."));
         }
 
         @Override
@@ -127,15 +89,41 @@ public class PinCreationScreen extends Screen
         }
     }
 
+    private static class ColourEditBox extends BaseIntegerEditBox
+    {
+        private int defaultValue;
+
+        public ColourEditBox(Font font, Component narration, int limit, int defaultValue, String hint)
+        {
+            super(font, narration);
+            this.setMaxLength(limit);
+            this.setHint(Component.literal(hint));
+            this.setValue(String.valueOf(defaultValue));
+
+            this.defaultValue = defaultValue;
+        }
+
+        @Override
+        public @Nullable Integer getIntValue()
+        {
+            Integer v = super.getIntValue();
+            return Math.min(v, this.defaultValue);
+        }
+    }
+
     private final Minecraft mc;
     private final Vec3 pinPosition;
     private final String level;
 
     Checkbox isPersistentCheckbox;
-    TimeUnitSelectionList objectSelectionList;
+    TimeMethod.TimeMethods timeMethod = TimeMethod.TimeMethods.GAMETIME;
     TimeUnit selectedTimeUnit = TimeUnit.HOURS;
+    EditBox markerBox;
 
     IntegerEditBox integerEditBox;
+    ColourEditBox rBox;
+    ColourEditBox gBox;
+    ColourEditBox bBox;
 
     public PinCreationScreen(Minecraft mc, @NotNull LocalPlayer player)
     {
@@ -149,34 +137,64 @@ public class PinCreationScreen extends Screen
     @Override
     protected void init()
     {
-         LinearLayout mainLayout = LinearLayout.horizontal().spacing(7);
+        LinearLayout masterLayout = LinearLayout.horizontal().spacing(7);
+
+        LinearLayout colourLayout = LinearLayout.vertical().spacing(5);
+        LinearLayout timeLayout = LinearLayout.vertical().spacing(5);
+        LinearLayout generalLayout = LinearLayout.vertical().spacing(5);
 
         // Define main layout elements
         this.isPersistentCheckbox = Checkbox.builder(Component.literal("P"), mc.font).build(); // TODO: Replace with JM style
         this.integerEditBox = new IntegerEditBox(mc.font, Component.empty());
-        this.objectSelectionList = new TimeUnitSelectionList(mc, 75, 20, 0, 15);
+
+        this.markerBox = new EditBox(mc.font, Component.empty());
+        this.markerBox.setValue("Pin label..");
+
+        this.rBox = new ColourEditBox(mc.font, Component.empty(), 3, 255, "Red..");
+        this.gBox = new ColourEditBox(mc.font, Component.empty(), 3, 255, "Green..");
+        this.bBox = new ColourEditBox(mc.font, Component.empty(), 3, 255, "Blue..");
+
+        CycleButton<TimeUnit> b = CycleButton.builder((timeUnit -> Component.literal(timeUnit.name())), TimeUnit.HOURS)
+                .withValues(TimeUnit.values())
+                .create(Component.literal("Time"), (_, newTimeUnit) -> this.selectedTimeUnit = newTimeUnit);
+
+        CycleButton<TimeMethod.TimeMethods> timeMethodCycleButton = CycleButton.builder(tu -> Component.literal(tu.getDisplayName()), TimeMethod.TimeMethods.REALTIME)
+                .withValues(TimeMethod.TimeMethods.values())
+                .withTooltip(TimeMethod.TimeMethods::getDescription)
+                .create(Component.literal("Method"), (_, newTimeMethod) -> timeMethod = newTimeMethod);
 
         // Add elements to main layout
-        mainLayout.addChild(this.integerEditBox);
-        mainLayout.addChild(isPersistentCheckbox);
-        mainLayout.addChild(this.objectSelectionList);
+        generalLayout.addChild(this.markerBox);
+        generalLayout.addChild(this.isPersistentCheckbox);
+
+        timeLayout.addChild(this.integerEditBox);
+        timeLayout.addChild(b);
+        timeLayout.addChild(timeMethodCycleButton);
+
+        colourLayout.addChild(this.rBox);
+        colourLayout.addChild(this.gBox);
+        colourLayout.addChild(this.bBox);
+
+        masterLayout.addChild(generalLayout);
+        masterLayout.addChild(timeLayout);
+        masterLayout.addChild(colourLayout);
 
         // Position elements within main layout and render
-        mainLayout.arrangeElements();
-        FrameLayout.centerInRectangle(mainLayout, 0, 0, this.width, this.height / 4);
-        mainLayout.visitWidgets(this::addRenderableWidget);
+        masterLayout.arrangeElements();
+        FrameLayout.centerInRectangle(masterLayout, 0, 0, this.width, this.height / 4);
+        masterLayout.visitWidgets(this::addRenderableWidget);
     }
 
-    private void enterSelection(@Nullable Button ignored)
+    private void enterSelection()
     {
         boolean isPersistent = isPersistent();
         @Nullable Integer expiryTime = this.integerEditBox.getIntValue();
-
         if (expiryTime == null)
         {
             Compass.addEntry(new PinEntry(pinPosition, getMarker(), level, isPersistent, getColour()));
         } else {
-            Compass.addEntry(new TimedPinEntry(pinPosition, level, getMarker(), this.selectedTimeUnit, expiryTime, isPersistent));
+            TimeMethod chosenMethod = timeMethod.createTimeMethod(selectedTimeUnit, expiryTime);
+            Compass.addEntry(new TimedPinEntry(pinPosition, level, getMarker(), chosenMethod, isPersistent, getColour()));
         }
 
         this.onClose();
@@ -187,7 +205,7 @@ public class PinCreationScreen extends Screen
     {
         if (event.keycode() == 13) // Enter key
         {
-            enterSelection(null);
+            enterSelection();
             return true;
         } else {
             return super.keyPressed(event);
@@ -204,7 +222,13 @@ public class PinCreationScreen extends Screen
 
     public String getMarker()
     {
-        return "P";
+        return this.markerBox.getValue();
+    }
+
+    @Override
+    public int getMarkerHalfWidth()
+    {
+        return mc.font.width(getMarker()) / 2;
     }
 
     public boolean isPersistent()
@@ -212,8 +236,14 @@ public class PinCreationScreen extends Screen
         return this.isPersistentCheckbox.selected();
     }
 
+    @Override
+    public Vec3 getPosition()
+    {
+        return pinPosition.add(10, 10, 10);
+    }
+
     public int getColour()
     {
-        return ColorHelper.WHITE;
+        return ColorHelper.rgb(rBox.getIntValue(), gBox.getIntValue(), bBox.getIntValue(),  255);
     }
 }

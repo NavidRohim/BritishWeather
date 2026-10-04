@@ -17,9 +17,9 @@ public abstract class DefaultTimedEntry extends DefaultEntry
 {
     public @NotNull TimeMethod timeMethod;
 
-    public DefaultTimedEntry(Vec3 position, String level, String marker, @NotNull TimeMethod timeMethod)
+    public DefaultTimedEntry(Vec3 position, String level, String marker, @NotNull TimeMethod timeMethod, int colour)
     {
-        super(position, level, marker);
+        super(position, level, marker, colour);
         this.timeMethod = timeMethod;
     }
 

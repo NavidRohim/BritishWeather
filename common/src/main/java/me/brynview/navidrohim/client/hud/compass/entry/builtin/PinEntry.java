@@ -14,17 +14,16 @@ public class PinEntry extends DefaultEntry
     public PinEntry(Vec3 position, String level, String pinIcon, boolean isPersistent, int colour)
     {
         // "P" as the marker is a placeholder.
-        super(position, level, pinIcon);
+        super(position, level, pinIcon, colour);
         this.isPersistent = isPersistent;
-
     }
 
     /*
     Constructor for NBT deserialisation
      */
-    public PinEntry(String s, Vec3 vec3, String level, FriendlyByteBuf extraData)
+    public PinEntry(String s, int colour, Vec3 vec3, String level, FriendlyByteBuf extraData)
     {
-        super(vec3, level, s);
+        super(vec3, level, s, colour);
         this.isPersistent = extraData.readBoolean();
     }
 

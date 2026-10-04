@@ -8,7 +8,6 @@ import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapObjectiveEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.PersistentEntryConstructor;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.CompassEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
 import net.minecraft.client.Minecraft;
@@ -77,13 +76,14 @@ public class PersistentEntriesManager
 
                     // Read values for reconstructing.
                     String marker = friendlyByteBuf.readUtf();
+                    int colour = friendlyByteBuf.readInt();
                     String type = friendlyByteBuf.readUtf(); // Type of entry. This is the name of the entry class. Used as a key to find the correct constructor
                     Vec3 pos = new Vec3(friendlyByteBuf.readVector3f());
                     String level = friendlyByteBuf.readUtf(); // What dimension this entry belongs to (was made in)
 
                     if (CONSTRUCTORS.containsKey(type)) // Check if the entry has a valid deserializer constructor
                     {
-                        Compass.addEntry(CONSTRUCTORS.get(type).constructEntryWithExtraData(marker, pos, level, friendlyByteBuf));
+                        Compass.addEntry(CONSTRUCTORS.get(type).constructEntryWithExtraData(marker, colour, pos, level, friendlyByteBuf));
                     } else {
                         Constants.LOG.error("Marker present in persistence cache does not have a registered constructor! This is perhaps due to a version mismatch. {}", type);
                     }
@@ -129,6 +129,7 @@ public class PersistentEntriesManager
 
             // Write metadata used to reconstruct
             buffer.writeUtf(entry.getMarker());
+            buffer.writeInt(entry.getColour());
             buffer.writeUtf(entry.getClass().getSimpleName());
             buffer.writeVector3f(entry.getPosition().toVector3f());
             buffer.writeUtf(entry.getLevel());
@@ -175,7 +176,7 @@ public class PersistentEntriesManager
          */
         public static void tick(@NotNull LocalPlayer player)
         {
-            PROVIDERS.values().removeIf(CompassEntry::hasExpired);
+            PROVIDERS.values().removeIf(DefaultEntry::hasExpired);
             PROVIDERS.values().forEach((p) -> p.tick(player));
 
             PROVIDER_GROUPS.removeIf(DefaultEntryGroup::hasExpired);
