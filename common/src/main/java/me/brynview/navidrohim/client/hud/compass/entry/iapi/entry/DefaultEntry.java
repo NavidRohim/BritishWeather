@@ -21,6 +21,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public class DefaultEntry implements TickableAndExpirable, EntryRenderable
 {
+    private final static String THINGY = "|";
+
     private final Vec3 position; // Position of the entry in-game.
     private final String level; // What dimension the entry was made in.
     private final String entryId; // Unique entry ID. Not used for anything at the moment.
@@ -127,7 +129,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     )
     {
         Compass compass = Compass.getInstance();
-        Vec3 playerPos = player.position();
+        Vec3 playerPos = compass.getZoomedPosition(player);
 
         int compassX;
         if (!showAtCenter)
@@ -136,11 +138,10 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             compassX = compass.util.getCompassScreenX((float) angleFromPosition, false);
         } else
         {
-            compassX = compass.compassX;
+            compassX = compass.compassX + 50;
         }
 
         // Draw entry marker
-        //FontHelper.drawEntry(mc, guiGraphicsExtractor, entry.getMarker(), entry.centerRelativeTo(compassX), this.yTextMiddle, entry.getColour(), FontHelper.TextType.NONE);
         FontHelper.draw(mc, guiGraphicsExtractor, entryRenderable.getMarker(), compassX - entryRenderable.getMarkerHalfWidth(), compass.util.getYRowOnCompass(-1), entryRenderable.getColour(), true, FontHelper.TextType.NONE);
 
         // If in view, render the distance from entry and if the player should go up or down to reach it
@@ -148,20 +149,20 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         {
             int distance = MathHelper.getDistance(entryRenderable.getPosition(), playerPos);
 
-            String suffix = "m ";
+            String suffix = "m";
             double heightDiff = playerPos.y - entryRenderable.getPosition().y;
             // Both indicators check if the player is within 200 blocks, if not, just ignore.
             if (distance <= 200)
             {
                 if (heightDiff >= 3) // down
                 {
-                    suffix += "↓";
+                    suffix += " ↓";
                 } else if (heightDiff <= -3) // up
                 {
-                    suffix += "↑";
+                    suffix += " ↑";
                 } else if ( heightDiff == 0)
                 {
-                    suffix += "-";
+                    suffix += " -";
                 }
             }
 
@@ -172,8 +173,11 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             }
 
             // Draw distance from entry
-            String distanceFromObjective = MathHelper.getDistance(playerPos, entryRenderable.getPosition()) + suffix;
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, compass.util.getCenteredXForString(distanceFromObjective, compassX) + 2, compass.util.getYRowOnCompass(1), entryRenderable.getColour(), FontHelper.TextType.LABEL);
+            String distanceFromObjective = MathHelper.getDistance(player.position(), entryRenderable.getPosition()) + suffix;
+            int xOnCompass = compass.util.getCenteredXForString(distanceFromObjective, compassX);
+
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), entryRenderable.getColour(), FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, compassX, compass.util.getYRowOnCompass(0), entryRenderable.getColour(), FontHelper.TextType.LABEL);
         }
     }
 

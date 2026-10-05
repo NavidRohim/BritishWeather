@@ -11,14 +11,10 @@ import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.TamableAnimal;
-import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -36,37 +32,6 @@ public class Compass
 
     public final class RenderUtils
     {
-        public int shiftColourToOpacity(int colour, int opacity)
-        {
-            return (colour & 0x00FFFFFF) | (opacity << 24);
-        }
-
-        public int getColourForEntity(LivingEntity entity, @Nullable LocalPlayer owner, int opacity)
-        {
-            switch (entity)
-            {
-                case Player _ ->
-                {
-                    return shiftColourToOpacity(ColorHelper.PLAYER, opacity);
-                }
-                case Monster _ ->
-                {
-                    return shiftColourToOpacity(ColorHelper.HOSTILE, opacity);
-                }
-                case TamableAnimal tamableAnimal ->
-                {
-                    if (tamableAnimal.getOwnerReference() != null && tamableAnimal.getOwnerReference().getUUID().equals(owner.getUUID()))
-                    {
-                        return shiftColourToOpacity(ColorHelper.WHITE, opacity);
-                    }
-                }
-                default ->
-                {
-                }
-            }
-            return shiftColourToOpacity(ColorHelper.NEUTRAL, opacity);
-        }
-
         public String getActualDegreesFromYaw()
         {
             return (Mth.wrapDegrees(yawInt) + 180) % 360 + "°";
@@ -140,9 +105,10 @@ public class Compass
 
     // Math constants used for rendering
     private static final double EXPAND_INFLATE_WITH_FOV_CONST = 0.119; // value at lowest fov (30): 3.477 blocks value at highest (110): 13.07
-    private static final int SCALE_MAX = 255; // Max value of what the entity distance scale should be (entity further away = lower, closer = higher)
     private static final int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
     private static final int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
+    private static final int ZOOM_ALERT_DURATION = 40;
+
     private static Compass INSTANCE;
 
     // Non-final general variables
@@ -152,10 +118,12 @@ public class Compass
     // Used to call tick methods like endTick and startTick
     private boolean shouldStartTick = false;
 
-
     // Yaw at the current render pass
     private float yaw;
     private int yawInt;
+
+    private int zoomAlertTick = 0;
+    private int zoomAmount = 0;
 
     // Compass width scaled with the compass size config value
     private int compassScaledWidth;
@@ -163,6 +131,9 @@ public class Compass
 
     // x coordinate of the compass. Can change due to scaling
     public int compassX;
+    private int farLeftX;
+    private int farRightX;
+
     public int yTextMiddle;
 
     public Minecraft mc;
@@ -191,6 +162,9 @@ public class Compass
 
         this.compassScaledWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) scaledWidth); // All these float are dumb
         this.compassScaledWidthHalf = compassScaledWidth / 2;
+
+        this.farLeftX = compassX - compassScaledWidthHalf;
+        this.farRightX = compassX + compassScaledWidthHalf;
 
         this.yaw = (!player.isPassenger() ?
                 Mth.lerp(partialTicks, player.yRotO, player.getYRot())
@@ -232,6 +206,7 @@ public class Compass
         {
             // Draw entry groups and entries.
             drawEntries(guiGraphics, player, dummyEntryProvider);
+            drawZoomLevel(guiGraphics, ColorHelper.WHITE);
             shouldStartTick = false;
         }
 
@@ -242,10 +217,8 @@ public class Compass
     private void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, int y)
     {
         // End of the compass on far left
-        int farLeftX = this.compassX - this.compassScaledWidthHalf;
 
         // End of the compass on far right
-        int farRightX = this.compassX + this.compassScaledWidthHalf;
 
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
 
@@ -254,9 +227,23 @@ public class Compass
         guiGraphicsExtractor.horizontalLine(farLeftX + 1, farRightX, y - 1, ColorHelper.COMPASS_BG_COLOR);
         guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
 
+        if (zoomAlertTick > 0)
+        {
+            int opacity = ColorHelper.getOpacity(ZOOM_ALERT_DURATION, zoomAlertTick, false);
+            int colourShiftOpacityWhite = ColorHelper.shiftColourToOpacity(ColorHelper.WHITE, opacity);
+
+            drawZoomLevel(guiGraphicsExtractor, colourShiftOpacityWhite);
+        }
+
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
         FontHelper.draw(mc, guiGraphicsExtractor, ">", farLeftX - 3, y - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
         FontHelper.draw(mc, guiGraphicsExtractor, "<", farRightX, y - mc.font.lineHeight / 2, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
+    }
+
+    private void drawZoomLevel(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
+    {
+        String amount = String.valueOf(zoomAmount);
+        FontHelper.draw(mc, guiGraphicsExtractor, amount, farLeftX - (13 + mc.font.width(amount) / 2), yTextMiddle, colour, true, FontHelper.TextType.VALUE);
     }
 
     private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks)
@@ -280,8 +267,8 @@ public class Compass
                     // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
                     int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
                     // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
-                    int iconScale = Math.abs(SCALE_MAX - (SCALE_MAX / DETECTION_DISTANCE * distanceFromEntity));
-                    int livingEntity = util.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
+                    int iconScale = ColorHelper.getOpacity(DETECTION_DISTANCE, distanceFromEntity, true);
+                    int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
 
                     // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
                     int ex = util.getCompassScreenX((float) angleFromEntity);
@@ -339,6 +326,38 @@ public class Compass
         }
     }
 
+    public Vec3 getZoomedPosition(@NotNull LocalPlayer player)
+    {
+        if (zoomAmount == 0)
+        {
+            return player.position();
+        }
+
+        int multiplier = 250 * zoomAmount;
+        Vec3 currentPlayerPos = player.position();
+
+        return currentPlayerPos.add(player.getViewVector(0).scale(multiplier));
+    }
+
+    public void displayZoom(int zoomIncrease)
+    {
+        int newZoomAmount = zoomAmount + zoomIncrease;
+
+        if (newZoomAmount <= -1)
+        {
+            return;
+        }
+
+        zoomAmount = newZoomAmount;
+        zoomAlertTick = Compass.ZOOM_ALERT_DURATION;
+
+    }
+
+    private void tick()
+    {
+        zoomAlertTick--;
+    }
+
     // Static methods
 
     public static Compass init()
@@ -370,6 +389,9 @@ public class Compass
 
     public static void tick(@NotNull LocalPlayer player)
     {
+        Compass compass = getInstance();
+
         PersistentEntriesManager.ProviderRegistry.tick(player);
+        compass.tick();
     }
 }

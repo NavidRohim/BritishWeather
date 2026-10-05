@@ -7,9 +7,10 @@
     "server.AnimalAiMixin"
   ],
   "client": [
-    "client.DeathScreenMixin",
     "client.ClientLevelMixin",
+    "client.DeathScreenMixin",
     "client.HudMixin",
+    "client.MouseMixin",
     "client.WeatherEffectRendererMixin"
   ],
   "server": [],

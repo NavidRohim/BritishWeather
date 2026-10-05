@@ -8,13 +8,13 @@ import me.brynview.navidrohim.client.screen.PinCreationScreen;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 public class ClientCommon
 {
     public static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "keybinds"));
+
     public static final KeyMapping PROVIDER = new KeyMapping(
             "br.keybind.showProviders", // The translation key for the key mapping.
             InputConstants.KEY_LALT, // The keycode of the key.
@@ -24,6 +24,12 @@ public class ClientCommon
     public static final KeyMapping DEBUG_ON_PRESS = new KeyMapping(
             "br.keybind.debug",
             InputConstants.KEY_COMMA,
+            CATEGORY
+    );
+
+    public static final KeyMapping ZOOM_MODIFIER = new KeyMapping(
+            "br.keybind.zoom_modifier",
+            InputConstants.KEY_LSHIFT,
             CATEGORY
     );
 

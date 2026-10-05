@@ -44,5 +44,8 @@
   "br.keybind.showProviders": "Show compass objectives",
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
-  "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline."
+  "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline.",
+  "br.pin_creation_screen.persistent_checkbox.selected.tooltip": "Persistent",
+  "br.pin_creation_screen.persistent_checkbox.unselected.tooltip": "Non-persistent"
+
 }

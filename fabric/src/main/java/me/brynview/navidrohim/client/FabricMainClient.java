@@ -1,15 +1,17 @@
 package me.brynview.navidrohim.client;
 
-import me.brynview.navidrohim.client.keybinds.ModKeybinds;
 import me.brynview.navidrohim.client.particle.HailParticle;
 import me.brynview.navidrohim.client.particle.ModParticles;
 import me.brynview.navidrohim.common.WeatherUpdatePacket;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
+import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
@@ -37,7 +39,15 @@ public class FabricMainClient implements ClientModInitializer
             ClientCommon.tickClient(player);
         });
 
-        ModKeybinds.init();
+        initKeybinds();
+
         ClientCommon.init();
+    }
+
+    private void initKeybinds()
+    {
+        KeyMappingHelper.registerKeyMapping(ClientCommon.PROVIDER);
+        KeyMappingHelper.registerKeyMapping(ClientCommon.DEBUG_ON_PRESS);
+        KeyMappingHelper.registerKeyMapping(ClientCommon.ZOOM_MODIFIER);
     }
 }

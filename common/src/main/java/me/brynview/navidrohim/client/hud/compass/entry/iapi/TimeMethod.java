@@ -38,8 +38,8 @@ public interface TimeMethod
 
     enum TimeMethods
     {
-        REALTIME("Real time", RealTime::new, RealTime::decode),
-        GAMETIME("Game time", GameTime::new, GameTime::decode);
+        REALTIME("real time", RealTime::new, RealTime::decode),
+        GAMETIME("game time", GameTime::new, GameTime::decode);
 
         private final String displayString;
         private final BiFunction<TimeUnit, Integer, TimeMethod> supplier;

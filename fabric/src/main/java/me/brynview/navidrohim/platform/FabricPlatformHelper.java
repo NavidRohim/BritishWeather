@@ -1,6 +1,5 @@
 package me.brynview.navidrohim.platform;
 
-import me.brynview.navidrohim.client.keybinds.ModKeybinds;
 import me.brynview.navidrohim.platform.services.IPlatformHelper;
 import net.fabricmc.loader.api.FabricLoader;
 
