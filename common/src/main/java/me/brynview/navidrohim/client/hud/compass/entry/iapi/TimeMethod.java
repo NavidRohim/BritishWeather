@@ -41,9 +41,9 @@ public interface TimeMethod
         REALTIME("Real time", RealTime::new, RealTime::decode),
         GAMETIME("Game time", GameTime::new, GameTime::decode);
 
-        private String displayString;
-        private BiFunction<TimeUnit, Integer, TimeMethod> supplier;
-        private Function<FriendlyByteBuf, TimeMethod> bufferDecoder;
+        private final String displayString;
+        private final BiFunction<TimeUnit, Integer, TimeMethod> supplier;
+        private final Function<FriendlyByteBuf, TimeMethod> bufferDecoder;
 
         TimeMethods(String displayName, BiFunction<TimeUnit, Integer, TimeMethod> timeMethodSupplier, Function<FriendlyByteBuf, TimeMethod> fromBuffer)
         {

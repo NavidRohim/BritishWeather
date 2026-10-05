@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.client.screen;
 
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.TimedPinEntry;
@@ -158,7 +159,7 @@ public class PinCreationScreen extends Screen implements EntryRenderable
                 .withValues(TimeUnit.values())
                 .create(Component.literal("Time"), (_, newTimeUnit) -> this.selectedTimeUnit = newTimeUnit);
 
-        CycleButton<TimeMethod.TimeMethods> timeMethodCycleButton = CycleButton.builder(tu -> Component.literal(tu.getDisplayName()), TimeMethod.TimeMethods.REALTIME)
+        CycleButton<TimeMethod.TimeMethods> timeMethodCycleButton = CycleButton.builder(tu -> Component.literal(tu.getDisplayName()), timeMethod)
                 .withValues(TimeMethod.TimeMethods.values())
                 .withTooltip(TimeMethod.TimeMethods::getDescription)
                 .create(Component.literal("Method"), (_, newTimeMethod) -> timeMethod = newTimeMethod);
