@@ -10,8 +10,6 @@ import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
@@ -46,8 +44,12 @@ public class FabricMainClient implements ClientModInitializer
 
     private void initKeybinds()
     {
-        KeyMappingHelper.registerKeyMapping(ClientCommon.PROVIDER);
-        KeyMappingHelper.registerKeyMapping(ClientCommon.DEBUG_ON_PRESS);
-        KeyMappingHelper.registerKeyMapping(ClientCommon.ZOOM_MODIFIER);
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.DEBUG_ON_PRESS);
+
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.ENTRY_HUD_KEY);
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.ZOOM_MODIFIER);
+
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.DELETION);
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.CREATE);
     }
 }

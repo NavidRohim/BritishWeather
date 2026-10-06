@@ -33,6 +33,8 @@
   "br.config.category.compass.compassY.description": "Set the compass Y. Lower is higher in the window, higher is lower.",
   "br.config.category.compass.shouldRenderHeading": "Should show heading",
   "br.config.category.compass.shouldRenderHeading.description": "If the current heading in degrees should be shown under the lubber line.",
+  "br.config.category.compass.shouldShowEntities": "Should show entities on compass",
+  "br.config.category.compass.shouldShowEntities.description": "If entities should be shown on the compass.",
 
   "br.config.no_config": "YACL is not installed!",
   "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?",
@@ -41,10 +43,15 @@
   "br.command.brweather.message_no_location": "Weather is currently %s",
 
   "key.category.britishweather.keybinds": "British Weather",
-  "br.keybind.showProviders": "Show compass objectives",
+  "br.keybind.showPins": "Show compass pins",
+  "br.keybind.debug": "Debug",
+  "br.keybind.delete_pin": "Delete pin (use with SCP)",
+  "br.keybind.create_pin": "Create pin (use with SCP)",
+  "br.keybind.zoom_modifier": "Zoom modifier (scroll)",
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
   "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline.",
+
   "br.pin_creation_screen.persistent_checkbox.selected.tooltip": "Persistent",
   "br.pin_creation_screen.persistent_checkbox.unselected.tooltip": "Non-persistent"
 

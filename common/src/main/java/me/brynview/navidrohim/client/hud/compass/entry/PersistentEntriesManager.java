@@ -203,6 +203,11 @@ public class PersistentEntriesManager
             }
         }
 
+        public static void removeEntry(DefaultEntry highlightedEntry)
+        {
+            PROVIDERS.remove(highlightedEntry.getId());
+        }
+
         /*
         Adds an entry group
          */

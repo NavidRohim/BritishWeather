@@ -27,6 +27,8 @@ public interface CommonConfig
 
     boolean shouldRenderHeading();
 
+    boolean shouldShowEntitiesOnCompass();
+
     int getCompassSize();
 
     int getCompassY();

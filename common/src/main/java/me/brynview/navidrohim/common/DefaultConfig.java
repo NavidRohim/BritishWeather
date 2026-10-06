@@ -78,6 +78,12 @@ public class DefaultConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldShowEntitiesOnCompass()
+    {
+        return Constants.DefaultConfigValues.shouldShowEntitiesOnCompass;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return Constants.DefaultConfigValues.compassSize;

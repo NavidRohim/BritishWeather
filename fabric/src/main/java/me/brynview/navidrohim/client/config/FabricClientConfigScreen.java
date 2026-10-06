@@ -119,6 +119,13 @@ public class FabricClientConfigScreen
                                 .controller(TickBoxControllerBuilder::create)
                                 .build()
                         )
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.shouldShowEntities"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.showEntities.description")))
+                                .binding(FabricConfigSerializer.shouldShowEntitiesOnCompass, () -> FabricConfigSerializer.shouldShowEntitiesOnCompass, (bool) -> FabricConfigSerializer.shouldShowEntitiesOnCompass = bool)
+                                .controller(TickBoxControllerBuilder::create)
+                                .build()
+                        )
                         .option(Option.<Integer>createBuilder() // Compass width. Percentage of screen width
                                 .name(Component.translatable("br.config.category.compass.size"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.compass.size.description")))

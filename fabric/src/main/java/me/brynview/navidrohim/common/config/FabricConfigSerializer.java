@@ -47,8 +47,9 @@ public class FabricConfigSerializer
     @SerialEntry
     public static boolean shouldRenderHeading = Constants.DefaultConfigValues.shouldRenderHeading;
     @SerialEntry
+    public static boolean shouldShowEntitiesOnCompass = Constants.DefaultConfigValues.shouldShowEntitiesOnCompass;
+    @SerialEntry
     public static int compassSize = Constants.DefaultConfigValues.compassSize;
     @SerialEntry
     public static int compassY = Constants.DefaultConfigValues.compassY;
-
 }

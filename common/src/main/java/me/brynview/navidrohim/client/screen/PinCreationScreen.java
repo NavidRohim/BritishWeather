@@ -264,4 +264,10 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     {
         return ColorHelper.rgb(rBox.getIntValue(), gBox.getIntValue(), bBox.getIntValue(),  255);
     }
+
+    @Override
+    public int getHighlightColour()
+    {
+        return 0;
+    }
 }

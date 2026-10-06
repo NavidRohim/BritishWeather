@@ -33,6 +33,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     private int markerWidthHalf; // The markers width halved.
 
     protected int colour;
+    protected int highlightColour;
 
     public DefaultEntry(Vec3 position, String level, String marker)
     {
@@ -44,7 +45,6 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         this.mc = Minecraft.getInstance();
         this.level = level;
         this.position = position;
-        this.colour = colour;
 
         if (!(this instanceof Singleton))
         {
@@ -56,6 +56,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             this.entryId = this.getClass().getSimpleName();
         }
 
+        this.setColour(colour);
         this.setMarker(marker);
     }
 
@@ -94,12 +95,24 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         return colour;
     }
 
-    public final void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick)
+    public void setColour(int colour)
+    {
+        this.colour = colour;
+        this.highlightColour = ColorHelper.shiftColourToOpacity(colour, 127);
+    }
+
+    @Override
+    public int getHighlightColour()
+    {
+        return highlightColour;
+    }
+
+    public final boolean draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
         if (!shouldRender() || !level.equals(player.level().dimension().identifier().toString()))
         {
-            return;
+            return false;
         }
 
         if (shouldStartTick)
@@ -107,7 +120,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             startTick(player);
         }
 
-        DefaultEntry.drawRawEntry(
+        return DefaultEntry.drawRawEntry(
                 guiGraphicsExtractor,
                 mc,
                 player,
@@ -118,7 +131,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         );
     }
 
-    public static void drawRawEntry(
+    public static boolean drawRawEntry(
             GuiGraphicsExtractor guiGraphicsExtractor,
             Minecraft mc,
             @NotNull LocalPlayer player,
@@ -131,6 +144,9 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         Compass compass = Compass.getInstance();
         Vec3 playerPos = compass.getZoomedPosition(player);
 
+        boolean didSetHighlighted = false;
+        int colour = entryRenderable.getColour();
+
         int compassX;
         if (!showAtCenter)
         {
@@ -141,8 +157,19 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             compassX = compass.compassX + 50;
         }
 
+        if (entryRenderable instanceof DefaultEntry &&
+            compassX <= compass.compassX + 10 &&
+            compassX >= compass.compassX - 10)
+        {
+            didSetHighlighted = compass.setHighlighted((DefaultEntry) entryRenderable);
+            if (didSetHighlighted)
+            {
+                colour = entryRenderable.getHighlightColour();
+            }
+        }
+
         // Draw entry marker
-        FontHelper.draw(mc, guiGraphicsExtractor, entryRenderable.getMarker(), compassX - entryRenderable.getMarkerHalfWidth(), compass.util.getYRowOnCompass(-1), entryRenderable.getColour(), true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, entryRenderable.getMarker(), compassX - entryRenderable.getMarkerHalfWidth(), compass.util.getYRowOnCompass(-1), colour, true, FontHelper.TextType.NONE);
 
         // If in view, render the distance from entry and if the player should go up or down to reach it
         if (shouldShowDistance && !compass.util.isXOutOfBounds(compassX))
@@ -169,16 +196,18 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
             if (BritishWeather.getConfig().debug() && debugString != null)
             {
-                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.getCenteredXForString(debugString, compassX), compass.util.getYRowOnCompass(2), entryRenderable.getColour(), FontHelper.TextType.NONE);
+                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.getCenteredXForString(debugString, compassX), compass.util.getYRowOnCompass(2), colour, FontHelper.TextType.NONE);
             }
 
             // Draw distance from entry
             String distanceFromObjective = MathHelper.getDistance(player.position(), entryRenderable.getPosition()) + suffix;
             int xOnCompass = compass.util.getCenteredXForString(distanceFromObjective, compassX);
 
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), entryRenderable.getColour(), FontHelper.TextType.LABEL);
-            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, compassX, compass.util.getYRowOnCompass(0), entryRenderable.getColour(), FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, compassX, compass.util.getYRowOnCompass(0), colour, FontHelper.TextType.LABEL);
         }
+
+        return didSetHighlighted;
     }
 
     /*

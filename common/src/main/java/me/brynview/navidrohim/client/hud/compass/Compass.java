@@ -1,7 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.client.ClientCommon;
+import me.brynview.navidrohim.client.ClientKeybinds;
 import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
@@ -117,7 +117,7 @@ public class Compass
     // Set to false on the first render pass when the entry HUD disappears.
     // Used to call tick methods like endTick and startTick
     private boolean shouldStartTick = false;
-
+    private boolean isHoldingRemovalKey = false;
     // Yaw at the current render pass
     private float yaw;
     private int yawInt;
@@ -135,9 +135,32 @@ public class Compass
     private int farRightX;
 
     public int yTextMiddle;
+    public int yMiddle;
 
     public Minecraft mc;
     public RenderUtils util;
+    private @Nullable DefaultEntry highlightedEntry;
+
+    private void calculateDimensions(int scaledWidth, int y, float partialTicks, @NotNull LocalPlayer player)
+    {
+        // uncomment this if something weird happens in pause menu
+        //final float partialTicks = mc.isPaused() ? 0 : _partialTicks;
+        this.compassX = RenderUtils.getCompassX(scaledWidth, mc.font.width(COMPASS_HEADING));
+
+        this.yMiddle = (y + mc.font.lineHeight - 1) / 2;
+        this.yTextMiddle = yMiddle - mc.font.lineHeight / 2;
+
+        this.compassScaledWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) scaledWidth); // All these float are dumb
+        this.compassScaledWidthHalf = compassScaledWidth / 2;
+
+        this.farLeftX = compassX - compassScaledWidthHalf;
+        this.farRightX = compassX + compassScaledWidthHalf;
+
+        this.yaw = (!player.isPassenger() ?
+                Mth.lerp(partialTicks, player.yRotO, player.getYRot())
+                : player.getYRot()) % 360;
+        this.yawInt = (int) yaw;
+    }
 
     public void render(GuiGraphicsExtractor graphics, int scaledWidth, float partialTicks)
     {
@@ -153,29 +176,15 @@ public class Compass
         {
             return;
         }
-        // uncomment this if something weird happens in pause menu
-        //final float partialTicks = mc.isPaused() ? 0 : _partialTicks;
-        this.compassX = RenderUtils.getCompassX(scaledWidth, mc.font.width(COMPASS_HEADING));
 
-        final int yMiddle = (y + mc.font.lineHeight - 1) / 2;
-        this.yTextMiddle = yMiddle - mc.font.lineHeight / 2;
-
-        this.compassScaledWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) scaledWidth); // All these float are dumb
-        this.compassScaledWidthHalf = compassScaledWidth / 2;
-
-        this.farLeftX = compassX - compassScaledWidthHalf;
-        this.farRightX = compassX + compassScaledWidthHalf;
-
-        this.yaw = (!player.isPassenger() ?
-                Mth.lerp(partialTicks, player.yRotO, player.getYRot())
-                : player.getYRot()) % 360;
-        this.yawInt = (int) yaw;
+        // Calculate compass dimensions
+        calculateDimensions(scaledWidth, y, partialTicks, player);
 
         // Compass background
         drawBackground(guiGraphics, mc, yMiddle);
 
         // Check if the entry HUD key is pressed.
-        if (!ClientCommon.PROVIDER.isDown() && dummyEntryProvider == null)
+        if (!ClientKeybinds.ENTRY_HUD_KEY.isDown() && dummyEntryProvider == null)
         {
             // Will be true on the first render pass after entry HUD disappears.
             if (!shouldStartTick)
@@ -185,7 +194,10 @@ public class Compass
             }
 
             // Draw all living entities
-            drawEntities(player, guiGraphics, partialTicks);
+            if (BritishWeather.getConfig().shouldShowEntitiesOnCompass())
+            {
+                drawEntities(player, guiGraphics, partialTicks);
+            }
 
             // Render N/E/S/W
             drawCardinal(guiGraphics, 0,  "S");
@@ -222,8 +234,6 @@ public class Compass
 
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
 
-        //int brightnessChange = Math.abs(SCALE_MAX - (SCALE_MAX / 10 * rawBrightness));
-        //Constants.LOG.info(String.valueOf(brightnessChange));
         guiGraphicsExtractor.horizontalLine(farLeftX + 1, farRightX, y - 1, ColorHelper.COMPASS_BG_COLOR);
         guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
 
@@ -242,8 +252,8 @@ public class Compass
 
     private void drawZoomLevel(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
     {
-        String amount = String.valueOf(zoomAmount);
-        FontHelper.draw(mc, guiGraphicsExtractor, amount, farLeftX - (13 + mc.font.width(amount) / 2), yTextMiddle, colour, true, FontHelper.TextType.VALUE);
+        String amount = "Zoom: " + zoomAmount;
+        FontHelper.draw(mc, guiGraphicsExtractor, amount, farLeftX - (mc.font.width(amount) + 5), yTextMiddle, colour, true, FontHelper.TextType.VALUE);
     }
 
     private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks)
@@ -292,6 +302,8 @@ public class Compass
      */
     private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player, @Nullable EntryRenderable dummyProvider)
     {
+        boolean didHighlight = false;
+
         if (dummyProvider != null)
         {
             DefaultEntry.drawRawEntry(
@@ -309,8 +321,18 @@ public class Compass
         // Draw normal entries.
         for (DefaultEntry entry : PersistentEntriesManager.ProviderRegistry.getEntries())
         {
-            entry.draw(guiGraphicsExtractor, player, shouldStartTick);
+            boolean highlighted = entry.draw(guiGraphicsExtractor, player, shouldStartTick);
+            if (!didHighlight)
+            {
+                didHighlight = highlighted;
+            }
         }
+
+        if (!didHighlight)
+        {
+            highlightedEntry = null;
+        }
+
 
         // Draw entries inside of entry groups.
         for (DefaultEntryGroup group : PersistentEntriesManager.ProviderRegistry.PROVIDER_GROUPS)
@@ -324,6 +346,16 @@ public class Compass
                 groupEntry.draw(guiGraphicsExtractor, player, shouldStartTick);
             });
         }
+    }
+
+    public boolean setHighlighted(DefaultEntry entry)
+    {
+        if (highlightedEntry == null || highlightedEntry == entry)
+        {
+            this.highlightedEntry = entry;
+            return true;
+        }
+        return false;
     }
 
     public Vec3 getZoomedPosition(@NotNull LocalPlayer player)
@@ -356,6 +388,18 @@ public class Compass
     private void tick()
     {
         zoomAlertTick--;
+
+        if (ClientKeybinds.ENTRY_HUD_KEY.isDown() && ClientKeybinds.DELETION.isDown())
+        {
+            if (highlightedEntry != null && !this.isHoldingRemovalKey)
+            {
+                PersistentEntriesManager.ProviderRegistry.removeEntry(this.highlightedEntry);
+                this.highlightedEntry = null;
+                this.isHoldingRemovalKey = true;
+            }
+        } else {
+            this.isHoldingRemovalKey = false;
+        }
     }
 
     // Static methods

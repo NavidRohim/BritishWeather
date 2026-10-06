@@ -68,6 +68,12 @@ public class FabricConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldShowEntitiesOnCompass()
+    {
+        return FabricConfigSerializer.shouldShowEntitiesOnCompass;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return FabricConfigSerializer.compassSize;

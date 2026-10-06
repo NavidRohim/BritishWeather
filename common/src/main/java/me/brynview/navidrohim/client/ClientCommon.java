@@ -1,38 +1,14 @@
 package me.brynview.navidrohim.client;
 
-import com.mojang.blaze3d.platform.InputConstants;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
 import me.brynview.navidrohim.client.screen.PinCreationScreen;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.NotNull;
 
 public class ClientCommon
 {
-    public static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "keybinds"));
-
-    public static final KeyMapping PROVIDER = new KeyMapping(
-            "br.keybind.showProviders", // The translation key for the key mapping.
-            InputConstants.KEY_LALT, // The keycode of the key.
-            CATEGORY // The category of the mapping.
-    );
-
-    public static final KeyMapping DEBUG_ON_PRESS = new KeyMapping(
-            "br.keybind.debug",
-            InputConstants.KEY_COMMA,
-            CATEGORY
-    );
-
-    public static final KeyMapping ZOOM_MODIFIER = new KeyMapping(
-            "br.keybind.zoom_modifier",
-            InputConstants.KEY_LSHIFT,
-            CATEGORY
-    );
-
     private static ClientWeatherManager WEATHER_MANAGER;
     public static Compass compass;
 
@@ -51,7 +27,7 @@ public class ClientCommon
     {
         Compass.tick(player);
 
-        if (DEBUG_ON_PRESS.isDown())
+        if (ClientKeybinds.ENTRY_HUD_KEY.isDown() && ClientKeybinds.CREATE.isDown())
         {
             Minecraft mc = Minecraft.getInstance();
             mc.setScreenAndShow(new PinCreationScreen(mc, player));

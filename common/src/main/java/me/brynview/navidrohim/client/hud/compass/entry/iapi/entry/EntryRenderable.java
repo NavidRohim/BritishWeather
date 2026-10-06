@@ -10,6 +10,8 @@ public interface EntryRenderable
 
     int getColour();
 
+    int getHighlightColour();
+
     boolean isPersistent();
 
     Vec3 getPosition();
