@@ -107,7 +107,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         return highlightColour;
     }
 
-    public final boolean draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick)
+    public final boolean draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, int entryX, int colour)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
         if (!shouldRender() || !level.equals(player.level().dimension().identifier().toString()))
@@ -120,14 +120,18 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             startTick(player);
         }
 
+        Compass compass = Compass.getInstance();
         return DefaultEntry.drawRawEntry(
                 guiGraphicsExtractor,
                 mc,
                 player,
+                compass,
                 shouldShowDistance(),
                 getDebugString(),
                 false,
-                this
+                this,
+                entryX,
+                colour
         );
     }
 
@@ -135,38 +139,18 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             GuiGraphicsExtractor guiGraphicsExtractor,
             Minecraft mc,
             @NotNull LocalPlayer player,
+            @NotNull Compass compass,
             boolean shouldShowDistance,
             @Nullable String debugString,
             boolean showAtCenter,
-            EntryRenderable entryRenderable
+            EntryRenderable entryRenderable,
+            int x,
+            int colour
     )
     {
-        Compass compass = Compass.getInstance();
-        Vec3 playerPos = compass.getZoomedPosition(player);
-
+        Vec3 playerPos = player.position();
         boolean didSetHighlighted = false;
-        int colour = entryRenderable.getColour();
-
-        int compassX;
-        if (!showAtCenter)
-        {
-            double angleFromPosition = MathHelper.angleFromPos(entryRenderable.getPosition(), playerPos);
-            compassX = compass.util.getCompassScreenX((float) angleFromPosition, false);
-        } else
-        {
-            compassX = compass.compassX + 50;
-        }
-
-        if (entryRenderable instanceof DefaultEntry &&
-            compassX <= compass.compassX + 10 &&
-            compassX >= compass.compassX - 10)
-        {
-            didSetHighlighted = compass.setHighlighted((DefaultEntry) entryRenderable);
-            if (didSetHighlighted)
-            {
-                colour = entryRenderable.getHighlightColour();
-            }
-        }
+        int compassX = showAtCenter ? compass.compassX + 50 : x;
 
         // Draw entry marker
         FontHelper.draw(mc, guiGraphicsExtractor, entryRenderable.getMarker(), compassX - entryRenderable.getMarkerHalfWidth(), compass.util.getYRowOnCompass(-1), colour, true, FontHelper.TextType.NONE);
@@ -187,7 +171,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
                 } else if (heightDiff <= -3) // up
                 {
                     suffix += " ↑";
-                } else if ( heightDiff == 0)
+                } else if (heightDiff == 0)
                 {
                     suffix += " -";
                 }
@@ -200,7 +184,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             }
 
             // Draw distance from entry
-            String distanceFromObjective = MathHelper.getDistance(player.position(), entryRenderable.getPosition()) + suffix;
+            String distanceFromObjective = MathHelper.getDistance(playerPos, entryRenderable.getPosition()) + suffix;
             int xOnCompass = compass.util.getCenteredXForString(distanceFromObjective, compassX);
 
             FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);

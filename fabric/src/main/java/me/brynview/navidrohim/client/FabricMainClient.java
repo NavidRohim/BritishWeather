@@ -51,5 +51,8 @@ public class FabricMainClient implements ClientModInitializer
 
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.DELETION);
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.CREATE);
+
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.LEFT_SNAP);
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.RIGHT_SNAP);
     }
 }

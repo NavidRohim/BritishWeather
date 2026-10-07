@@ -38,4 +38,16 @@ public class ClientKeybinds
             InputConstants.KEY_N,
             CATEGORY
     );
+
+    public static final KeyMapping LEFT_SNAP = new KeyMapping(
+            "br.keybind.snap_left",
+            InputConstants.KEYCODE_RIGHT,
+            CATEGORY
+    );
+
+    public static final KeyMapping RIGHT_SNAP = new KeyMapping(
+            "br.keybind.snap_right",
+            InputConstants.KEYCODE_RIGHT,
+            CATEGORY
+    );
 }

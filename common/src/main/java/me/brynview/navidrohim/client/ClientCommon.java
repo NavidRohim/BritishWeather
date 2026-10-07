@@ -1,16 +1,21 @@
 package me.brynview.navidrohim.client;
 
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
 import me.brynview.navidrohim.client.screen.PinCreationScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.Identifier;
+import net.minecraft.sounds.SoundEvent;
 import org.jetbrains.annotations.NotNull;
 
 public class ClientCommon
 {
     private static ClientWeatherManager WEATHER_MANAGER;
     public static Compass compass;
+
+    public static final SoundEvent SCROLL = SoundEvent.createVariableRangeEvent(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "scroll"));
 
     public static void init()
     {

@@ -43,11 +43,13 @@
   "br.command.brweather.message_no_location": "Weather is currently %s",
 
   "key.category.britishweather.keybinds": "British Weather",
-  "br.keybind.showPins": "Show compass pins",
+  "br.keybind.showPins": "Show compass pins (SCP)",
   "br.keybind.debug": "Debug",
   "br.keybind.delete_pin": "Delete pin (use with SCP)",
   "br.keybind.create_pin": "Create pin (use with SCP)",
   "br.keybind.zoom_modifier": "Zoom modifier (scroll)",
+  "br.keybind.snap_right": "Snap next pin",
+  "br.keybind.snap_left": "Snap last pin",
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
   "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline.",
