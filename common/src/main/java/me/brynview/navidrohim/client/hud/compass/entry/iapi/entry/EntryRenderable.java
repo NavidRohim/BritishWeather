@@ -19,4 +19,6 @@ public interface EntryRenderable
     boolean isPersistent();
 
     Vec3 getPosition();
+
+    boolean shouldShowDistance();
 }

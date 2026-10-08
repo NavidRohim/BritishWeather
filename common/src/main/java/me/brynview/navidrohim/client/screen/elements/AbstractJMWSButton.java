@@ -15,7 +15,7 @@ public abstract class AbstractJMWSButton extends Button
 {
     private static final Identifier BUTTON_BG = Identifier.fromNamespaceAndPath(Constants.MOD_ID, "button_bg");
     protected boolean isHeld = false;
-    private boolean isEnabled = true;
+    private final boolean isEnabled = true;
 
     protected AbstractJMWSButton(int x, int y, int width, int height, Component message, OnPress onPress, CreateNarration createNarration) {
         super(x, y, width, height, message, onPress, createNarration);

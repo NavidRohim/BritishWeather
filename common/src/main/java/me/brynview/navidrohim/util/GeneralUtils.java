@@ -12,7 +12,6 @@ import org.joml.Vector2i;
 public class GeneralUtils
 {
     private static double cMouse = 0;
-    private static double cMouseOld = 0;
 
     public static String getDimensionFromPlayer(@NotNull LocalPlayer player)
     {
@@ -33,6 +32,5 @@ public class GeneralUtils
         } else if (cMouse >= 1.0){
             Compass.getInstance().displayZoom(-1);
         }
-        cMouseOld = cMouse;
     }
 }

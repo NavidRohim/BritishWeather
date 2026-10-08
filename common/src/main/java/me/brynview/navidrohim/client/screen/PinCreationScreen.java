@@ -1,7 +1,7 @@
 package me.brynview.navidrohim.client.screen;
 
 import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.PinEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.DefaultPinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.TimedPinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
@@ -23,7 +23,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.concurrent.TimeUnit;
 
@@ -57,14 +57,14 @@ public class PinCreationScreen extends Screen implements EntryRenderable
             return false;
         }
 
-        public Integer getIntValue()
+        public int getIntValue()
         {
             String value = getValue();
             if (value.isEmpty())
             {
                 return 0;
             }
-            return Integer.valueOf(this.getValue());
+            return Integer.parseInt(this.getValue());
         }
     }
 
@@ -92,8 +92,8 @@ public class PinCreationScreen extends Screen implements EntryRenderable
 
     private static class ColourEditBox extends BaseIntegerEditBox
     {
-        private int defaultValue;
-        private int outlineColour;
+        private final int defaultValue;
+        private final int outlineColour;
 
         public ColourEditBox(Font font, Component narration, int defaultValue, String hint, int outlineColour)
         {
@@ -108,14 +108,14 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         }
 
         @Override
-        public @Nullable Integer getIntValue()
+        public int getIntValue()
         {
-            Integer v = super.getIntValue();
+            int v = super.getIntValue();
             return Math.min(v, this.defaultValue);
         }
 
         @Override
-        public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
+        public void extractWidgetRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
         {
             super.extractWidgetRenderState(graphics, mouseX, mouseY, a);
             graphics.outline(this.getX(), this.getY(), this.getWidth(), this.getHeight(), this.outlineColour);
@@ -127,6 +127,9 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     private final String level;
 
     BRCheckbox isPersistentCheckbox;
+    BRCheckbox shouldShowDistCheckbox;
+    BRCheckbox shouldDisappearWhenOOB;
+
     TimeMethod.TimeMethods timeMethod = TimeMethod.TimeMethods.GAMETIME;
     TimeUnit selectedTimeUnit = TimeUnit.SECONDS;
     EditBox markerBox;
@@ -138,6 +141,13 @@ public class PinCreationScreen extends Screen implements EntryRenderable
 
     Tooltip selectedPersistent = Tooltip.create(Component.translatable("br.pin_creation_screen.persistent_checkbox.selected.tooltip"));
     Tooltip unselectedPersistent = Tooltip.create(Component.translatable("br.pin_creation_screen.persistent_checkbox.unselected.tooltip"));
+
+    Tooltip shouldShowDistSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_show_dist.selected.tooltip"));
+    Tooltip shouldShowDistUnSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_show_dist.unselected.tooltip"));
+
+    Tooltip shouldDisappearWhenOOBTooltipSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_disappear_oob.selected.tooltip"));
+    Tooltip shouldDisappearWhenOOBTooltipUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_disappear_oob.unselected.tooltip"));
+
     private static final Component EMPTY = Component.empty();
 
     public PinCreationScreen(Minecraft mc, @NotNull LocalPlayer player)
@@ -158,10 +168,12 @@ public class PinCreationScreen extends Screen implements EntryRenderable
 
         LinearLayout colourLayout = LinearLayout.vertical().spacing(5);
         LinearLayout timeLayout = LinearLayout.vertical().spacing(5);
-        LinearLayout generalLayout = LinearLayout.vertical().spacing(5);
+        LinearLayout personalisationLayout = LinearLayout.vertical().spacing(5);
 
         // Define main layout elements
         this.isPersistentCheckbox = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, selectedPersistent, unselectedPersistent);
+        this.shouldShowDistCheckbox = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, shouldShowDistSelected, shouldShowDistUnSelected);
+        this.shouldDisappearWhenOOB = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, shouldDisappearWhenOOBTooltipSelected, shouldDisappearWhenOOBTooltipUnselected);
 
         this.integerEditBox = new IntegerEditBox(mc.font, Component.empty());
 
@@ -182,8 +194,11 @@ public class PinCreationScreen extends Screen implements EntryRenderable
                 .create(Component.literal("Method"), (_, newTimeMethod) -> timeMethod = newTimeMethod);
 
         // Add elements to main layout
-        generalLayout.addChild(this.markerBox);
-        generalLayout.addChild(this.isPersistentCheckbox, LayoutSettings::alignHorizontallyRight);
+        personalisationLayout.addChild(this.markerBox);
+
+        personalisationLayout.addChild(this.isPersistentCheckbox, LayoutSettings::alignHorizontallyRight);
+        personalisationLayout.addChild(this.shouldShowDistCheckbox, LayoutSettings::alignHorizontallyRight);
+        personalisationLayout.addChild(this.shouldDisappearWhenOOB, LayoutSettings::alignHorizontallyRight);
 
         timeLayout.addChild(this.integerEditBox);
         timeLayout.addChild(b);
@@ -193,7 +208,7 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         colourLayout.addChild(this.gBox);
         colourLayout.addChild(this.bBox);
 
-        masterLayout.addChild(generalLayout);
+        masterLayout.addChild(personalisationLayout);
         masterLayout.addChild(timeLayout);
         masterLayout.addChild(colourLayout);
 
@@ -206,13 +221,13 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     private void enterSelection()
     {
         boolean isPersistent = isPersistent();
-        Integer expiryTime = this.integerEditBox.getIntValue();
+        int expiryTime = this.integerEditBox.getIntValue();
         if (expiryTime == 0)
         {
-            Compass.addEntry(new PinEntry(pinPosition, level, getMarker(), isPersistent, getColour()));
+            Compass.addEntry(new DefaultPinEntry(pinPosition, level, getMarker(), isPersistent, getColour(), shouldShowDistance(), shouldDisappearWhenOutsideView()));
         } else {
             TimeMethod chosenMethod = timeMethod.createTimeMethod(selectedTimeUnit, expiryTime);
-            Compass.addEntry(new TimedPinEntry(pinPosition, level, getMarker(), chosenMethod, isPersistent, getColour()));
+            Compass.addEntry(new TimedPinEntry(pinPosition, level, getMarker(), chosenMethod, isPersistent, getColour(), shouldShowDistance(), shouldDisappearWhenOutsideView()));
         }
 
         this.onClose();
@@ -231,7 +246,7 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
+    public void extractBackground(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
     {
         super.extractBackground(graphics, mouseX, mouseY, a);
         Minecraft mc = Minecraft.getInstance();
@@ -260,6 +275,7 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         return pinPosition.add(10, 10, 10);
     }
 
+    @SuppressWarnings("boxing")
     public int getColour()
     {
         return ColorHelper.rgb(rBox.getIntValue(), gBox.getIntValue(), bBox.getIntValue(),  255);
@@ -269,6 +285,17 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     public int getHighlightColour()
     {
         return 0;
+    }
+
+    @Override
+    public boolean shouldShowDistance()
+    {
+        return this.shouldShowDistCheckbox.isChecked;
+    }
+
+    public boolean shouldDisappearWhenOutsideView()
+    {
+        return this.shouldDisappearWhenOOB.isChecked;
     }
 
     @Override

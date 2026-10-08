@@ -19,10 +19,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /*
 Manages persistent entries and the constructors that deserialises them.
@@ -69,10 +66,23 @@ public class PersistentEntriesManager
             // Each entry has an entry in the map.
             for (Map.Entry<String, Tag> stringTagEntry : nbtR.entrySet())
             {
-                if (stringTagEntry.getValue().asByteArray().isPresent())
+                if (stringTagEntry.getValue().asCompound().isPresent())
                 {
-                    ByteBuf byteBuf = Unpooled.copiedBuffer(stringTagEntry.getValue().asByteArray().get()); // Normal netty ByteBuf
+                    CompoundTag compoundTagByteBuffers = stringTagEntry.getValue().asCompound().get();
+                    Optional<byte[]> customDataByteBuf = compoundTagByteBuffers.get("custom").asByteArray();
+                    Optional<byte[]> nativeByteBuf = compoundTagByteBuffers.get("native").asByteArray();
+
+                    if (nativeByteBuf.isEmpty() || customDataByteBuf.isEmpty())
+                    {
+                        Constants.LOG.error("Could not deserialize entry: {} one of the required buffers is missing.", stringTagEntry);
+                        continue;
+                    }
+
+                    ByteBuf byteBuf = Unpooled.copiedBuffer(nativeByteBuf.get()); // Normal netty ByteBuf
                     FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(byteBuf); // Get FriendlyByteBuf as it plays better with MC. Can write strings and vectors
+
+                    ByteBuf byteBufCustom = Unpooled.copiedBuffer(customDataByteBuf.get()); // Normal netty ByteBuf
+                    FriendlyByteBuf customFriendlyByteBuf = new FriendlyByteBuf(byteBufCustom); // Get FriendlyByteBuf as it plays better with MC. Can write strings and vectors
 
                     // Read values for reconstructing.
                     String marker = friendlyByteBuf.readUtf();
@@ -83,17 +93,20 @@ public class PersistentEntriesManager
 
                     if (CONSTRUCTORS.containsKey(type)) // Check if the entry has a valid deserializer constructor
                     {
-                        Compass.addEntry(CONSTRUCTORS.get(type).constructEntryWithExtraData(marker, colour, pos, level, friendlyByteBuf));
+                        Compass.addEntry(CONSTRUCTORS.get(type).constructEntryWithExtraData(marker, colour, pos, level, customFriendlyByteBuf));
                     } else {
                         Constants.LOG.error("Marker present in persistence cache does not have a registered constructor! This is perhaps due to a version mismatch. {}", type);
                     }
                 }
             }
 
-        } catch (IOException err)
+
+        } catch (NullPointerException exc)
         {
-            // Bad
-            err.printStackTrace();
+            Constants.LOG.error("Corrupted pin.");
+        } catch (IOException exc)
+        {
+            exc.printStackTrace();
         }
     }
 
@@ -124,6 +137,7 @@ public class PersistentEntriesManager
                 Constants.LOG.error("Entry marked as persistent does not have a registered constructor! Ignoring, but please take a look at class {}", entry.getClass());
                 continue;
             }
+            CompoundTag entryTag = new CompoundTag();
 
             FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
 
@@ -134,10 +148,15 @@ public class PersistentEntriesManager
             buffer.writeVector3f(entry.getPosition().toVector3f());
             buffer.writeUtf(entry.getLevel());
 
-            // Call the entries serialise method so the entry can encode anything else it wants
-            entry.serialise(buffer);
+            FriendlyByteBuf customDataBuffer = new FriendlyByteBuf(Unpooled.buffer());
 
-            master.putByteArray(entry.getId(), buffer.array());
+            // Call the entries serialise method so the entry can encode anything else it wants
+            entry.serialise(customDataBuffer);
+
+            entryTag.putByteArray("native", buffer.array());
+            entryTag.putByteArray("custom", customDataBuffer.array());
+
+            master.put(entry.getId(), entryTag);
         }
 
         try

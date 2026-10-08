@@ -4,6 +4,7 @@ import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.ClientKeybinds;
 import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.Pin;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
@@ -115,8 +116,9 @@ public class Compass
 
         public int getXForEntry(DefaultEntry entry)
         {
+            boolean shouldDisappear = entry instanceof Pin && ((Pin) entry).shouldDisappearWhenNotInView();
             double angleFromPosition = MathHelper.angleFromPos(entry.getPosition(), mc.player.position());
-            return (int) getCompassScreenX((float) angleFromPosition, false);
+            return (int) getCompassScreenX((float) angleFromPosition, shouldDisappear);
         }
     }
 
@@ -251,7 +253,7 @@ public class Compass
         {
             // Draw entry groups and entries.
             drawEntries(guiGraphics, player, dummyEntryProvider);
-            drawZoomLevelEffects(guiGraphics, ColorHelper.WHITE, "");
+            drawZoomLevelEffects(guiGraphics, ColorHelper.WHITE);
             shouldStartTick = false;
         }
 
@@ -276,7 +278,7 @@ public class Compass
             int opacity = ColorHelper.getOpacity(ZOOM_ALERT_DURATION, zoomAlertTick, false);
             int colourShiftOpacityWhite = ColorHelper.shiftColourToOpacity(ColorHelper.WHITE, opacity);
 
-            drawZoomLevelEffects(guiGraphicsExtractor, colourShiftOpacityWhite, "Zoom: ");
+            drawZoomLevelEffects(guiGraphicsExtractor, colourShiftOpacityWhite);
         }
 
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
@@ -284,9 +286,9 @@ public class Compass
         FontHelper.draw(mc, guiGraphicsExtractor, "<", farRightX, decoY, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
     }
 
-    private void drawZoomLevelEffects(GuiGraphicsExtractor guiGraphicsExtractor, int colour, String prefix)
+    private void drawZoomLevelEffects(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
     {
-        String amount = prefix + zoomAmount;
+        String amount = String.valueOf(zoomAmount);
         FontHelper.draw(mc, guiGraphicsExtractor, amount, farLeftX - (mc.font.width(amount) + 5), yTextMiddle, colour, true, FontHelper.TextType.VALUE);
 
         if (zoomAmount > 1)
@@ -350,7 +352,7 @@ public class Compass
                     mc,
                     player,
                     this,
-                    true,
+                    dummyProvider.shouldShowDistance(),
                     null,
                     true,
                     dummyProvider,
@@ -443,7 +445,7 @@ public class Compass
         zoomAmountSmooth = 1.0f + (zoomAmount - 1.0f) * 0.5f;
         zoomAlertTick = Compass.ZOOM_ALERT_DURATION;
 
-        mc.player.playSound(ClientCommon.SCROLL, 0.06f, 2.0f);
+        mc.player.playSound(ClientCommon.SCROLL, 0.01f, 1.5f);
     }
 
     private void tick()

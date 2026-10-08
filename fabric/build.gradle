@@ -20,6 +20,7 @@ repositories {
         name 'Xander Maven'
         url 'https://maven.isxander.dev/releases'
     }
+    maven { url = "https://pkgs.dev.azure.com/djtheredstoner/DevAuth/_packaging/public/maven/v1" }
 }
 
 dependencies {
@@ -31,6 +32,7 @@ dependencies {
     //implementation("maven.modrinth:1eAoo2KR:rSnhz5tr") // temp while waiting for release on maven
     implementation("com.terraformersmc:modmenu:${modmenu_version}")
     implementation("dev.isxander:yet-another-config-lib:${yacl_version}-fabric")
+    runtimeOnly("me.djtheredstoner:DevAuth-fabric:1.2.2")
 }
 
 loom {

@@ -1,9 +1,13 @@
 package me.brynview.navidrohim.util;
 
+import me.brynview.navidrohim.Constants;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.TamableAnimal;
+import net.minecraft.world.entity.OwnableEntity;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
+import net.minecraft.world.entity.animal.equine.Horse;
+import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Player;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +30,8 @@ public class ColorHelper {
     public static final int PLAYER = rgb(125, 255, 125, 255);
     public static final int NEUTRAL = rgb(255, 255, 255, 255);
     public static final int HOSTILE = rgb(255, 125, 125, 255);
+    public static final int ALLY = rgb(127, 127, 255, 255);
+
     public static final int OBJECTIVE_MARKER_COLOUR = rgb(243, 238, 159, 255);
 
     public static final int BORDER_COLOUR = 0xFF202020;
@@ -67,11 +73,13 @@ public class ColorHelper {
             {
                 return shiftColourToOpacity(HOSTILE, opacity);
             }
-            case TamableAnimal tamableAnimal ->
+            case OwnableEntity tamableAnimal ->
             {
-                if (tamableAnimal.getOwnerReference() != null && tamableAnimal.getOwnerReference().getUUID().equals(owner.getUUID()))
+                if (tamableAnimal.getOwnerReference() != null && tamableAnimal.getOwnerReference().getUUID().equals(owner.getUUID()) ||
+                    tamableAnimal instanceof AbstractHorse horseLike && horseLike.isTamed()
+                )
                 {
-                    return shiftColourToOpacity(WHITE, opacity);
+                    return shiftColourToOpacity(ALLY, opacity);
                 }
             }
             default ->

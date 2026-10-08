@@ -53,8 +53,12 @@
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
   "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline.",
+  "br.pin_creation_screen.persistent_checkbox.selected.tooltip": "Persistent through game sessions",
+  "br.pin_creation_screen.persistent_checkbox.unselected.tooltip": "Non-persistent. Will disappear when you leave",
+  "br.pin_creation_screen.should_show_dist.selected.tooltip": "Show distance from pin",
+  "br.pin_creation_screen.should_show_dist.unselected.tooltip": "Don't show distance from pin",
+  "br.pin_creation_screen.should_disappear_oob.selected.tooltip": "Disappear when on the end of compass",
+  "br.pin_creation_screen.should_disappear_oob.unselected.tooltip": "Don't disappear when on the end of compass (Might clutter)"
 
-  "br.pin_creation_screen.persistent_checkbox.selected.tooltip": "Persistent",
-  "br.pin_creation_screen.persistent_checkbox.unselected.tooltip": "Non-persistent"
 
 }

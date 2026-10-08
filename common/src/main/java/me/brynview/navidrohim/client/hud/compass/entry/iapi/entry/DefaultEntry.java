@@ -115,7 +115,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     public void setColour(int colour)
     {
         this.colour = colour;
-        this.highlightColour = ColorHelper.shiftColourToOpacity(colour, 127);
+        this.highlightColour = ColorHelper.shiftColourToOpacity(colour, 150);
     }
 
     @Override
@@ -207,9 +207,9 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             int xOnCompass = compass.util.getCenteredXForString(distanceFromObjective, compassX);
 
             FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);
-            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, compassX, compass.util.getYRowOnCompass(0), colour, FontHelper.TextType.LABEL);
         }
 
+        FontHelper.draw(mc, guiGraphicsExtractor, THINGY, compassX, compass.util.getYRowOnCompass(0), colour, FontHelper.TextType.LABEL);
         return didSetHighlighted;
     }
 
@@ -229,10 +229,10 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         } else {
             int compassHalf = compass.compassScaledWidthHalf;
 
-            float markerLengthWithoutBeginning = marker.length() - MINIMUM_MARKER_LENGTH;
+            float markerLengthWithoutBeginning = markerLength - MINIMUM_MARKER_LENGTH;
             int distFromCenter = compassHalf - Math.abs(compass.compassX - compassX);
             float perCharAmt = markerLengthWithoutBeginning / compassHalf;
-            int showLen = (int) Math.min(MINIMUM_MARKER_LENGTH + perCharAmt * distFromCenter, markerLength);
+            int showLen = (int) Math.min(MINIMUM_MARKER_LENGTH + (perCharAmt * distFromCenter), markerLength);
 
             if (compassX < compass.compassX) // left side
             {
