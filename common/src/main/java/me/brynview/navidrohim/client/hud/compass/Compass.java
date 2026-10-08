@@ -56,8 +56,13 @@ public class Compass
 
         public boolean isXHighlightable(int x)
         {
-            int snapBounds = Math.min(HIGHLIGHT_BOUNDS * zoomAmount, compassScaledWidthHalf);
-            return x <= compassX + snapBounds && x >= compassX - snapBounds;
+            int highlightBounds = getHighlightBounds();
+            return x <= compassX + highlightBounds && x >= compassX - highlightBounds;
+        }
+
+        public int getHighlightBounds()
+        {
+            return Math.min(HIGHLIGHT_BOUNDS * zoomAmount, compassScaledWidthHalf);
         }
 
         public static int getCompassX(int screenWidth, int textWidth)
@@ -147,7 +152,7 @@ public class Compass
 
     // Compass width scaled with the compass size config value
     private int compassScaledWidth;
-    private int compassScaledWidthHalf;
+    public int compassScaledWidthHalf;
 
     // x coordinate of the compass. Can change due to scaling
     public int compassX;
@@ -246,7 +251,7 @@ public class Compass
         {
             // Draw entry groups and entries.
             drawEntries(guiGraphics, player, dummyEntryProvider);
-            drawZoomLevel(guiGraphics, ColorHelper.WHITE, "");
+            drawZoomLevelEffects(guiGraphics, ColorHelper.WHITE, "");
             shouldStartTick = false;
         }
 
@@ -271,7 +276,7 @@ public class Compass
             int opacity = ColorHelper.getOpacity(ZOOM_ALERT_DURATION, zoomAlertTick, false);
             int colourShiftOpacityWhite = ColorHelper.shiftColourToOpacity(ColorHelper.WHITE, opacity);
 
-            drawZoomLevel(guiGraphicsExtractor, colourShiftOpacityWhite, "Zoom: ");
+            drawZoomLevelEffects(guiGraphicsExtractor, colourShiftOpacityWhite, "Zoom: ");
         }
 
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
@@ -279,10 +284,17 @@ public class Compass
         FontHelper.draw(mc, guiGraphicsExtractor, "<", farRightX, decoY, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
     }
 
-    private void drawZoomLevel(GuiGraphicsExtractor guiGraphicsExtractor, int colour, String prefix)
+    private void drawZoomLevelEffects(GuiGraphicsExtractor guiGraphicsExtractor, int colour, String prefix)
     {
         String amount = prefix + zoomAmount;
         FontHelper.draw(mc, guiGraphicsExtractor, amount, farLeftX - (mc.font.width(amount) + 5), yTextMiddle, colour, true, FontHelper.TextType.VALUE);
+
+        if (zoomAmount > 1)
+        {
+            int bounds = util.getHighlightBounds();
+            FontHelper.draw(mc, guiGraphicsExtractor, "+", compassX - bounds, yTextMiddle, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.VALUE);
+            FontHelper.draw(mc, guiGraphicsExtractor, "+", compassX + bounds, yTextMiddle, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.VALUE);
+        }
     }
 
     private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks)
@@ -366,16 +378,24 @@ public class Compass
                     highlightedElementX = compassXForEntry;
                     highlightedElementColour = entry.getColour();
                     didHighlight = true;
+
+                    entry.setFocused(true);
                 } else {
                     entry.draw(guiGraphicsExtractor, player, shouldStartTick, compassXForEntry, entry.getHighlightColour());
+                    entry.setFocused(false);
                 }
             } else {
                 entry.draw(guiGraphicsExtractor, player, shouldStartTick, compassXForEntry, entry.getHighlightColour());
+                entry.setFocused(false);
             }
         }
 
         if (!didHighlight)
         {
+            if (highlightedEntry != null)
+            {
+                highlightedEntry.setFocused(false);
+            }
             highlightedEntry = null;
         } else {
             highlightedEntry.draw(guiGraphicsExtractor, player, shouldStartTick, highlightedElementX, highlightedElementColour);
@@ -430,35 +450,33 @@ public class Compass
     {
         zoomAlertTick--;
 
-        if (highlightedEntry != null && ClientKeybinds.ENTRY_HUD_KEY.isDown())
+        if (highlightedEntry != null)
         {
-            if (ClientKeybinds.DELETION.isDown())
+            if (ClientKeybinds.ENTRY_HUD_KEY.isDown() && !isHoldingRemovalKey)
             {
-                if (!this.isHoldingRemovalKey)
+                if (ClientKeybinds.DELETION.isDown())
                 {
                     PersistentEntriesManager.ProviderRegistry.removeEntry(this.highlightedEntry);
                     this.highlightedEntry = null;
-                    this.isHoldingRemovalKey = true;
-                    return;
+                }
+
+                if (ClientKeybinds.DEBUG_ON_PRESS.isDown())
+                {
+                    Vec3 pos = this.highlightedEntry.getPosition();
+                    mc.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
+                }
+
+                if (ClientKeybinds.LEFT_SNAP.isDown())
+                {
+                    snap(1);
+                }
+
+                if (ClientKeybinds.RIGHT_SNAP.isDown())
+                {
+                    snap(-1);
                 }
             } else {
                 this.isHoldingRemovalKey = false;
-            }
-
-            if (ClientKeybinds.DEBUG_ON_PRESS.isDown())
-            {
-                Vec3 pos = this.highlightedEntry.getPosition();
-                mc.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
-            }
-
-            if (ClientKeybinds.LEFT_SNAP.isDown())
-            {
-                snap(1);
-            }
-
-            if (ClientKeybinds.RIGHT_SNAP.isDown())
-            {
-                snap(-1);
             }
         }
     }

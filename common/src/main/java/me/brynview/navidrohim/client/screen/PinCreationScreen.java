@@ -270,4 +270,13 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     {
         return 0;
     }
+
+    @Override
+    public boolean isFocused()
+    {
+        return true;
+    }
+
+    @Override
+    public void setFocused(boolean focused) {}
 }

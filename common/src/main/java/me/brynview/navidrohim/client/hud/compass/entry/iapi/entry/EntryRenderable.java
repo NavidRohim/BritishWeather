@@ -8,6 +8,10 @@ public interface EntryRenderable
 
     int getMarkerHalfWidth();
 
+    void setFocused(boolean focused);
+
+    boolean isFocused();
+
     int getColour();
 
     int getHighlightColour();

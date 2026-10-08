@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
@@ -14,6 +15,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 /*
  * DefaultEntry should be extended but is not abstract as it does have functionality by itself.
@@ -22,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public class DefaultEntry implements TickableAndExpirable, EntryRenderable
 {
     private final static String THINGY = "|";
+    private final static int MINIMUM_MARKER_LENGTH = 4;
 
     private final Vec3 position; // Position of the entry in-game.
     private final String level; // What dimension the entry was made in.
@@ -34,6 +37,8 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
 
     protected int colour;
     protected int highlightColour;
+
+    private boolean isFocused = false;
 
     public DefaultEntry(Vec3 position, String level, String marker)
     {
@@ -87,6 +92,18 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     {
         this.marker = marker;
         this.markerWidthHalf = mc.font.width(marker) / 2; // Calculate the markers width here, so it does not have to be calculated every render pass.
+    }
+
+    @Override
+    public void setFocused(boolean focused)
+    {
+        isFocused = focused;
+    }
+
+    @Override
+    public boolean isFocused()
+    {
+        return isFocused;
     }
 
     @Override
@@ -152,8 +169,10 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         boolean didSetHighlighted = false;
         int compassX = showAtCenter ? compass.compassX + 50 : x;
 
-        // Draw entry marker
-        FontHelper.draw(mc, guiGraphicsExtractor, entryRenderable.getMarker(), compassX - entryRenderable.getMarkerHalfWidth(), compass.util.getYRowOnCompass(-1), colour, true, FontHelper.TextType.NONE);
+        String displayableMarker = getDisplayableMarker(entryRenderable, entryRenderable.getMarker().length() <= 10, compass, compassX);
+        int finalMarkerLen = mc.font.width(displayableMarker) / 2;
+
+        FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, compassX - finalMarkerLen, compass.util.getYRowOnCompass(-1), colour, true, FontHelper.TextType.NONE);
 
         // If in view, render the distance from entry and if the player should go up or down to reach it
         if (shouldShowDistance && !compass.util.isXOutOfBounds(compassX))
@@ -192,6 +211,41 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         }
 
         return didSetHighlighted;
+    }
+
+    private static @NonNull String getDisplayableMarker(EntryRenderable entryRenderable, boolean smart, Compass compass, int compassX)
+    {
+        // Draw entry marker
+        String marker = entryRenderable.getMarker();
+        int markerLength = marker.length();
+
+        String displayableMarker;
+
+        if (entryRenderable.isFocused() || markerLength <= MINIMUM_MARKER_LENGTH)
+        {
+            displayableMarker = marker;
+        } else if (!smart) {
+            displayableMarker = marker.substring(0, MINIMUM_MARKER_LENGTH) + "...";
+        } else {
+            int compassHalf = compass.compassScaledWidthHalf;
+
+            float markerLengthWithoutBeginning = marker.length() - MINIMUM_MARKER_LENGTH;
+            int distFromCenter = compassHalf - Math.abs(compass.compassX - compassX);
+            float perCharAmt = markerLengthWithoutBeginning / compassHalf;
+            int showLen = (int) Math.min(MINIMUM_MARKER_LENGTH + perCharAmt * distFromCenter, markerLength);
+
+            if (compassX < compass.compassX) // left side
+            {
+                String baseMarker = marker.substring(0, MINIMUM_MARKER_LENGTH);
+                String displayableRest = marker.substring(MINIMUM_MARKER_LENGTH, showLen);
+                displayableMarker = baseMarker + displayableRest + "...";
+            } else {
+                String baseMarker = marker.substring(markerLength - MINIMUM_MARKER_LENGTH, markerLength);
+                String displayableRest = marker.substring((markerLength - showLen), markerLength - MINIMUM_MARKER_LENGTH);
+                displayableMarker = "..." + displayableRest + baseMarker;
+            }
+        }
+        return displayableMarker;
     }
 
     /*
