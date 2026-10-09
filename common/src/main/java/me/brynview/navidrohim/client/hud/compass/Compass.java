@@ -3,7 +3,7 @@ package me.brynview.navidrohim.client.hud.compass;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.ClientKeybinds;
-import me.brynview.navidrohim.client.hud.compass.entry.PersistentEntriesManager;
+import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Pin;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
@@ -223,8 +223,7 @@ public class Compass
             // Will be true on the first render pass after entry HUD disappears.
             if (!shouldStartTick)
             {
-                PersistentEntriesManager.ProviderRegistry.stopTickAll(player);
-                PersistentEntriesManager.save();
+                EntryManager.ProviderRegistry.stopTickAll(player);
             }
 
             // Draw all living entities
@@ -369,7 +368,7 @@ public class Compass
         int highlightedElementColour = ColorHelper.WHITE;
 
         // Draw normal entries.
-        for (DefaultEntry entry : PersistentEntriesManager.ProviderRegistry.getEntries())
+        for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntries())
         {
             int compassXForEntry = util.getXForEntry(entry);
 
@@ -404,7 +403,7 @@ public class Compass
         }
 
         // Draw entries inside of entry groups.
-        for (DefaultEntryGroup group : PersistentEntriesManager.ProviderRegistry.PROVIDER_GROUPS)
+        for (DefaultEntryGroup group : EntryManager.ProviderRegistry.PROVIDER_GROUPS)
         {
             if (shouldStartTick)
             {
@@ -458,7 +457,7 @@ public class Compass
             {
                 if (ClientKeybinds.DELETION.isDown())
                 {
-                    PersistentEntriesManager.ProviderRegistry.removeEntry(this.highlightedEntry);
+                    EntryManager.ProviderRegistry.removeEntry(this.highlightedEntry);
                     this.highlightedEntry = null;
                 }
 
@@ -525,19 +524,19 @@ public class Compass
 
     public static void addEntry(DefaultEntry provider)
     {
-        PersistentEntriesManager.ProviderRegistry.addEntry(provider);
+        EntryManager.ProviderRegistry.addEntry(provider);
     }
 
     public static Collection<DefaultEntry> getEntries()
     {
-        return PersistentEntriesManager.ProviderRegistry.getEntries();
+        return EntryManager.ProviderRegistry.getEntries();
     }
 
     public static void tick(@NotNull LocalPlayer player)
     {
         Compass compass = getInstance();
 
-        PersistentEntriesManager.ProviderRegistry.tick(player);
+        EntryManager.ProviderRegistry.tick(player);
         compass.tick();
     }
 }

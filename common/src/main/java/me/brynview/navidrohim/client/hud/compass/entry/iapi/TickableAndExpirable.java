@@ -13,7 +13,6 @@ Possibilities are endless.
 public interface TickableAndExpirable
 {
     default void tick(@NotNull LocalPlayer player) {}
-    default void displayTick(@NotNull LocalPlayer player) {}
     default void startTick(@NotNull LocalPlayer player) {}
     default void endTick(@NotNull LocalPlayer player) {}
 

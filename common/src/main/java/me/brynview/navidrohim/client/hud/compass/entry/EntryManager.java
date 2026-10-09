@@ -17,6 +17,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
@@ -24,11 +25,12 @@ import java.util.*;
 /*
 Manages persistent entries and the constructors that deserialises them.
  */
-public class PersistentEntriesManager
+public class EntryManager
 {
 
     // All constructors
     private static final Map<String, PersistentEntryConstructor> CONSTRUCTORS = new HashMap<>();
+    private static final String PATH = "data/%s/".formatted(Constants.MOD_ID);
 
     /*
     Get the current NBT entry cache. Will be the name of the world without spaces if singleplayer, IP of the server if multiplayer.
@@ -36,13 +38,23 @@ public class PersistentEntriesManager
     public static Path getCurrentPath()
     {
         Minecraft mc = Minecraft.getInstance();
+        File path = new File(PATH);
+
+        if (!path.isDirectory())
+        {
+            boolean success = path.mkdirs();
+            if (!success)
+            {
+                throw new RuntimeException("Could not create data path for persistent pins.");
+            }
+        }
 
         Path nbtPath;
         if (mc.hasSingleplayerServer())
         {
-            nbtPath = Path.of("%s.nbt".formatted(mc.getSingleplayerServer().getWorldData().getLevelName().replace(" ", "")));
+            nbtPath = Path.of(PATH + "%s.nbt".formatted(mc.getSingleplayerServer().getWorldData().getLevelName().replace(" ", "")));
         } else {
-            nbtPath = Path.of("%s.nbt".formatted(mc.getCurrentServer().ip));
+            nbtPath = Path.of(PATH + "%s.nbt".formatted(mc.getCurrentServer().ip));
         }
 
         return nbtPath;
