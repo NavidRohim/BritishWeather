@@ -1,7 +1,6 @@
 package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
@@ -203,12 +202,12 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
             if (BritishWeather.getConfig().debug() && debugString != null)
             {
-                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.getCenteredXForString(debugString, compassX), compass.util.getYRowOnCompass(2), colour, FontHelper.TextType.NONE);
+                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.centerStringAroundX(debugString, compassX), compass.util.getYRowOnCompass(2), colour, FontHelper.TextType.NONE);
             }
 
             // Draw distance from entry
             String distanceFromObjective = MathHelper.getDistance(playerPos, entryRenderable.getPosition()) + suffix;
-            int xOnCompass = compass.util.getCenteredXForString(distanceFromObjective, compassX);
+            int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, compassX);
 
             FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);
         }
