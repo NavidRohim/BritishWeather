@@ -260,7 +260,7 @@ public class EntryManager
         public static void clear()
         {
             PROVIDERS.clear();
-            PROVIDER_GROUPS.removeIf((g) -> !g.isBuiltin());
+            PROVIDER_GROUPS.removeIf((g) -> !g.isBuiltIn());
         }
     }
 }

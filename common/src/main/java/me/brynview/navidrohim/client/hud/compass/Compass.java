@@ -45,7 +45,7 @@ public class Compass
         /*
         Get centered X position for a string, accounting for the width of the string. Only do in render thread
          */
-        public int getCenteredXForString(String str, int xPlacement)
+        public int centerStringAroundX(String str, int xPlacement)
         {
             return xPlacement - (mc.font.width(str) / 2);
         }
@@ -71,12 +71,12 @@ public class Compass
             return (screenWidth - textWidth) / 2;
         }
 
-        public int getCompassScreenX(float angle)
+        public int getAngleX(float angle)
         {
-            return (int) getCompassScreenX(angle, true);
+            return (int) getAngleX(angle, true);
         }
 
-        public float getCompassScreenX(float angle, boolean shouldDisappearWhenOOB)
+        public float getAngleX(float angle, boolean shouldDisappearWhenOOB)
         {
             // Text is centered at the center of the screen. aDist is used as an offset
             // Return an int between -180 and +180 (360)
@@ -118,7 +118,7 @@ public class Compass
         {
             boolean shouldDisappear = entry instanceof Pin && ((Pin) entry).shouldDisappearWhenNotInView();
             double angleFromPosition = MathHelper.angleFromPos(entry.getPosition(), mc.player.position());
-            return (int) getCompassScreenX((float) angleFromPosition, shouldDisappear);
+            return (int) getAngleX((float) angleFromPosition, shouldDisappear);
         }
     }
 
@@ -131,6 +131,7 @@ public class Compass
     private static final int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
     private static final int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
     private static final int ZOOM_ALERT_DURATION = 40;
+    private static final int ENTRIES_ALLOWED_ON_SIDE = 7;
 
     public static final int HIGHLIGHT_BOUNDS = 7;
 
@@ -158,8 +159,8 @@ public class Compass
 
     // x coordinate of the compass. Can change due to scaling
     public int compassX;
-    private int farLeftX;
-    private int farRightX;
+    public int farLeftX;
+    public int farRightX;
 
     public int yTextMiddle;
     public int yMiddle;
@@ -167,11 +168,12 @@ public class Compass
 
     public Minecraft mc;
     public RenderUtils util;
-    private @Nullable DefaultEntry highlightedEntry;
 
-
-    private final List<DefaultEntry> entriesInSnapArea = new ArrayList<>();
+    public int entriesOnLeftEdge = 0;
+    public int entriesOnRightEdge = 0;
     private int snapIndex = 0;
+    private final List<DefaultEntry> entriesInSnapArea = new ArrayList<>();
+    private @Nullable DefaultEntry highlightedEntry;
 
     private void calculateDimensions(int scaledWidth, int y, float partialTicks, @NotNull LocalPlayer player)
     {
@@ -243,7 +245,7 @@ public class Compass
             if (BritishWeather.getConfig().shouldRenderHeading())
             {
                 String friendlyDeg = util.getActualDegreesFromYaw(); // Number from 0 to 360
-                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.getCenteredXForString(friendlyDeg, this.compassX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false, FontHelper.TextType.LABEL);
+                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.centerStringAroundX(friendlyDeg, this.compassX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false, FontHelper.TextType.LABEL);
             }
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
@@ -323,7 +325,7 @@ public class Compass
                     int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
 
                     // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
-                    int ex = util.getCompassScreenX((float) angleFromEntity);
+                    int ex = util.getAngleX((float) angleFromEntity);
                     FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, ex, yTextMiddle, livingEntity, false, FontHelper.TextType.NONE);
 
                 }
@@ -335,7 +337,7 @@ public class Compass
      */
     private void drawCardinal(GuiGraphicsExtractor guiGraphics, float angle, String text)
     {
-        int dx = util.getCompassScreenX(angle) - 3;
+        int dx = util.getAngleX(angle) - 3;
         FontHelper.draw(mc, guiGraphics, text, dx, yTextMiddle, ColorHelper.WHITE, true, FontHelper.TextType.NONE);
     }
 
@@ -351,61 +353,44 @@ public class Compass
                     mc,
                     player,
                     this,
-                    dummyProvider.shouldShowDistance(),
-                    null,
-                    true,
                     dummyProvider,
+                    false,
+                    "",
                     compassX + 50,
+                    0,
                     dummyProvider.getColour()
             );
             return;
         }
 
         this.entriesInSnapArea.clear();
-
-        boolean didHighlight = false;
-        int highlightedElementX = Integer.MAX_VALUE;
-        int highlightedElementColour = ColorHelper.WHITE;
+        entriesOnLeftEdge = 0;
+        entriesOnRightEdge = 0;
 
         // Draw normal entries.
         for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntries())
         {
-            int compassXForEntry = util.getXForEntry(entry);
-
-            if (util.isXHighlightable(compassXForEntry))
+            var entryIsFocused = entry.calculate(this);
+            if (entryIsFocused == null)
             {
-                boolean didHighlightEntry = setInSnapArea(entry, compassX == compassXForEntry);
-                if (didHighlightEntry && !didHighlight) {
-                    highlightedElementX = compassXForEntry;
-                    highlightedElementColour = entry.getColour();
-                    didHighlight = true;
-
-                    entry.setFocused(true);
-                } else {
-                    entry.draw(guiGraphicsExtractor, player, shouldStartTick, compassXForEntry, entry.getHighlightColour());
-                    entry.setFocused(false);
+                if ( (entry.isOnLeftEdge && this.entriesOnLeftEdge >= ENTRIES_ALLOWED_ON_SIDE) || (entry.isOnRightEdge && this.entriesOnRightEdge >= ENTRIES_ALLOWED_ON_SIDE) )
+                {
+                    continue;
                 }
-            } else {
-                entry.draw(guiGraphicsExtractor, player, shouldStartTick, compassXForEntry, entry.getHighlightColour());
-                entry.setFocused(false);
+
+                entry.draw(guiGraphicsExtractor, player, shouldStartTick);
             }
         }
 
-        if (!didHighlight)
+        if (highlightedEntry != null)
         {
-            if (highlightedEntry != null)
-            {
-                highlightedEntry.setFocused(false);
-            }
-            highlightedEntry = null;
-        } else {
-            highlightedEntry.draw(guiGraphicsExtractor, player, shouldStartTick, highlightedElementX, highlightedElementColour);
+            highlightedEntry.draw(guiGraphicsExtractor, player, shouldStartTick);
         }
 
         // Draw entries inside of entry groups.
         for (DefaultEntryGroup group : EntryManager.ProviderRegistry.PROVIDER_GROUPS)
         {
-            if (group.isBuiltin() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
+            if (group.isBuiltIn() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
             {
                 continue;
             }
@@ -416,27 +401,34 @@ public class Compass
             }
 
             group.getEntries().forEach(groupEntry -> {
-                int xForEntry = util.getXForEntry(groupEntry);
-                groupEntry.draw(guiGraphicsExtractor, player, shouldStartTick, xForEntry, groupEntry.getColour());
+                groupEntry.calculate(this);
+                groupEntry.draw(guiGraphicsExtractor, player, shouldStartTick);
             });
         }
     }
 
 
-    public boolean setInSnapArea(DefaultEntry entry, boolean absolute)
+    public boolean setInSnapArea(DefaultEntry entry)
     {
+        if (!entry.isHighlightable() || entry.isBuiltIn())
+        {
+            return false;
+        }
+
         this.entriesInSnapArea.add(entry);
-        if (highlightedEntry == null || highlightedEntry == entry || absolute)
+
+        if (highlightedEntry == null || highlightedEntry == entry || (entry.getScreenX() == compassX))
         {
             this.highlightedEntry = entry;
             return true;
         }
+
         return false;
     }
 
-    public void displayZoom(int zoomIncrease)
+    public void displayZoom(int zoomStep)
     {
-        int newZoomAmount = zoomAmount + zoomIncrease;
+        int newZoomAmount = zoomAmount + zoomStep;
 
         if (newZoomAmount < 1)
         {
