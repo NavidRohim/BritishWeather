@@ -1,24 +1,12 @@
 package me.brynview.navidrohim.mixin.client;
 
-import com.mojang.renderpearl.api.commands.RenderPass;
-import me.brynview.navidrohim.client.ClientCommon;
-import me.brynview.navidrohim.common.WeatherCondition;
 import net.minecraft.client.renderer.WeatherEffectRenderer;
-import net.minecraft.client.renderer.texture.AbstractTexture;
-import net.minecraft.client.renderer.texture.TextureManager;
-import org.jspecify.annotations.Nullable;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WeatherEffectRenderer.class)
 public class WeatherEffectRendererMixin
 {
-
+    /*
     @Unique
     private static AbstractTexture britishweather$hailTexture;
 
@@ -47,7 +35,7 @@ public class WeatherEffectRendererMixin
 
     /*
     Correct stage to load the hail texture.
-     */
+
     @Inject(method = "prepare", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer;requestIndexCount(I)V"))
     private void prepareHailTexture(CallbackInfo ci)
     {
@@ -57,4 +45,5 @@ public class WeatherEffectRendererMixin
             britishweather$hailTexture = textureManager.getTexture(condition.getWeatherTexture());
         }
     }
+    */
 }
