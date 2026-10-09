@@ -52,7 +52,7 @@ public class Compass
 
         public boolean isXOutOfBounds(int x)
         {
-            return x <= compassX - compassScaledWidthHalf || x >= compassX + compassScaledWidthHalf;
+            return x == Integer.MAX_VALUE || x < compassX - compassScaledWidthHalf || x > compassX + compassScaledWidthHalf;
         }
 
         public boolean isXHighlightable(int x)

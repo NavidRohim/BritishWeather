@@ -124,12 +124,12 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         return highlightColour;
     }
 
-    public final boolean draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, int entryX, int colour)
+    public final void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, int entryX, int colour)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
         if (!shouldRender() || !level.equals(player.level().dimension().identifier().toString()))
         {
-            return false;
+            return;
         }
 
         if (shouldStartTick)
@@ -138,7 +138,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         }
 
         Compass compass = Compass.getInstance();
-        return DefaultEntry.drawRawEntry(
+        DefaultEntry.drawRawEntry(
                 guiGraphicsExtractor,
                 mc,
                 player,
@@ -152,7 +152,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         );
     }
 
-    public static boolean drawRawEntry(
+    public static void drawRawEntry(
             GuiGraphicsExtractor guiGraphicsExtractor,
             Minecraft mc,
             @NotNull LocalPlayer player,
@@ -165,8 +165,12 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             int colour
     )
     {
+        if (compass.util.isXOutOfBounds(x))
+        {
+            return;
+        }
+
         Vec3 playerPos = player.position();
-        boolean didSetHighlighted = false;
         int compassX = showAtCenter ? compass.compassX + 50 : x;
 
         String displayableMarker = getDisplayableMarker(entryRenderable, entryRenderable.getMarker().length() <= 10, compass, compassX);
@@ -210,7 +214,6 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         }
 
         FontHelper.draw(mc, guiGraphicsExtractor, THINGY, compassX, compass.util.getYRowOnCompass(0), colour, FontHelper.TextType.LABEL);
-        return didSetHighlighted;
     }
 
     private static @NonNull String getDisplayableMarker(EntryRenderable entryRenderable, boolean smart, Compass compass, int compassX)
@@ -227,10 +230,12 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         } else if (!smart) {
             displayableMarker = marker.substring(0, MINIMUM_MARKER_LENGTH) + "...";
         } else {
+
+            int safeX = Math.min(compassX, compass.compassX);
             int compassHalf = compass.compassScaledWidthHalf;
 
             float markerLengthWithoutBeginning = markerLength - MINIMUM_MARKER_LENGTH;
-            int distFromCenter = compassHalf - Math.abs(compass.compassX - compassX);
+            int distFromCenter = compassHalf - Math.abs(compass.compassX - safeX);
             float perCharAmt = markerLengthWithoutBeginning / compassHalf;
             int showLen = (int) Math.min(MINIMUM_MARKER_LENGTH + (perCharAmt * distFromCenter), markerLength);
 
