@@ -23,6 +23,20 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
 {
     private static final String MARKER = "\uD83C\uDFF0";
 
+    private static final class MapObjectiveEntry extends DefaultEntry
+    {
+        public MapObjectiveEntry(Vec3 position)
+        {
+            super(position, Level.OVERWORLD.identifier().toString(), MARKER);
+        }
+
+        @Override
+        public boolean isBuiltIn()
+        {
+            return true;
+        }
+    }
+
     /*
     Only get the maps the player currently has at the start tick (When the player first activates the entry HUD)
      */
@@ -40,7 +54,7 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
                     MapDecorations.Entry saved = itemStack.get(DataComponents.MAP_DECORATIONS).decorations().get("+"); // What is this key?
                     Vec3 pos = new Vec3(saved.x(), 0, saved.z());
 
-                    this.addEntry(DefaultEntry.of(pos, GeneralUtils.getDimensionFromPlayer(player), MARKER));
+                    this.addEntry(new MapObjectiveEntry(pos));
                 }
             } catch (NullPointerException _) // Will be thrown if the map doesn't have a decoration. Which will be the case if the map is just a normal map. Ignore.
             {}
@@ -58,7 +72,7 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
     }
 
     @Override
-    public boolean isBuiltin()
+    public boolean isBuiltIn()
     {
         return true;
     }

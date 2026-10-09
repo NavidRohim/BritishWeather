@@ -42,9 +42,4 @@ public abstract class DefaultEntryGroup implements TickableAndExpirable
     {
         getEntries().forEach(entry -> entry.endTick(player));
     }
-
-    public boolean isBuiltin()
-    {
-        return false;
-    }
 }

@@ -38,6 +38,14 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     protected int highlightColour;
 
     private boolean isFocused = false;
+    private boolean isHighlightable = false;
+
+    public boolean isOnLeftEdge = false;
+    public boolean isOnRightEdge = false;
+
+    private int screenX;
+    private int screenY;
+    private int renderColour;
 
     public DefaultEntry(Vec3 position, String level, String marker)
     {
@@ -105,6 +113,11 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         return isFocused;
     }
 
+    public boolean isHighlightable()
+    {
+        return isHighlightable;
+    }
+
     @Override
     public int getColour()
     {
@@ -123,7 +136,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         return highlightColour;
     }
 
-    public final void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, int entryX, int colour)
+    public final void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
         if (!shouldRender() || !level.equals(player.level().dimension().identifier().toString()))
@@ -142,12 +155,12 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
                 mc,
                 player,
                 compass,
-                shouldShowDistance(),
-                getDebugString(),
-                false,
                 this,
-                entryX,
-                colour
+                false,
+                getDebugString(),
+                this.screenX,
+                screenY,
+                this.renderColour
         );
     }
 
@@ -156,11 +169,11 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             Minecraft mc,
             @NotNull LocalPlayer player,
             @NotNull Compass compass,
-            boolean shouldShowDistance,
-            @Nullable String debugString,
-            boolean showAtCenter,
             EntryRenderable entryRenderable,
+            boolean showAtCenter,
+            @Nullable String debugString,
             int x,
+            int yRow,
             int colour
     )
     {
@@ -175,10 +188,10 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         String displayableMarker = getDisplayableMarker(entryRenderable, entryRenderable.getMarker().length() <= 10, compass, compassX);
         int finalMarkerLen = mc.font.width(displayableMarker) / 2;
 
-        FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, compassX - finalMarkerLen, compass.util.getYRowOnCompass(-1), colour, true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, compassX - finalMarkerLen, compass.util.getYRowOnCompass(yRow - 1), colour, true, FontHelper.TextType.NONE);
 
         // If in view, render the distance from entry and if the player should go up or down to reach it
-        if (shouldShowDistance && !compass.util.isXOutOfBounds(compassX))
+        if (entryRenderable.shouldShowDistance() && !compass.util.isXOutOfBounds(compassX))
         {
             int distance = MathHelper.getDistance(entryRenderable.getPosition(), playerPos);
 
@@ -202,17 +215,17 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
             if (BritishWeather.getConfig().debug() && debugString != null)
             {
-                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.centerStringAroundX(debugString, compassX), compass.util.getYRowOnCompass(2), colour, FontHelper.TextType.NONE);
+                FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.centerStringAroundX(debugString, compassX), compass.util.getYRowOnCompass(yRow + 2), colour, FontHelper.TextType.NONE);
             }
 
             // Draw distance from entry
             String distanceFromObjective = MathHelper.getDistance(playerPos, entryRenderable.getPosition()) + suffix;
             int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, compassX);
 
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(yRow + 1), colour, FontHelper.TextType.LABEL);
         }
 
-        FontHelper.draw(mc, guiGraphicsExtractor, THINGY, compassX, compass.util.getYRowOnCompass(0), colour, FontHelper.TextType.LABEL);
+        FontHelper.draw(mc, guiGraphicsExtractor, THINGY, compassX, compass.util.getYRowOnCompass(yRow), colour, FontHelper.TextType.LABEL);
     }
 
     private static @NonNull String getDisplayableMarker(EntryRenderable entryRenderable, boolean smart, Compass compass, int compassX)
@@ -226,9 +239,11 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         if (entryRenderable.isFocused() || markerLength <= MINIMUM_MARKER_LENGTH)
         {
             displayableMarker = marker;
-        } else if (!smart) {
+        } else if (!smart)
+        {
             displayableMarker = marker.substring(0, MINIMUM_MARKER_LENGTH) + "...";
-        } else {
+        } else
+        {
 
             int safeX = Math.min(compassX, compass.compassX);
             int compassHalf = compass.compassScaledWidthHalf;
@@ -243,7 +258,8 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
                 String baseMarker = marker.substring(0, MINIMUM_MARKER_LENGTH);
                 String displayableRest = marker.substring(MINIMUM_MARKER_LENGTH, showLen);
                 displayableMarker = baseMarker + displayableRest + "...";
-            } else {
+            } else
+            {
                 String baseMarker = marker.substring(markerLength - MINIMUM_MARKER_LENGTH, markerLength);
                 String displayableRest = marker.substring((markerLength - showLen), markerLength - MINIMUM_MARKER_LENGTH);
                 displayableMarker = "..." + displayableRest + baseMarker;
@@ -294,4 +310,35 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     {
         return new DefaultEntry(position, level, marker);
     }
+
+    public final @Nullable DefaultEntry calculate(Compass compass)
+    {
+        screenX = compass.util.getXForEntry(this);
+        screenY = 0;
+
+        isHighlightable = compass.util.isXHighlightable(screenX);
+        isFocused = compass.setInSnapArea(this);
+        renderColour = isFocused || isBuiltIn() ? this.colour : this.highlightColour;
+
+        isOnLeftEdge = screenX == compass.farLeftX;
+        isOnRightEdge = screenX == compass.farRightX;
+
+        if (isOnLeftEdge)
+        {
+            compass.entriesOnLeftEdge++;
+        }
+
+        if (isOnRightEdge)
+        {
+            compass.entriesOnRightEdge++;
+        }
+
+        return isFocused ? this : null;
+    }
+
+    public int getScreenX()
+    {
+        return screenX;
+    }
+
 }

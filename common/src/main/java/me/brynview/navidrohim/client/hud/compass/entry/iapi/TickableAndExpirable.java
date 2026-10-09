@@ -20,5 +20,9 @@ public interface TickableAndExpirable
     {
         return false;
     }
+    default boolean isBuiltIn()
+    {
+        return false;
+    }
 
 }
