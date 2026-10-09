@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.screen;
 
 import me.brynview.navidrohim.client.hud.compass.Compass;
+import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.DefaultPinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.TimedPinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
@@ -231,6 +232,7 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         }
 
         this.onClose();
+        EntryManager.save();
     }
 
     @Override
