@@ -9,6 +9,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MapItem;
 import net.minecraft.world.item.component.MapDecorations;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
         {
             try
             {
-                if (itemStack.getItem() instanceof MapItem) // Check if MapItem. This is the case for all maps. Normal maps, abandoned camp maps or explorer maps
+                if (itemStack.getItem() instanceof MapItem && player.level().dimension().equals(Level.OVERWORLD)) // Check if MapItem. This is the case for all maps. Normal maps, abandoned camp maps or explorer maps
                 {
                     // Get the "decoration" as minecraft calls it. Which is the abandoned structure or POI.
                     MapDecorations.Entry saved = itemStack.get(DataComponents.MAP_DECORATIONS).decorations().get("+"); // What is this key?

@@ -74,6 +74,12 @@ public class FabricConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldShowBuiltinObjectives()
+    {
+        return FabricConfigSerializer.shouldShowBuiltinObjectives;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return FabricConfigSerializer.compassSize;

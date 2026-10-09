@@ -8,6 +8,8 @@ import me.brynview.navidrohim.Constants;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.resources.Identifier;
 
+import java.io.Serial;
+
 /*
 Again, separate from FabricClientConfigScreen and another classes to avoid classloading
  */
@@ -48,6 +50,9 @@ public class FabricConfigSerializer
     public static boolean shouldRenderHeading = Constants.DefaultConfigValues.shouldRenderHeading;
     @SerialEntry
     public static boolean shouldShowEntitiesOnCompass = Constants.DefaultConfigValues.shouldShowEntitiesOnCompass;
+    @Serial
+    public static boolean shouldShowBuiltinObjectives = Constants.DefaultConfigValues.shouldShowBuiltinObjectives;
+
     @SerialEntry
     public static int compassSize = Constants.DefaultConfigValues.compassSize;
     @SerialEntry

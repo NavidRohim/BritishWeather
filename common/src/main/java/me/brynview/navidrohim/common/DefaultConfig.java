@@ -84,6 +84,9 @@ public class DefaultConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldShowBuiltinObjectives() {return Constants.DefaultConfigValues.shouldShowBuiltinObjectives;}
+
+    @Override
     public int getCompassSize()
     {
         return Constants.DefaultConfigValues.compassSize;

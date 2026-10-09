@@ -29,6 +29,8 @@ public interface CommonConfig
 
     boolean shouldShowEntitiesOnCompass();
 
+    boolean shouldShowBuiltinObjectives();
+
     int getCompassSize();
 
     int getCompassY();

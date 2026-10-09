@@ -33,8 +33,10 @@
   "br.config.category.compass.compassY.description": "Set the compass Y. Lower is higher in the window, higher is lower.",
   "br.config.category.compass.shouldRenderHeading": "Should show heading",
   "br.config.category.compass.shouldRenderHeading.description": "If the current heading in degrees should be shown under the lubber line.",
-  "br.config.category.compass.shouldShowEntities": "Should show entities on compass",
+  "br.config.category.compass.shouldShowEntities": "Should show entities",
   "br.config.category.compass.shouldShowEntities.description": "If entities should be shown on the compass.",
+  "br.config.category.compass.showBuiltinObjectives": "Should show objectives",
+  "br.config.category.compass.showBuiltinObjectives.description": "If built-in objectives will be shown.\n\nWhat is an objective?\n\nObjectives are things that the compass can smartly pickup and display on the compass. An example is an explorer map or abandoned camp map.\nWhen the player is holding one, the compass will read that and display it on the compass even if you aren't holding the map. But it must be in your inventory.",
 
   "br.config.no_config": "YACL is not installed!",
   "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?",

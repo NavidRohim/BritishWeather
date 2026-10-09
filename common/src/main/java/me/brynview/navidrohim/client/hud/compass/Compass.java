@@ -405,6 +405,11 @@ public class Compass
         // Draw entries inside of entry groups.
         for (DefaultEntryGroup group : EntryManager.ProviderRegistry.PROVIDER_GROUPS)
         {
+            if (group.isBuiltin() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
+            {
+                continue;
+            }
+
             if (shouldStartTick)
             {
                 group.startTick(player);
