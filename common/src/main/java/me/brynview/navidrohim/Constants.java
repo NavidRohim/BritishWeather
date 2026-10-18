@@ -43,7 +43,7 @@ public class Constants {
         public static final boolean shouldShowBuiltinObjectives = true;
 
         public static final int compassSize = 35;
-        public static int compassY = 32;
+        public static int compassY = 56;
 
     }
 

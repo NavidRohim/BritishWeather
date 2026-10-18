@@ -1,16 +1,22 @@
 package me.brynview.navidrohim.client.screen;
 
+import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.DefaultPinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.TimedPinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
+import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
 import me.brynview.navidrohim.client.screen.elements.BRCheckbox;
 import me.brynview.navidrohim.util.ColorHelper;
+import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
+import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.layouts.FrameLayout;
@@ -225,10 +231,10 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         int expiryTime = this.integerEditBox.getIntValue();
         if (expiryTime == 0)
         {
-            Compass.addEntry(new DefaultPinEntry(pinPosition, level, getMarker(), isPersistent, getColour(), shouldShowDistance(), shouldDisappearWhenOutsideView()));
+            Compass.addEntry(new DefaultPinEntry(pinPosition, level, getMarker(), isPersistent, getHighlightColor(), shouldShowDistance(), shouldDisappearWhenOutsideView()));
         } else {
             TimeMethod chosenMethod = timeMethod.createTimeMethod(selectedTimeUnit, expiryTime);
-            Compass.addEntry(new TimedPinEntry(pinPosition, level, getMarker(), chosenMethod, isPersistent, getColour(), shouldShowDistance(), shouldDisappearWhenOutsideView()));
+            Compass.addEntry(new TimedPinEntry(pinPosition, level, getMarker(), chosenMethod, isPersistent, getHighlightColor(), shouldShowDistance(), shouldDisappearWhenOutsideView()));
         }
 
         this.onClose();
@@ -251,8 +257,7 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     public void extractBackground(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
     {
         super.extractBackground(graphics, mouseX, mouseY, a);
-        Minecraft mc = Minecraft.getInstance();
-        Compass.getInstance().render(graphics, mc.getWindow().getGuiScaledWidth(), a, this, this.height);
+        renderDummy(graphics, a);
     }
 
     public String getMarker()
@@ -277,14 +282,13 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         return pinPosition.add(10, 10, 10);
     }
 
-    @SuppressWarnings("boxing")
-    public int getColour()
+    public int getHighlightColor()
     {
         return ColorHelper.rgb(rBox.getIntValue(), gBox.getIntValue(), bBox.getIntValue(),  255);
     }
 
     @Override
-    public int getHighlightColour()
+    public int getColor()
     {
         return 0;
     }
@@ -293,6 +297,12 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     public boolean shouldShowDistance()
     {
         return this.shouldShowDistCheckbox.isChecked;
+    }
+
+    @Override
+    public DefaultEntry.RenderState getRenderState()
+    {
+        return DefaultEntry.RenderState.NORMAL;
     }
 
     public boolean shouldDisappearWhenOutsideView()
@@ -308,4 +318,29 @@ public class PinCreationScreen extends Screen implements EntryRenderable
 
     @Override
     public void setFocused(boolean focused) {}
+
+    private void renderDummy(GuiGraphicsExtractor guiGraphicsExtractor, float ticks)
+    {
+        Minecraft mc = Minecraft.getInstance();
+        Compass compass = Compass.getInstance();
+        int scaledWidth = mc.getWindow().getGuiScaledWidth();
+        compass.render(guiGraphicsExtractor, scaledWidth, ticks, height, true);
+
+        int entryDummyX = compass.compassX + 50;
+        int colour = getHighlightColor();
+
+        String marker = getMarker();
+        int finalMarkerLen = mc.font.width(marker) / 2;
+        FontHelper.draw(mc, guiGraphicsExtractor, marker, entryDummyX - finalMarkerLen, compass.util.getYRowOnCompass(-1), colour, true, FontHelper.TextType.NONE);
+
+        if (shouldShowDistance())
+        {
+            String distanceFromObjective = "14m -";
+            int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, entryDummyX);
+
+            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);
+        }
+
+        FontHelper.draw(mc, guiGraphicsExtractor, DefaultEntry.THINGY, entryDummyX, compass.util.getYRowOnCompass(0), colour, FontHelper.TextType.LABEL);
+    }
 }

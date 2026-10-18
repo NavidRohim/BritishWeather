@@ -34,6 +34,6 @@ public abstract class HudMixin
 
         Minecraft mc = Minecraft.getInstance();
         int scaledWidth = mc.getWindow().getGuiScaledWidth();
-        Compass.getInstance().render(graphics, scaledWidth, tickCount);
+        Compass.getInstance().render(graphics, scaledWidth, tickCount, BritishWeather.getConfig().getCompassY(), false);
     }
 }

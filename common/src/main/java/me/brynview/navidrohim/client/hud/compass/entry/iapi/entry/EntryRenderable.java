@@ -8,17 +8,15 @@ public interface EntryRenderable
 
     int getMarkerHalfWidth();
 
-    void setFocused(boolean focused);
+    int getHighlightColor();
 
-    boolean isFocused();
-
-    int getColour();
-
-    int getHighlightColour();
+    int getColor();
 
     boolean isPersistent();
 
     Vec3 getPosition();
 
     boolean shouldShowDistance();
+
+    DefaultEntry.RenderState getRenderState();
 }

@@ -155,7 +155,7 @@ public class EntryManager
 
             // Write metadata used to reconstruct
             buffer.writeUtf(entry.getMarker());
-            buffer.writeInt(entry.getColour());
+            buffer.writeInt(entry.getHighlightColor());
             buffer.writeUtf(entry.getClass().getSimpleName());
             buffer.writeVector3f(entry.getPosition().toVector3f());
             buffer.writeUtf(entry.getLevel());

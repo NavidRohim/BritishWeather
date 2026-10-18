@@ -71,7 +71,7 @@ public final class DeathEntry extends DefaultTimedEntry implements Singleton
     }
 
     @Override
-    public int getColour()
+    public int getHighlightColor()
     {
         return RED;
     }
