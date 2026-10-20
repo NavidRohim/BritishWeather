@@ -60,7 +60,7 @@
   "br.pin_creation_screen.should_show_dist.selected.tooltip": "Show distance from pin",
   "br.pin_creation_screen.should_show_dist.unselected.tooltip": "Don't show distance from pin",
   "br.pin_creation_screen.should_disappear_oob.selected.tooltip": "Disappear when on the end of compass",
-  "br.pin_creation_screen.should_disappear_oob.unselected.tooltip": "Don't disappear when on the end of compass (Might clutter)"
-
+  "br.pin_creation_screen.should_disappear_oob.unselected.tooltip": "Don't disappear when on the end of compass (Might clutter)",
+  "br.pin_creation_screen.colour_picker.tooltip": "Pick colour from game window."
 
 }

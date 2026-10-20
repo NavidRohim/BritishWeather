@@ -1,5 +1,13 @@
 package me.brynview.navidrohim.client.screen;
 
+import com.mojang.blaze3d.platform.cursor.CursorType;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.backend.vulkan.VulkanBackend;
+import com.mojang.renderpearl.backend.vulkan.VulkanDevice;
+import com.mojang.renderpearl.backend.vulkan.VulkanInstance;
+import com.mojang.renderpearl.backend.vulkan.VulkanPhysicalDevice;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
@@ -15,26 +23,34 @@ import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.color.ColorLerper;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.client.gui.layouts.LayoutSettings;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL30;
 
+import java.awt.*;
+import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
-public class PinCreationScreen extends Screen implements EntryRenderable
+public class PinCreationScreen extends Screen
 {
     private static class BaseIntegerEditBox extends EditBox
     {
@@ -133,6 +149,8 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     private final Vec3 pinPosition;
     private final String level;
 
+    LinearLayout masterLayout;
+
     BRCheckbox isPersistentCheckbox;
     BRCheckbox shouldShowDistCheckbox;
     BRCheckbox shouldDisappearWhenOOB;
@@ -145,6 +163,7 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     ColourEditBox rBox;
     ColourEditBox gBox;
     ColourEditBox bBox;
+    Button colourDropperButton;
 
     Tooltip selectedPersistent = Tooltip.create(Component.translatable("br.pin_creation_screen.persistent_checkbox.selected.tooltip"));
     Tooltip unselectedPersistent = Tooltip.create(Component.translatable("br.pin_creation_screen.persistent_checkbox.unselected.tooltip"));
@@ -155,7 +174,22 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     Tooltip shouldDisappearWhenOOBTooltipSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_disappear_oob.selected.tooltip"));
     Tooltip shouldDisappearWhenOOBTooltipUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_disappear_oob.unselected.tooltip"));
 
+    Tooltip colourDropperTooltip = Tooltip.create(Component.translatable("br.pin_creation_screen.colour_picker.tooltip"));
+
     private static final Component EMPTY = Component.empty();
+    private static final String DUMMY_DISTANCE_MARKER = "0m -";
+
+    private static final int PICKER_BG = ColorHelper.rgb(110, 110, 110, 255);
+    private static final int PICKER_GLASS_SIZE = 18;
+    private static final int PICKER_GLASS_OFFSET = 22;
+    private static final int PICKER_COLOUR_SPACING = 4;
+
+    private boolean isSelectingColour = false;
+    private int frameCounter = 0;
+    private int highlightedColourOnPicker = 0;
+    private int highlightedColourPickerR = 0;
+    private int highlightedColourPickerG = 0;
+    private int highlightedColourPickerB = 0;
 
     public PinCreationScreen(Minecraft mc, @NotNull LocalPlayer player)
     {
@@ -164,14 +198,12 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         this.mc = mc;
         this.pinPosition = player.position();
         this.level = GeneralUtils.getDimensionFromPlayer(player);
-
-
     }
 
     @Override
     protected void init()
     {
-        LinearLayout masterLayout = LinearLayout.horizontal().spacing(7);
+        masterLayout = LinearLayout.horizontal().spacing(7);
 
         LinearLayout colourLayout = LinearLayout.vertical().spacing(5);
         LinearLayout timeLayout = LinearLayout.vertical().spacing(5);
@@ -190,8 +222,12 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         this.rBox = new ColourEditBox(mc.font, Component.empty(), 255, "Red..", ColorHelper.RED);
         this.gBox = new ColourEditBox(mc.font, Component.empty(), 255, "Green..", ColorHelper.GREEN);
         this.bBox = new ColourEditBox(mc.font, Component.empty(), 255, "Blue..", ColorHelper.BLUE);
+        this.colourDropperButton = Button.builder(Component.literal("\uD83D\uDCA7"), (_) -> this.selectColourFromScreen())
+                .width(50)
+                .tooltip(colourDropperTooltip)
+                .build();
 
-        CycleButton<TimeUnit> b = CycleButton.builder((timeUnit -> Component.literal(timeUnit.name().toLowerCase())), selectedTimeUnit)
+        CycleButton<TimeUnit> timeUnitCycleButton = CycleButton.builder((timeUnit -> Component.literal(timeUnit.name().toLowerCase())), selectedTimeUnit)
                 .withValues(TimeUnit.values())
                 .create(Component.literal("Time"), (_, newTimeUnit) -> this.selectedTimeUnit = newTimeUnit);
 
@@ -208,12 +244,13 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         personalisationLayout.addChild(this.shouldDisappearWhenOOB, LayoutSettings::alignHorizontallyRight);
 
         timeLayout.addChild(this.integerEditBox);
-        timeLayout.addChild(b);
+        timeLayout.addChild(timeUnitCycleButton);
         timeLayout.addChild(timeMethodCycleButton);
 
         colourLayout.addChild(this.rBox);
         colourLayout.addChild(this.gBox);
         colourLayout.addChild(this.bBox);
+        colourLayout.addChild(this.colourDropperButton);
 
         masterLayout.addChild(personalisationLayout);
         masterLayout.addChild(timeLayout);
@@ -223,6 +260,12 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         masterLayout.arrangeElements();
         FrameLayout.centerInRectangle(masterLayout, 0, 0, width, mc.getWindow().getGuiScaledWidth() / 4);
         masterLayout.visitWidgets(this::addRenderableWidget);
+    }
+
+    private void selectColourFromScreen()
+    {
+        isSelectingColour = !isSelectingColour;
+        frameCounter = 0;
     }
 
     private void enterSelection()
@@ -244,6 +287,12 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     @Override
     public boolean keyPressed(KeyEvent event)
     {
+        if (isSelectingColour)
+        {
+            isSelectingColour = false;
+            frameCounter = 0;
+        }
+
         if (event.keycode() == 13) // Enter key
         {
             enterSelection();
@@ -254,10 +303,24 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     }
 
     @Override
-    public void extractBackground(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
+    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
     {
-        super.extractBackground(graphics, mouseX, mouseY, a);
-        renderDummy(graphics, a);
+        if (!isSelectingColour)
+        {
+            super.extractRenderState(graphics, mouseX, mouseY, a);
+            renderDummy(graphics, a);
+        } else {
+            renderColourDropper(graphics, mouseX, mouseY, a);
+        }
+    }
+
+    @Override
+    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
+    {
+        if (!isSelectingColour)
+        {
+            super.extractBackground(graphics, mouseX, mouseY, a);
+        }
     }
 
     public String getMarker()
@@ -265,21 +328,9 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         return this.markerBox.getValue();
     }
 
-    @Override
-    public int getMarkerHalfWidth()
-    {
-        return mc.font.width(getMarker()) / 2;
-    }
-
     public boolean isPersistent()
     {
         return this.isPersistentCheckbox.isChecked;
-    }
-
-    @Override
-    public Vec3 getPosition()
-    {
-        return pinPosition.add(10, 10, 10);
     }
 
     public int getHighlightColor()
@@ -287,22 +338,9 @@ public class PinCreationScreen extends Screen implements EntryRenderable
         return ColorHelper.rgb(rBox.getIntValue(), gBox.getIntValue(), bBox.getIntValue(),  255);
     }
 
-    @Override
-    public int getColor()
-    {
-        return 0;
-    }
-
-    @Override
     public boolean shouldShowDistance()
     {
         return this.shouldShowDistCheckbox.isChecked;
-    }
-
-    @Override
-    public DefaultEntry.RenderState getRenderState()
-    {
-        return DefaultEntry.RenderState.NORMAL;
     }
 
     public boolean shouldDisappearWhenOutsideView()
@@ -319,11 +357,64 @@ public class PinCreationScreen extends Screen implements EntryRenderable
     @Override
     public void setFocused(boolean focused) {}
 
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick)
+    {
+        boolean didAction = super.mouseClicked(event, doubleClick);
+        if (isSelectingColour && frameCounter >= 10)
+        {
+            isSelectingColour = false;
+            this.rBox.setValue(String.valueOf(highlightedColourPickerR));
+            this.gBox.setValue(String.valueOf(highlightedColourPickerG));
+            this.bBox.setValue(String.valueOf(highlightedColourPickerB));
+        }
+
+        return didAction;
+    }
+
+
+    private void renderColourDropper(GuiGraphicsExtractor guiGraphicsExtractor, int mX, int mY, float a)
+    {
+        frameCounter++;
+
+        if (frameCounter % 10 == 0)
+        {
+            int width = mc.getWindow().getWidth();
+            int height = mc.getWindow().getHeight();
+
+            int x = mX * width / mc.getWindow().getGuiScaledWidth();
+            int y = height - 1 - mY * height / mc.getWindow().getGuiScaledHeight();
+            ByteBuffer pixelRGB = BufferUtils.createByteBuffer(4);
+
+            // No idea of Vulkan equivalent. TODO: Look for abstraction that works with Vulkan
+            GL11.glReadPixels(x, y, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, pixelRGB);
+
+            int r = pixelRGB.get(0) & 0xFF;
+            int g = pixelRGB.get(1) & 0xFF;
+            int b = pixelRGB.get(2) & 0xFF;
+
+            highlightedColourOnPicker = ColorHelper.rgb(r, g, b, 255);
+            highlightedColourPickerR = r;
+            highlightedColourPickerG = g;
+            highlightedColourPickerB = b;
+        }
+
+        int mXOutline = mX - PICKER_GLASS_OFFSET;
+        int mYOutline = mY - PICKER_GLASS_OFFSET;
+
+        guiGraphicsExtractor.requestCursor(CursorTypes.CROSSHAIR);
+
+        guiGraphicsExtractor.fill(mXOutline, mYOutline, mXOutline + PICKER_GLASS_SIZE, mYOutline + PICKER_GLASS_SIZE, PICKER_BG);
+        guiGraphicsExtractor.outline(mXOutline, mYOutline, PICKER_GLASS_SIZE, PICKER_GLASS_SIZE, ColorHelper.COMPASS_BG_COLOR);
+        guiGraphicsExtractor.fill(mXOutline + PICKER_COLOUR_SPACING, mYOutline + PICKER_COLOUR_SPACING, mXOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), mYOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), highlightedColourOnPicker);
+    }
+
     private void renderDummy(GuiGraphicsExtractor guiGraphicsExtractor, float ticks)
     {
         Minecraft mc = Minecraft.getInstance();
         Compass compass = Compass.getInstance();
         int scaledWidth = mc.getWindow().getGuiScaledWidth();
+
         compass.render(guiGraphicsExtractor, scaledWidth, ticks, height, true);
 
         int entryDummyX = compass.compassX + 50;
@@ -335,10 +426,8 @@ public class PinCreationScreen extends Screen implements EntryRenderable
 
         if (shouldShowDistance())
         {
-            String distanceFromObjective = "14m -";
-            int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, entryDummyX);
-
-            FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);
+            // 11 represents half the text width of the dummy distance marker. Because the distance marker in this case is final (won't change) there is no reason to calculate the width every time.
+            FontHelper.draw(mc, guiGraphicsExtractor, DUMMY_DISTANCE_MARKER, entryDummyX - 11, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);
         }
 
         FontHelper.draw(mc, guiGraphicsExtractor, DefaultEntry.THINGY, entryDummyX, compass.util.getYRowOnCompass(0), colour, FontHelper.TextType.LABEL);
