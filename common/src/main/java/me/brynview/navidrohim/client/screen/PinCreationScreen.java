@@ -1,9 +1,13 @@
 package me.brynview.navidrohim.client.screen;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.cursor.CursorType;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.api.device.GpuDevice;
 import com.mojang.renderpearl.backend.vulkan.VulkanBackend;
 import com.mojang.renderpearl.backend.vulkan.VulkanDevice;
 import com.mojang.renderpearl.backend.vulkan.VulkanInstance;
@@ -38,6 +42,8 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.block.RedstoneLampBlock;
+import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -291,9 +297,8 @@ public class PinCreationScreen extends Screen
         {
             isSelectingColour = false;
             frameCounter = 0;
-        }
-
-        if (event.keycode() == 13) // Enter key
+            return true;
+        } else if (event.keycode() == 13) // Enter key
         {
             enterSelection();
             return true;
@@ -376,27 +381,34 @@ public class PinCreationScreen extends Screen
     private void renderColourDropper(GuiGraphicsExtractor guiGraphicsExtractor, int mX, int mY, float a)
     {
         frameCounter++;
-
         if (frameCounter % 10 == 0)
         {
+            RenderTarget mainRenderTarget = mc.gameRenderer.mainRenderTarget();
+            GpuDevice device = RenderSystem.getDevice();
+            CommandEncoder encoder = device.createCommandEncoder();
+            GpuBuffer pixelBuffer = device.createBuffer(
+                    () -> "Colour picker pixel readback",
+                    GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST,
+                    4
+            );
+
             int width = mc.getWindow().getWidth();
             int height = mc.getWindow().getHeight();
 
             int x = mX * width / mc.getWindow().getGuiScaledWidth();
             int y = height - 1 - mY * height / mc.getWindow().getGuiScaledHeight();
-            ByteBuffer pixelRGB = BufferUtils.createByteBuffer(4);
 
-            // No idea of Vulkan equivalent. TODO: Look for abstraction that works with Vulkan
-            GL11.glReadPixels(x, y, 1, 1, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, pixelRGB);
-
-            int r = pixelRGB.get(0) & 0xFF;
-            int g = pixelRGB.get(1) & 0xFF;
-            int b = pixelRGB.get(2) & 0xFF;
-
-            highlightedColourOnPicker = ColorHelper.rgb(r, g, b, 255);
-            highlightedColourPickerR = r;
-            highlightedColourPickerG = g;
-            highlightedColourPickerB = b;
+            encoder.copyTextureToBuffer(
+                    mainRenderTarget.getColorTexture(),
+                    pixelBuffer,
+                    0L,
+                    () -> readPixel(pixelBuffer),
+                    0,
+                    x,
+                    y,
+                    1,
+                    1
+            );
         }
 
         int mXOutline = mX - PICKER_GLASS_OFFSET;
@@ -407,6 +419,18 @@ public class PinCreationScreen extends Screen
         guiGraphicsExtractor.fill(mXOutline, mYOutline, mXOutline + PICKER_GLASS_SIZE, mYOutline + PICKER_GLASS_SIZE, PICKER_BG);
         guiGraphicsExtractor.outline(mXOutline, mYOutline, PICKER_GLASS_SIZE, PICKER_GLASS_SIZE, ColorHelper.COMPASS_BG_COLOR);
         guiGraphicsExtractor.fill(mXOutline + PICKER_COLOUR_SPACING, mYOutline + PICKER_COLOUR_SPACING, mXOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), mYOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), highlightedColourOnPicker);
+    }
+
+    private void readPixel(GpuBuffer pixelBuffer)
+    {
+        try (GpuBufferSlice.MappedView view = pixelBuffer.map(0L, 4L, true, false)) {
+
+            ByteBuffer data = view.data();
+            highlightedColourPickerR = Byte.toUnsignedInt(data.get(0));
+            highlightedColourPickerG = Byte.toUnsignedInt(data.get(1));
+            highlightedColourPickerB = Byte.toUnsignedInt(data.get(2));
+            highlightedColourOnPicker = ColorHelper.rgb(highlightedColourPickerR, highlightedColourPickerG, highlightedColourPickerB, 255);
+        }
     }
 
     private void renderDummy(GuiGraphicsExtractor guiGraphicsExtractor, float ticks)
