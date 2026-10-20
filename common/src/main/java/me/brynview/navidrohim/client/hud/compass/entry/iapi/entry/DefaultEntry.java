@@ -13,6 +13,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
@@ -62,7 +63,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
 
             isOnLeftEdge = screenX == compass.farLeftX;
             isOnRightEdge = screenX == compass.farRightX;
-            distanceFromHeading = compass.yawInt - angle;
+            distanceFromHeading = Math.abs(Mth.wrapDegrees(compass.yawInt - angle));
 
             if (isHighlightable)
             {
@@ -378,6 +379,12 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     public String getDebugString()
     {
         return "P=%s".formatted(this.isPersistent());
+    }
+
+    @Override
+    public String toString()
+    {
+        return getMarker();
     }
 
     public static DefaultEntry of(Vec3 position, String level, String marker)

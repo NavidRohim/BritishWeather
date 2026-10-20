@@ -111,12 +111,6 @@ public class Compass
             return yTextMiddle + (mc.font.lineHeight * row);
         }
 
-        public int getXForEntry(DefaultEntry entry)
-        {
-            boolean shouldDisappear = entry instanceof Pin && ((Pin) entry).shouldDisappearWhenNotInView();
-            return getXFromPosition(entry.getPosition(),  shouldDisappear);
-        }
-
         public int getXFromPosition(Vec3 position, boolean disappearWhenOutOfBounds)
         {
             double angleRelativeToPosition = MathHelper.angleFromPos(position, mc.player.position());
@@ -369,6 +363,7 @@ public class Compass
 
             float key = Math.abs(entry.renderer.getDistanceFromHeading());
             this.entriesSortedDistance.put(key, entry);
+            Constants.LOG.info(String.valueOf(key));
         }
 
         ListIterator<Float> sortedDist = new ArrayList<>(entriesSortedDistance.keySet().stream().sorted().toList()).listIterator(entriesSortedDistance.size());
