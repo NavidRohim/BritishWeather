@@ -344,29 +344,6 @@ public class Compass
         entriesOnLeftEdge = 0;
         entriesOnRightEdge = 0;
 
-        // Draw normal entries.
-        for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntries())
-        {
-            entry.renderer.calculateState(this);
-            float key = Math.abs(entry.renderer.getDistanceFromHeading());
-            this.entriesSortedDistanceMap.put(key, entry);
-        }
-
-        for (@NotNull Iterator<Map.Entry<Float, DefaultEntry>> it = this.entriesSortedDistanceMap.entrySet().iterator(); it.hasNext(); )
-        {
-            Map.Entry<Float, DefaultEntry> entry = it.next();
-            Float _ = entry.getKey();
-            DefaultEntry value = entry.getValue();
-
-            if (!it.hasNext() && value.renderer.getRenderState() == DefaultEntry.RenderState.HIGHLIGHT)
-            {
-                highlightedEntry = value;
-                highlightedEntry.renderer.setRenderState(DefaultEntry.RenderState.FOCUSED);
-            }
-
-            value.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, false);
-        }
-
         // Draw entries inside of entry groups.
         for (DefaultEntryGroup group : EntryManager.ProviderRegistry.PROVIDER_GROUPS)
         {
@@ -383,6 +360,28 @@ public class Compass
             group.getEntries().forEach(groupEntry -> {
                 groupEntry.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, true);
             });
+        }
+
+        // Draw normal entries.
+        for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntries())
+        {
+            entry.renderer.calculateState(this);
+            float key = Math.abs(entry.renderer.getDistanceFromHeading());
+            this.entriesSortedDistanceMap.put(key, entry);
+        }
+
+        for (@NotNull Iterator<Map.Entry<Float, DefaultEntry>> it = this.entriesSortedDistanceMap.entrySet().iterator(); it.hasNext(); )
+        {
+            Map.Entry<Float, DefaultEntry> entry = it.next();
+            DefaultEntry value = entry.getValue();
+
+            if (!it.hasNext() && value.renderer.getRenderState() == DefaultEntry.RenderState.HIGHLIGHT)
+            {
+                highlightedEntry = value;
+                highlightedEntry.renderer.setRenderState(DefaultEntry.RenderState.FOCUSED);
+            }
+
+            value.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, false);
         }
     }
 
