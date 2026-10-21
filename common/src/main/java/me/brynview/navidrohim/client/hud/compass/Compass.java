@@ -159,10 +159,8 @@ public class Compass
 
     public int entriesOnLeftEdge = 0;
     public int entriesOnRightEdge = 0;
-    private int snapIndex = 0;
 
-    public final List<DefaultEntry> entriesInSnapArea = new ArrayList<>();
-    public final HashMap<Float, DefaultEntry> entriesSortedDistance = new HashMap<>();
+    public final TreeMap<Float, DefaultEntry> entriesSortedDistanceMap = new TreeMap<>(Comparator.reverseOrder());
 
     private @Nullable DefaultEntry highlightedEntry;
 
@@ -259,11 +257,6 @@ public class Compass
         }
 
         // Draw compass heading
-        if (highlightedEntry != null && !shouldShowNormalHud && !isDummy)
-        {
-            highlightedEntry.renderer.draw(guiGraphics, player, false, false);
-        }
-
         FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, this.compassX, this.yTextMiddle, ColorHelper.CENTER_COLOR, false, FontHelper.TextType.NONE);
     }
 
@@ -346,9 +339,7 @@ public class Compass
      */
     private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player)
     {
-        snapIndex = 0;
-        this.entriesInSnapArea.clear();
-        this.entriesSortedDistance.clear();
+        this.entriesSortedDistanceMap.clear();
 
         entriesOnLeftEdge = 0;
         entriesOnRightEdge = 0;
@@ -357,26 +348,23 @@ public class Compass
         for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntries())
         {
             entry.renderer.calculateState(this);
-
             float key = Math.abs(entry.renderer.getDistanceFromHeading());
-            this.entriesSortedDistance.put(key, entry);
+            this.entriesSortedDistanceMap.put(key, entry);
         }
 
-        ListIterator<Float> sortedDist = new ArrayList<>(entriesSortedDistance.keySet().stream().sorted().toList()).listIterator(entriesSortedDistance.size());
-
-        while (sortedDist.hasPrevious())
+        for (@NotNull Iterator<Map.Entry<Float, DefaultEntry>> it = this.entriesSortedDistanceMap.entrySet().iterator(); it.hasNext(); )
         {
-            float index = sortedDist.previous();
-            DefaultEntry defaultEntry = entriesSortedDistance.get(index);
-            boolean hasPrev = sortedDist.hasPrevious();
+            Map.Entry<Float, DefaultEntry> entry = it.next();
+            Float _ = entry.getKey();
+            DefaultEntry value = entry.getValue();
 
-            if (!hasPrev && defaultEntry.renderer.getRenderState() == DefaultEntry.RenderState.HIGHLIGHT)
+            if (!it.hasNext() && value.renderer.getRenderState() == DefaultEntry.RenderState.HIGHLIGHT)
             {
-                highlightedEntry = defaultEntry;
+                highlightedEntry = value;
                 highlightedEntry.renderer.setRenderState(DefaultEntry.RenderState.FOCUSED);
-            } else {
-                defaultEntry.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, false);
             }
+
+            value.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, false);
         }
 
         // Draw entries inside of entry groups.
@@ -456,19 +444,13 @@ public class Compass
 
     private @Nullable DefaultEntry getClosestEntry()
     {
-        @Nullable DefaultEntry closest = null;
-        float closestI = 0;
-
-        for (Map.Entry<Float, DefaultEntry> entrySet : entriesSortedDistance.entrySet())
+        Map.Entry<Float, DefaultEntry> lowerEntry = entriesSortedDistanceMap.lowerEntry(4f);
+        if (lowerEntry == null)
         {
-            if ((closest == null || entrySet.getKey() < closestI) && (int) entrySet.getValue().renderer.getDistanceFromHeading() != 0)
-            {
-                closest = entrySet.getValue();
-                closestI = entrySet.getKey();
-            }
+            return null;
         }
 
-        return closest;
+        return lowerEntry.getValue();
     }
 
     // Static methods

@@ -56,11 +56,6 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
 
             boolean isHighlightable = compass.util.isXHighlightable(screenX) && !owner.isBuiltIn();
 
-            if (isHighlightable)
-            {
-                compass.entriesInSnapArea.add(owner);
-            }
-
             isOnLeftEdge = screenX == compass.farLeftX;
             isOnRightEdge = screenX == compass.farRightX;
             distanceFromHeading = Math.abs(Mth.wrapDegrees(compass.yawInt - angle));
