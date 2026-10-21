@@ -5,14 +5,10 @@ import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
 import me.brynview.navidrohim.client.screen.PinCreationScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ServerData;
-import net.minecraft.client.particle.EndRodParticle;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class ClientCommon
 {
@@ -26,6 +22,8 @@ public class ClientCommon
     {
         WEATHER_MANAGER = new ClientWeatherManager();
         compass = Compass.init();
+
+
     }
 
     public static ClientWeatherManager getWeatherManager()
@@ -35,8 +33,10 @@ public class ClientCommon
 
     public static void tickClient(@NotNull LocalPlayer player)
     {
-        Compass.tick(player);
-        if (ClientKeybinds.ENTRY_HUD_KEY.isDown() && ClientKeybinds.CREATE.isDown())
+        boolean isPinHudKeyHeld = ClientKeybinds.ENTRY_HUD_KEY.isDown();
+        Compass.tick(player, isPinHudKeyHeld);
+
+        if (isPinHudKeyHeld && ClientKeybinds.CREATE.isDown())
         {
             Minecraft mc = Minecraft.getInstance();
             mc.setScreenAndShow(new PinCreationScreen(mc, player));
@@ -59,4 +59,5 @@ public class ClientCommon
         EntryManager.save();
         EntryManager.ProviderRegistry.clear();
     }
+
 }

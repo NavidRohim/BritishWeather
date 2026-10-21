@@ -11,8 +11,6 @@ import org.joml.Vector2i;
 
 public class GeneralUtils
 {
-    private static double cMouse = 0;
-
     public static String getDimensionFromPlayer(@NotNull LocalPlayer player)
     {
         return player.level().dimension().identifier().toString();
@@ -23,14 +21,5 @@ public class GeneralUtils
         renderer.fill(element.getX(), element.getY(), element.getX() + element.getWidth(), element.getY() + element.getHeight(), colour);
     }
 
-    public static void doHouseEventHandleFromMixinToAvoidReloadingEveryDebugSessionForFuckSake(Vector2i wheelXY)
-    {
-        cMouse = wheelXY.y;
-        if (cMouse <= -1.0) // scroll up
-        {
-            Compass.getInstance().displayZoom(1);
-        } else if (cMouse >= 1.0){
-            Compass.getInstance().displayZoom(-1);
-        }
-    }
+
 }

@@ -1,35 +1,28 @@
 package me.brynview.navidrohim.client;
 
+import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.particle.HailParticle;
 import me.brynview.navidrohim.client.particle.ModParticles;
 import me.brynview.navidrohim.common.WeatherUpdatePacket;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLevelEvents;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
-import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
-import net.fabricmc.fabric.api.entity.event.v1.ServerPlayerEvents;
-import net.fabricmc.fabric.api.event.client.player.ClientHotbarScrollEvents;
-import net.minecraft.client.ClientClockManager;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.DisconnectedScreen;
-import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.protocol.common.ClientboundDisconnectPacket;
-import org.lwjgl.sdl.SDL_RenderEvent;
+import net.minecraft.resources.Identifier;
 
 public class FabricMainClient implements ClientModInitializer
-
 {
+    private float tickCount = 0;
+
     @Override
     public void onInitializeClient()
     {
@@ -49,12 +42,28 @@ public class FabricMainClient implements ClientModInitializer
             LocalPlayer player = Minecraft.getInstance().player;
             ClientCommon.tickClient(player);
         });
-
+        HudElementRegistry.addFirst(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "compass_hud"), this.compassHudLayer());
         initKeybinds();
 
         ClientCommon.init();
     }
 
+    private HudElement compassHudLayer()
+    {
+        return (gpu, deltaTickTracker) ->
+        {
+            tickCount += deltaTickTracker.getGameTimeDeltaPartialTick(true);
+
+            if (!BritishWeather.getConfig().shouldRenderCompass())
+            {
+                return;
+            }
+
+            Minecraft mc = Minecraft.getInstance();
+            int scaledWidth = mc.getWindow().getGuiScaledWidth();
+            Compass.getInstance().render(gpu, scaledWidth, tickCount, BritishWeather.getConfig().getCompassY(), false);
+        };
+    }
     private void initKeybinds()
     {
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.DEBUG_ON_PRESS);
@@ -65,7 +74,6 @@ public class FabricMainClient implements ClientModInitializer
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.DELETION);
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.CREATE);
 
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.LEFT_SNAP);
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.RIGHT_SNAP);
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.SNAP_TO_NEAREST);
     }
 }

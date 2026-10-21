@@ -1,13 +1,10 @@
 package me.brynview.navidrohim.client.hud.compass;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.ClientKeybinds;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.Pin;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
 import me.brynview.navidrohim.client.screen.PinCreationScreen;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -363,7 +360,6 @@ public class Compass
 
             float key = Math.abs(entry.renderer.getDistanceFromHeading());
             this.entriesSortedDistance.put(key, entry);
-            Constants.LOG.info(String.valueOf(key));
         }
 
         ListIterator<Float> sortedDist = new ArrayList<>(entriesSortedDistance.keySet().stream().sorted().toList()).listIterator(entriesSortedDistance.size());
@@ -420,61 +416,59 @@ public class Compass
         mc.player.playSound(ClientCommon.SCROLL, 0.04f, 1.5f);
     }
 
-    private void tick()
+    private void tick(boolean isPinHudKeyHeld)
     {
         zoomAlertTick--;
 
-        if (highlightedEntry != null)
+        if (isPinHudKeyHeld && (currentHeldKey == null || !currentHeldKey.isDown()))
         {
-            if (ClientKeybinds.ENTRY_HUD_KEY.isDown() && (currentHeldKey == null || !currentHeldKey.isDown()))
+            if (ClientKeybinds.SNAP_TO_NEAREST.isDown())
+            {
+                snap();
+                currentHeldKey = ClientKeybinds.SNAP_TO_NEAREST;
+            } else if (highlightedEntry != null)
             {
                 if (ClientKeybinds.DELETION.isDown())
                 {
                     EntryManager.ProviderRegistry.removeEntry(this.highlightedEntry);
                     this.highlightedEntry = null;
                     currentHeldKey = ClientKeybinds.DELETION;
-                }
-
-                if (ClientKeybinds.DEBUG_ON_PRESS.isDown())
+                } else if (ClientKeybinds.DEBUG_ON_PRESS.isDown())
                 {
                     Vec3 pos = this.highlightedEntry.getPosition();
                     mc.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
-                }
-
-                if (ClientKeybinds.LEFT_SNAP.isDown())
-                {
-                    snap(-1);
-                    currentHeldKey = ClientKeybinds.LEFT_SNAP;
-                }
-
-                if (ClientKeybinds.RIGHT_SNAP.isDown())
-                {
-                    snap(1);
-                    currentHeldKey = ClientKeybinds.RIGHT_SNAP;
+                } else {
+                    currentHeldKey = null;
                 }
             }
         }
     }
 
-    private void snap(int index)
+    private void snap()
     {
-        // Check bounds
-        if (entriesInSnapArea.isEmpty())
+        @Nullable DefaultEntry closest = getClosestEntry();
+        if (closest != null)
         {
-            return;
+            double angleFromEntry = MathHelper.angleFromPos(closest.getPosition(), mc.player.position());
+            mc.player.setYRot((float) angleFromEntry);
+        }
+    }
+
+    private @Nullable DefaultEntry getClosestEntry()
+    {
+        @Nullable DefaultEntry closest = null;
+        float closestI = 0;
+
+        for (Map.Entry<Float, DefaultEntry> entrySet : entriesSortedDistance.entrySet())
+        {
+            if ((closest == null || entrySet.getKey() < closestI) && (int) entrySet.getValue().renderer.getDistanceFromHeading() != 0)
+            {
+                closest = entrySet.getValue();
+                closestI = entrySet.getKey();
+            }
         }
 
-        if ( (snapIndex == 0 && index < 0) || (snapIndex + index >= this.entriesInSnapArea.size()) )
-        {
-            snapIndex = 0;
-            index = 0;
-        }
-
-        snapIndex += index;
-        DefaultEntry snappedCurrentEntry = entriesInSnapArea.get(snapIndex);
-
-        double a = MathHelper.angleFromPos(snappedCurrentEntry.getPosition(), mc.player.position());
-        mc.player.setYRot((float) a);
+        return closest;
     }
 
     // Static methods
@@ -506,11 +500,11 @@ public class Compass
         return EntryManager.ProviderRegistry.getEntries();
     }
 
-    public static void tick(@NotNull LocalPlayer player)
+    public static void tick(@NotNull LocalPlayer player, boolean isPinHudKeyHeld)
     {
         Compass compass = getInstance();
 
         EntryManager.ProviderRegistry.tick(player);
-        compass.tick();
+        compass.tick(isPinHudKeyHeld);
     }
 }

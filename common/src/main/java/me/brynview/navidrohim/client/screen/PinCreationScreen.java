@@ -1,35 +1,24 @@
 package me.brynview.navidrohim.client.screen;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
-import com.mojang.blaze3d.platform.cursor.CursorType;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.device.GpuDevice;
-import com.mojang.renderpearl.backend.vulkan.VulkanBackend;
-import com.mojang.renderpearl.backend.vulkan.VulkanDevice;
-import com.mojang.renderpearl.backend.vulkan.VulkanInstance;
-import com.mojang.renderpearl.backend.vulkan.VulkanPhysicalDevice;
-import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.DefaultPinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.TimedPinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.EntryRenderable;
 import me.brynview.navidrohim.client.screen.elements.BRCheckbox;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
-import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.color.ColorLerper;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.components.Button;
@@ -42,17 +31,11 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.level.block.RedstoneLampBlock;
-import net.minecraft.world.level.block.TorchBlock;
 import net.minecraft.world.phys.Vec3;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL30;
 
-import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
@@ -182,9 +165,12 @@ public class PinCreationScreen extends Screen
 
     Tooltip colourDropperTooltip = Tooltip.create(Component.translatable("br.pin_creation_screen.colour_picker.tooltip"));
 
+    Component pressAnyToExit = Component.translatable("br.pin_creation_screen.press_any_to_exit");
+
     private static final Component EMPTY = Component.empty();
     private static final String DUMMY_DISTANCE_MARKER = "0m -";
 
+    // Colour dropper values
     private static final int PICKER_BG = ColorHelper.rgb(110, 110, 110, 255);
     private static final int PICKER_GLASS_SIZE = 18;
     private static final int PICKER_GLASS_OFFSET = 22;
@@ -192,10 +178,15 @@ public class PinCreationScreen extends Screen
 
     private boolean isSelectingColour = false;
     private int frameCounter = 0;
+
     private int highlightedColourOnPicker = 0;
     private int highlightedColourPickerR = 0;
     private int highlightedColourPickerG = 0;
     private int highlightedColourPickerB = 0;
+
+    GpuBuffer pixelBuffer;
+    RenderTarget mainRenderTarget;
+    CommandEncoder encoder;
 
     public PinCreationScreen(Minecraft mc, @NotNull LocalPlayer player)
     {
@@ -204,6 +195,16 @@ public class PinCreationScreen extends Screen
         this.mc = mc;
         this.pinPosition = player.position();
         this.level = GeneralUtils.getDimensionFromPlayer(player);
+
+        GpuDevice device = RenderSystem.getDevice();
+
+        mainRenderTarget = mc.gameRenderer.mainRenderTarget();
+        encoder = device.createCommandEncoder();
+        pixelBuffer = device.createBuffer(
+                () -> "Colour picker pixel readback",
+                GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST,
+                4
+        );
     }
 
     @Override
@@ -228,7 +229,7 @@ public class PinCreationScreen extends Screen
         this.rBox = new ColourEditBox(mc.font, Component.empty(), 255, "Red..", ColorHelper.RED);
         this.gBox = new ColourEditBox(mc.font, Component.empty(), 255, "Green..", ColorHelper.GREEN);
         this.bBox = new ColourEditBox(mc.font, Component.empty(), 255, "Blue..", ColorHelper.BLUE);
-        this.colourDropperButton = Button.builder(Component.literal("\uD83D\uDCA7"), (_) -> this.selectColourFromScreen())
+        this.colourDropperButton = Button.builder(Component.literal("\uD83D\uDCA7"), (_) -> this.enableColourDropper(!isSelectingColour))
                 .width(50)
                 .tooltip(colourDropperTooltip)
                 .build();
@@ -268,9 +269,9 @@ public class PinCreationScreen extends Screen
         masterLayout.visitWidgets(this::addRenderableWidget);
     }
 
-    private void selectColourFromScreen()
+    private void enableColourDropper(boolean enabled)
     {
-        isSelectingColour = !isSelectingColour;
+        isSelectingColour = enabled;
         frameCounter = 0;
     }
 
@@ -295,8 +296,7 @@ public class PinCreationScreen extends Screen
     {
         if (isSelectingColour)
         {
-            isSelectingColour = false;
-            frameCounter = 0;
+            enableColourDropper(false);
             return true;
         } else if (event.keycode() == 13) // Enter key
         {
@@ -315,7 +315,7 @@ public class PinCreationScreen extends Screen
             super.extractRenderState(graphics, mouseX, mouseY, a);
             renderDummy(graphics, a);
         } else {
-            renderColourDropper(graphics, mouseX, mouseY, a);
+            renderColourDropper(graphics, mouseX, mouseY);
         }
     }
 
@@ -368,7 +368,7 @@ public class PinCreationScreen extends Screen
         boolean didAction = super.mouseClicked(event, doubleClick);
         if (isSelectingColour && frameCounter >= 10)
         {
-            isSelectingColour = false;
+            enableColourDropper(false);
             this.rBox.setValue(String.valueOf(highlightedColourPickerR));
             this.gBox.setValue(String.valueOf(highlightedColourPickerG));
             this.bBox.setValue(String.valueOf(highlightedColourPickerB));
@@ -378,20 +378,13 @@ public class PinCreationScreen extends Screen
     }
 
 
-    private void renderColourDropper(GuiGraphicsExtractor guiGraphicsExtractor, int mX, int mY, float a)
+    private void renderColourDropper(GuiGraphicsExtractor guiGraphicsExtractor, int mX, int mY)
     {
         frameCounter++;
+        guiGraphicsExtractor.centeredText(font, pressAnyToExit, width / 2, 25, ColorHelper.WHITE);
+
         if (frameCounter % 10 == 0)
         {
-            RenderTarget mainRenderTarget = mc.gameRenderer.mainRenderTarget();
-            GpuDevice device = RenderSystem.getDevice();
-            CommandEncoder encoder = device.createCommandEncoder();
-            GpuBuffer pixelBuffer = device.createBuffer(
-                    () -> "Colour picker pixel readback",
-                    GpuBuffer.USAGE_MAP_READ | GpuBuffer.USAGE_COPY_DST,
-                    4
-            );
-
             int width = mc.getWindow().getWidth();
             int height = mc.getWindow().getHeight();
 
