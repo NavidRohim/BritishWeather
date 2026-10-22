@@ -110,7 +110,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             }
 
             // Check if the entry should be rendered and the entry dimension matches the players current dimension
-            if (!owner.shouldRender() || !level.equals(player.level().dimension().identifier().toString()))
+            if (!owner.shouldRender() || getRenderState() == RenderState.NONE)
             {
                 return;
             }
@@ -192,7 +192,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, entryX - finalMarkerLen, compass.util.getYRowOnCompass(screenYRow - 1), renderingColour, true, FontHelper.TextType.NONE);
 
             // If in view, render the distance from entry and if the player should go up or down to reach it
-            if ((owner.shouldShowDistance() && owner.getRenderState() == RenderState.FOCUSED) || (owner.isBuiltIn() && owner.forceDistanceRendering()))
+            if (owner.shouldShowDistance() && (owner.getRenderState() == RenderState.FOCUSED || owner.isBuiltIn()))
             {
                 int distance = MathHelper.getDistance(owner.getPosition(), playerPos);
 
@@ -231,18 +231,12 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         }
     }
 
-    public boolean forceDistanceRendering()
-    {
-        return false;
-    }
-
     public enum RenderState
     {
         NONE,
         NORMAL,
         HIGHLIGHT,
-        FOCUSED,
-        INBUILT
+        FOCUSED
     }
 
     public final static String THINGY = "|";

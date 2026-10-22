@@ -36,12 +36,6 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
         }
 
         @Override
-        public boolean forceDistanceRendering()
-        {
-            return true;
-        }
-
-        @Override
         public boolean isBuiltIn()
         {
             return true;
