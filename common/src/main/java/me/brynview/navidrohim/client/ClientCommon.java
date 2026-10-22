@@ -34,14 +34,7 @@ public class ClientCommon
 
     public static void tickClient(@NotNull LocalPlayer player)
     {
-        boolean isPinHudKeyHeld = ClientKeybinds.ENTRY_HUD_KEY.isDown();
-        Compass.tick(player, isPinHudKeyHeld);
-
-        if (isPinHudKeyHeld && ClientKeybinds.CREATE.isDown())
-        {
-            Minecraft mc = Minecraft.getInstance();
-            mc.setScreenAndShow(new PinCreationScreen(mc, player));
-        }
+        Compass.tick(player);
     }
 
     /*

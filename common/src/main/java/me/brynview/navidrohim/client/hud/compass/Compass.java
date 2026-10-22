@@ -358,13 +358,21 @@ public class Compass
             }
 
             group.getEntries().forEach(groupEntry -> {
-                groupEntry.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, true);
+                if (groupEntry.isUsable())
+                {
+                    groupEntry.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, true);
+                }
             });
         }
 
         // Draw normal entries.
         for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntries())
         {
+            if (!entry.isUsable())
+            {
+                continue;
+            }
+
             entry.renderer.calculateState(this);
             float key = Math.abs(entry.renderer.getDistanceFromHeading());
             this.entriesSortedDistanceMap.put(key, entry);
@@ -403,17 +411,24 @@ public class Compass
         mc.player.playSound(ClientCommon.SCROLL, 0.04f, 1.5f);
     }
 
-    private void tick(boolean isPinHudKeyHeld)
+    private void tick()
     {
         zoomAlertTick--;
+        boolean isPinHudKeyHeld = ClientKeybinds.ENTRY_HUD_KEY.isDown();
 
+        // Is there a better way to listen for key presses? This is horrible.
         if (isPinHudKeyHeld && (currentHeldKey == null || !currentHeldKey.isDown()))
         {
             if (ClientKeybinds.SNAP_TO_NEAREST.isDown())
             {
                 snap();
                 currentHeldKey = ClientKeybinds.SNAP_TO_NEAREST;
-            } else if (highlightedEntry != null)
+            }
+            else if (ClientKeybinds.CREATE.isDown())
+            {
+                mc.setScreenAndShow(new PinCreationScreen(mc, mc.player));
+            }
+            else if (highlightedEntry != null)
             {
                 if (ClientKeybinds.DELETION.isDown())
                 {
@@ -481,11 +496,11 @@ public class Compass
         return EntryManager.ProviderRegistry.getEntries();
     }
 
-    public static void tick(@NotNull LocalPlayer player, boolean isPinHudKeyHeld)
+    public static void tick(@NotNull LocalPlayer player)
     {
         Compass compass = getInstance();
 
         EntryManager.ProviderRegistry.tick(player);
-        compass.tick(isPinHudKeyHeld);
+        compass.tick();
     }
 }

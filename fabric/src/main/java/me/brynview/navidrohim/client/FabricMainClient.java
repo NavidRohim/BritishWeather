@@ -28,10 +28,11 @@ public class FabricMainClient implements ClientModInitializer
     {
         ParticleProviderRegistry.getInstance().register(ModParticles.HAIL, HailParticle.Provider::new);
         HudElementRegistry.addFirst(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "compass_hud"), this.compassHudLayer());
-        // Reset weather manager upon joining server
 
+        // Reset weather manager upon joining server
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCommon.leaveServerEvent());
         ClientPlayConnectionEvents.JOIN.register((_, _, _) -> ClientCommon.joinServerEvent());
+
         // Client packet registry
         ClientPlayNetworking.registerGlobalReceiver(WeatherUpdatePacket.TYPE, ((payload, _) ->
                 ClientCommon.getWeatherManager().setWeather(payload.condition())));

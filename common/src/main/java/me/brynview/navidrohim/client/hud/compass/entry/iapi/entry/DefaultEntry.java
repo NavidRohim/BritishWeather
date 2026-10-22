@@ -8,6 +8,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
+import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -247,6 +248,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     private final String entryId; // Unique entry ID. Not used for anything at the moment.
 
     private final Minecraft mc;
+    private final Compass compass = Compass.getInstance();
     public final EntryRenderer renderer;
 
     private String marker; // What text will be rendered on the compass.
@@ -345,6 +347,11 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     public boolean isPersistent()
     {
         return false;
+    }
+
+    public boolean isUsable()
+    {
+        return level.equals(GeneralUtils.getDimensionFromPlayer(mc.player));
     }
 
     public boolean shouldShowDistance()
