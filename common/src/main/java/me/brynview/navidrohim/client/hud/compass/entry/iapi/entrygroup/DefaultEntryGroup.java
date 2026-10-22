@@ -3,6 +3,8 @@ package me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -13,8 +15,15 @@ An entry group is just a list of entries. Each entry is normal and can be a subc
 But, the entries will only have the end tick and not any other tick in the TickableAndExpirable interface.
 Instead, the EntryGroup will tick which can dictate behaviour for the child entries.
  */
-public abstract class DefaultEntryGroup implements TickableAndExpirable
+public class DefaultEntryGroup implements TickableAndExpirable
 {
+    private String level;
+
+    public DefaultEntryGroup(ResourceKey<Level> level)
+    {
+        this.level = level.identifier().toString();
+    }
+
     private final List<DefaultEntry> entries = new ArrayList<>();
 
     public List<DefaultEntry> getEntries()
@@ -41,5 +50,11 @@ public abstract class DefaultEntryGroup implements TickableAndExpirable
     public void endTick(@NotNull LocalPlayer player)
     {
         getEntries().forEach(entry -> entry.endTick(player));
+    }
+
+    @Override
+    public String getLevel()
+    {
+        return level;
     }
 }

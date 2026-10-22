@@ -2,9 +2,9 @@ package me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup;
 
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
-import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.MapItem;
@@ -21,13 +21,24 @@ without having to hold the map out.
  */
 public class MapObjectiveEntryGroup extends DefaultEntryGroup
 {
-    private static final String MARKER = "\uD83C\uDFF0";
+    private static final String MARKER = "⛺";
+
+    public MapObjectiveEntryGroup(ResourceKey<Level> level)
+    {
+        super(level);
+    }
 
     private static final class MapObjectiveEntry extends DefaultEntry
     {
         public MapObjectiveEntry(Vec3 position)
         {
             super(position, Level.OVERWORLD.identifier().toString(), MARKER);
+        }
+
+        @Override
+        public boolean forceDistanceRendering()
+        {
+            return true;
         }
 
         @Override
@@ -48,7 +59,7 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
         {
             try
             {
-                if (itemStack.getItem() instanceof MapItem && player.level().dimension().equals(Level.OVERWORLD)) // Check if MapItem. This is the case for all maps. Normal maps, abandoned camp maps or explorer maps
+                if (itemStack.getItem() instanceof MapItem) // Check if MapItem. This is the case for all maps. Normal maps, abandoned camp maps or explorer maps
                 {
                     // Get the "decoration" as minecraft calls it. Which is the abandoned structure or POI.
                     MapDecorations.Entry saved = itemStack.get(DataComponents.MAP_DECORATIONS).decorations().get("+"); // What is this key?
@@ -56,8 +67,10 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
 
                     this.addEntry(new MapObjectiveEntry(pos));
                 }
-            } catch (NullPointerException _) // Will be thrown if the map doesn't have a decoration. Which will be the case if the map is just a normal map. Ignore.
-            {}
+            } catch (
+                    NullPointerException _) // Will be thrown if the map doesn't have a decoration. Which will be the case if the map is just a normal map. Ignore.
+            {
+            }
         }
     }
 

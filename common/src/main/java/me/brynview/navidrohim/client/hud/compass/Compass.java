@@ -345,7 +345,7 @@ public class Compass
         entriesOnRightEdge = 0;
 
         // Draw entries inside of entry groups.
-        for (DefaultEntryGroup group : EntryManager.ProviderRegistry.PROVIDER_GROUPS)
+        for (DefaultEntryGroup group : EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension()))
         {
             if (group.isBuiltIn() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
             {
@@ -357,22 +357,12 @@ public class Compass
                 group.startTick(player);
             }
 
-            group.getEntries().forEach(groupEntry -> {
-                if (groupEntry.isUsable())
-                {
-                    groupEntry.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, true);
-                }
-            });
+            group.getEntries().forEach(groupEntry -> groupEntry.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, true));
         }
 
         // Draw normal entries.
-        for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntries())
+        for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntriesInDimension(player.level().dimension()))
         {
-            if (!entry.isUsable())
-            {
-                continue;
-            }
-
             entry.renderer.calculateState(this);
             float key = Math.abs(entry.renderer.getDistanceFromHeading());
             this.entriesSortedDistanceMap.put(key, entry);
@@ -493,7 +483,7 @@ public class Compass
 
     public static Collection<DefaultEntry> getEntries()
     {
-        return EntryManager.ProviderRegistry.getEntries();
+        return EntryManager.ProviderRegistry.getAllEntries();
     }
 
     public static void tick(@NotNull LocalPlayer player)

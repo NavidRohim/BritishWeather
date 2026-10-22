@@ -1,7 +1,6 @@
 package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Pin;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
@@ -193,7 +192,7 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
             FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, entryX - finalMarkerLen, compass.util.getYRowOnCompass(screenYRow - 1), renderingColour, true, FontHelper.TextType.NONE);
 
             // If in view, render the distance from entry and if the player should go up or down to reach it
-            if (owner.shouldShowDistance() && owner.getRenderState() == RenderState.FOCUSED)
+            if ((owner.shouldShowDistance() && owner.getRenderState() == RenderState.FOCUSED) || (owner.isBuiltIn() && owner.forceDistanceRendering()))
             {
                 int distance = MathHelper.getDistance(owner.getPosition(), playerPos);
 
@@ -232,12 +231,18 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
         }
     }
 
+    public boolean forceDistanceRendering()
+    {
+        return false;
+    }
+
     public enum RenderState
     {
         NONE,
         NORMAL,
         HIGHLIGHT,
-        FOCUSED
+        FOCUSED,
+        INBUILT
     }
 
     public final static String THINGY = "|";
@@ -347,11 +352,6 @@ public class DefaultEntry implements TickableAndExpirable, EntryRenderable
     public boolean isPersistent()
     {
         return false;
-    }
-
-    public boolean isUsable()
-    {
-        return level.equals(GeneralUtils.getDimensionFromPlayer(mc.player));
     }
 
     public boolean shouldShowDistance()
