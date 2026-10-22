@@ -27,11 +27,11 @@ public class FabricMainClient implements ClientModInitializer
     public void onInitializeClient()
     {
         ParticleProviderRegistry.getInstance().register(ModParticles.HAIL, HailParticle.Provider::new);
-
+        HudElementRegistry.addFirst(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "compass_hud"), this.compassHudLayer());
         // Reset weather manager upon joining server
-        ClientLoginConnectionEvents.INIT.register((_, _) -> ClientCommon.joinServerEvent());
-        ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCommon.leaveServerEvent());
 
+        ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCommon.leaveServerEvent());
+        ClientPlayConnectionEvents.JOIN.register((_, _, _) -> ClientCommon.joinServerEvent());
         // Client packet registry
         ClientPlayNetworking.registerGlobalReceiver(WeatherUpdatePacket.TYPE, ((payload, _) ->
                 ClientCommon.getWeatherManager().setWeather(payload.condition())));
@@ -42,9 +42,8 @@ public class FabricMainClient implements ClientModInitializer
             LocalPlayer player = Minecraft.getInstance().player;
             ClientCommon.tickClient(player);
         });
-        HudElementRegistry.addFirst(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "compass_hud"), this.compassHudLayer());
-        initKeybinds();
 
+        initKeybinds();
         ClientCommon.init();
     }
 

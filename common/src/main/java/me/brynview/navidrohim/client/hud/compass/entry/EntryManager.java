@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client.hud.compass.entry;
 import com.google.common.collect.Sets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.util.Constant;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapObjectiveEntryGroup;
@@ -115,7 +116,7 @@ public class EntryManager
 
         } catch (NullPointerException exc)
         {
-            Constants.LOG.error("Corrupted pin.");
+            Constants.LOG.error("Corrupted pin. Error: {}", exc.getMessage());
         } catch (IOException exc)
         {
             exc.printStackTrace();
