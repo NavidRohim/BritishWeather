@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.ClientKeybinds;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
@@ -202,7 +203,7 @@ public class Compass
         final LocalPlayer player = mc.player;
         Screen currentScreen = mc.gui.screen();
 
-        if ((currentScreen instanceof PinCreationScreen) && (!isDummy) || player == null)
+        if ((currentScreen instanceof PinCreationScreen) && !isDummy || player == null)
         {
             return;
         }
@@ -373,10 +374,10 @@ public class Compass
             Map.Entry<Float, DefaultEntry> entry = it.next();
             DefaultEntry value = entry.getValue();
 
-            if (!it.hasNext() && value.renderer.getRenderState() == DefaultEntry.RenderState.HIGHLIGHT)
+            if (!it.hasNext() && value.getRenderState() == DefaultEntry.EntryRenderer.RenderState.HIGHLIGHT)
             {
                 highlightedEntry = value;
-                highlightedEntry.renderer.setRenderState(DefaultEntry.RenderState.FOCUSED);
+                highlightedEntry.renderer.setRenderState(DefaultEntry.EntryRenderer.RenderState.FOCUSED);
             }
 
             value.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, false);
