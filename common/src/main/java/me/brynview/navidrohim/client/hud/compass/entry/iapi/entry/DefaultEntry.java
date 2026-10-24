@@ -298,16 +298,6 @@ public class DefaultEntry implements TickableAndExpirable
         return position;
     }
 
-    public void setPosition(Vec3 position)
-    {
-        if (this.isPersistent())
-        {
-            throw new UnsupportedOperationException("Persistent entries cannot have their position modified.");
-        }
-
-        this.position = position;
-    }
-
     public String getLevel()
     {
         return level;
