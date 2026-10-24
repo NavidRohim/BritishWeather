@@ -59,7 +59,7 @@ public class DefaultEntry implements TickableAndExpirable
         {
             RenderState state = RenderState.NORMAL;
 
-            float angle = (float) MathHelper.angleFromPos(position, mc.player.position());
+            float angle = (float) MathHelper.angleFromPos(getPosition(), mc.player.position());
             boolean shouldDisappear = owner instanceof Pin entry && entry.shouldDisappearWhenNotInView();
 
             screenX = (int) compass.util.getAngleX(angle, shouldDisappear);
@@ -250,7 +250,7 @@ public class DefaultEntry implements TickableAndExpirable
 
     public final static String THINGY = "|";
 
-    private Vec3 position; // Position of the entry in-game.
+    protected Vec3 position; // Position of the entry in-game.
     private final String level; // What dimension the entry was made in.
     private final String entryId; // Unique entry ID. Not used for anything at the moment.
 
@@ -285,7 +285,7 @@ public class DefaultEntry implements TickableAndExpirable
             this.entryId = this.getClass().getSimpleName();
         } else
         {
-            this.entryId = "%s.%s.%s.%s.%s".formatted(this.getClass().getSimpleName(), (int) this.position.x, (int) this.position.y, (int) this.position.z, level);
+            this.entryId = "%s.%s.%s.%s.%s".formatted(this.getClass().getSimpleName(), (int) this.getPosition().x, (int) this.getPosition().y, (int) this.getPosition().z, level);
             // If singleton, it is just the class name so it can be overridden.
         }
 

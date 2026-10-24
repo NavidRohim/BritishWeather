@@ -50,15 +50,22 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
 
         public VehicleEntry(VehicleEntity entity, String marker)
         {
-            super(entity.position(), entity.level().dimension().identifier().toString(), marker);
-            this.setRenderer(new VehicleRenderer());
             this.vehicle = entity;
+            super(entity.position(), entity.level().dimension().identifier().toString(), marker);
+
+            this.setRenderer(new VehicleRenderer());
         }
 
         @Override
         public boolean isBuiltIn()
         {
             return true;
+        }
+
+        @Override
+        public Vec3 getPosition()
+        {
+            return vehicle.position();
         }
     }
 
@@ -88,12 +95,6 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
                 }
             }
         });
-    }
-
-    @Override
-    public void tick(@NotNull LocalPlayer player)
-    {
-        this.getEntries().forEach(entry -> entry.setPosition(entry.vehicle.position()));
     }
 
     @Override
