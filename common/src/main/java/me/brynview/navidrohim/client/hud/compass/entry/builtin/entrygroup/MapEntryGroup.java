@@ -19,11 +19,11 @@ Entry group for each map in a players inventory.
 For each explorer / abandoned camp map, an entry will be added to the compass so the player can go there
 without having to hold the map out.
  */
-public class MapObjectiveEntryGroup extends DefaultEntryGroup
+public class MapEntryGroup extends DefaultEntryGroup
 {
     private static final String MARKER = "⛺";
 
-    public MapObjectiveEntryGroup(ResourceKey<Level> level)
+    public MapEntryGroup(ResourceKey<Level> level)
     {
         super(level);
     }
@@ -74,7 +74,6 @@ public class MapObjectiveEntryGroup extends DefaultEntryGroup
     @Override
     public void endTick(@NotNull LocalPlayer player)
     {
-        super.endTick(player);
         this.clearEntries();
     }
 

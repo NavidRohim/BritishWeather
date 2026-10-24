@@ -1,7 +1,6 @@
 package me.brynview.navidrohim.client.hud.compass;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.ClientKeybinds;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
@@ -10,6 +9,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEn
 import me.brynview.navidrohim.client.screen.PinCreationScreen;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
+import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -18,7 +18,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,10 +119,6 @@ public class Compass
     private static final String COMPASS_HEADING = "|";
     private static final String ENTITY_LABEL = "⏺";
 
-    // Math constants used for rendering
-    private static final double EXPAND_INFLATE_WITH_FOV_CONST = 0.119; // value at lowest fov (30): 3.477 blocks value at highest (110): 13.07
-    private static final int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
-    private static final int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
     private static final int ZOOM_ALERT_DURATION = 40;
     public static final int ENTRIES_ALLOWED_ON_SIDE = 7;
 
@@ -227,7 +222,7 @@ public class Compass
             // Draw all living entities
             if (BritishWeather.getConfig().shouldShowEntitiesOnCompass())
             {
-                drawEntities(player, guiGraphics, partialTicks);
+                drawEntities(player, guiGraphics);
             }
 
             // Render N/E/S/W
@@ -295,35 +290,21 @@ public class Compass
         }
     }
 
-    private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics, float partialTicks)
+    private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics)
     {
-        // Where player is looking
-        Vec3 look = player.getViewVector(partialTicks).scale(DETECTION_DISTANCE);
+        GeneralUtils.getEntitiesInView(player, LivingEntity.class).forEach(entity -> {
+            // Angle from us to the entity
+            int xForEntity = util.getXFromPosition(entity.position(), true);
+            // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
+            int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
+            // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
+            int iconScale = ColorHelper.getOpacity(GeneralUtils.DETECTION_DISTANCE, distanceFromEntity, true);
+            int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
 
-        // Get bounding box 40m infront of where player is looking
-        int fov = mc.options.fov().get();
+            // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
+            FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, xForEntity, yTextMiddle, livingEntity, false, FontHelper.TextType.NONE);
 
-        AABB normalBB = player.getBoundingBox();
-        AABB inFrontOfPlayer = normalBB
-                .expandTowards(look.x, 0, look.z)
-                .inflate(EXPAND_INFLATE_WITH_FOV_CONST * fov); // inflate so entities don't get cut off from compass
-
-        // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
-        mc.level.getEntitiesOfClass(LivingEntity.class, inFrontOfPlayer, (en) -> (en != player.asLivingEntity() && !en.getBoundingBox().intersects(normalBB))).stream().limit(MAX_ALLOWED_ENTITIES_ON_COMPASS).forEach(entity ->
-                {
-                    // Angle from us to the entity
-                    int xForEntity = util.getXFromPosition(entity.position(), true);
-                    // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
-                    int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
-                    // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
-                    int iconScale = ColorHelper.getOpacity(DETECTION_DISTANCE, distanceFromEntity, true);
-                    int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
-
-                    // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
-                    FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, xForEntity, yTextMiddle, livingEntity, false, FontHelper.TextType.NONE);
-
-                }
-        );
+        });
     }
 
     /*
@@ -346,7 +327,10 @@ public class Compass
         entriesOnRightEdge = 0;
 
         // Draw entries inside of entry groups.
-        for (DefaultEntryGroup group : EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension()))
+        Set<DefaultEntryGroup<DefaultEntry>> groupsToCheck = new HashSet<>(Set.copyOf(EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension())));
+        groupsToCheck.addAll(EntryManager.ProviderRegistry.getEntryGroupsInAll());
+
+        for (DefaultEntryGroup<DefaultEntry> group : groupsToCheck)
         {
             if (group.isBuiltIn() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
             {
@@ -358,14 +342,14 @@ public class Compass
                 group.startTick(player);
             }
 
-            group.getEntries().forEach(groupEntry -> groupEntry.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, true));
+            group.getEntries().forEach(groupEntry -> groupEntry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, true));
         }
 
         // Draw normal entries.
         for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntriesInDimension(player.level().dimension()))
         {
-            entry.renderer.calculateState(this);
-            float key = Math.abs(entry.renderer.getDistanceFromHeading());
+            entry.getRenderer().calculateState(this);
+            float key = Math.abs(entry.getRenderer().getDistanceFromHeading());
             this.entriesSortedDistanceMap.put(key, entry);
         }
 
@@ -377,10 +361,10 @@ public class Compass
             if (!it.hasNext() && value.getRenderState() == DefaultEntry.EntryRenderer.RenderState.HIGHLIGHT)
             {
                 highlightedEntry = value;
-                highlightedEntry.renderer.setRenderState(DefaultEntry.EntryRenderer.RenderState.FOCUSED);
+                highlightedEntry.getRenderer().setRenderState(DefaultEntry.EntryRenderer.RenderState.FOCUSED);
             }
 
-            value.renderer.draw(guiGraphicsExtractor, player, shouldStartTick, false);
+            value.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, false);
         }
     }
 

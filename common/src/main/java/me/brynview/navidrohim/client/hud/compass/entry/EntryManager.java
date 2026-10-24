@@ -5,7 +5,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapObjectiveEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.VehicleEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.PersistentEntryConstructor;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
@@ -199,12 +200,13 @@ public class EntryManager
         private static final HashMap<String, DefaultEntry> PROVIDERS = new HashMap<>();
         private static final HashMap<String, HashMap<String, DefaultEntry>> PROVIDERS_DIMENSION_SORTED = new HashMap<>();
 
-        private static final Set<DefaultEntryGroup> PROVIDER_GROUPS = Sets.newHashSet(); // Only one type of group entry can appear at once
-        private static final HashMap<String, Set<DefaultEntryGroup>> PROVIDER_GROUPS_DIMENSION_SORTED = new HashMap<>();
+        private static final Set<DefaultEntryGroup<?>> PROVIDER_GROUPS = Sets.newHashSet(); // Only one type of group entry can appear at once
+        private static final HashMap<String, Set<DefaultEntryGroup<DefaultEntry>>> PROVIDER_GROUPS_DIMENSION_SORTED = new HashMap<>();
 
         static
         {
-            ProviderRegistry.addEntryGroup(new MapObjectiveEntryGroup(Level.OVERWORLD));
+            ProviderRegistry.addEntryGroup(new MapEntryGroup(Level.OVERWORLD));
+            ProviderRegistry.addEntryGroup(new VehicleEntryGroup(null));
         }
 
         /*
@@ -235,9 +237,14 @@ public class EntryManager
             return PROVIDERS_DIMENSION_SORTED.computeIfAbsent(key.identifier().toString(), _ -> new HashMap<>()).values();
         }
 
-        public static Set<DefaultEntryGroup> getEntryGroupsInDimension(ResourceKey<Level> key)
+        public static Set<DefaultEntryGroup<DefaultEntry>> getEntryGroupsInDimension(ResourceKey<Level> key)
         {
             return PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent(key.identifier().toString(), _ -> new HashSet<>());
+        }
+
+        public static Set<DefaultEntryGroup<DefaultEntry>> getEntryGroupsInAll()
+        {
+            return PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent("all",  _ -> new HashSet<>());
         }
 
         public static void addEntry(DefaultEntry entry)

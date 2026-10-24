@@ -9,11 +9,13 @@ import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
@@ -26,8 +28,10 @@ import static me.brynview.navidrohim.client.hud.compass.Compass.ENTRIES_ALLOWED_
 public class DefaultEntry implements TickableAndExpirable
 {
 
+
+
     // Might ditch
-    public final class EntryRenderer
+    public class EntryRenderer
     {
         private final static int MINIMUM_MARKER_LENGTH = 4;
 
@@ -39,12 +43,12 @@ public class DefaultEntry implements TickableAndExpirable
             FOCUSED
         }
 
-        private int screenX;
-        private int screenYRow;
+        protected int screenX;
+        protected int screenYRow;
         private float distanceFromHeading;
 
-        private RenderState renderState;
-        private final DefaultEntry owner;
+        protected RenderState renderState;
+        protected final DefaultEntry owner;
 
         public EntryRenderer()
         {
@@ -127,6 +131,11 @@ public class DefaultEntry implements TickableAndExpirable
                 startTick(player);
             }
 
+            if (compass.util.isXOutOfBounds(screenX))
+            {
+                return;
+            }
+
             drawRawEntry(
                     guiGraphicsExtractor,
                     mc,
@@ -182,21 +191,21 @@ public class DefaultEntry implements TickableAndExpirable
                 @NotNull Compass compass
         )
         {
-            Vec3 playerPos = player.position();
-            int entryX = this.screenX;
-            int renderingColour = this.getRenderColour();
+            drawMarker(guiGraphicsExtractor);
+            drawDistanceAndDebug(guiGraphicsExtractor);
+            drawDecoration(guiGraphicsExtractor);
+        }
 
-            if (compass.util.isXOutOfBounds(entryX))
-            {
-                return;
-            }
+        protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
+        {
+            String displayableMarker = getDisplayableMarker(owner, owner.getMarker().length() <= 15, compass, screenX);
+            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, screenX - mc.font.width(displayableMarker) / 2, compass.util.getYRowOnCompass(screenYRow - 1), getRenderColour(), true, FontHelper.TextType.NONE);
+        }
 
-            String displayableMarker = getDisplayableMarker(owner, owner.getMarker().length() <= 15, compass, entryX);
-            int finalMarkerLen = mc.font.width(displayableMarker) / 2;
-
-            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, entryX - finalMarkerLen, compass.util.getYRowOnCompass(screenYRow - 1), renderingColour, true, FontHelper.TextType.NONE);
-
+        protected void drawDistanceAndDebug(GuiGraphicsExtractor guiGraphicsExtractor)
+        {
             // If in view, render the distance from entry and if the player should go up or down to reach it
+            Vec3 playerPos = mc.player.position();
             if (owner.shouldShowDistance() && (owner.getRenderState() == RenderState.FOCUSED || owner.isBuiltIn()))
             {
                 int distance = MathHelper.getDistance(owner.getPosition(), playerPos);
@@ -222,29 +231,32 @@ public class DefaultEntry implements TickableAndExpirable
                 String debugString = getDebugString();
                 if (BritishWeather.getConfig().debug() && debugString != null)
                 {
-                    FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.centerStringAroundX(debugString, entryX), compass.util.getYRowOnCompass(screenYRow + 2), renderingColour, FontHelper.TextType.NONE);
+                    FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.centerStringAroundX(debugString, screenX), compass.util.getYRowOnCompass(screenYRow + 2), getRenderColour(), FontHelper.TextType.NONE);
                 }
 
                 // Draw distance from entry
                 String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition()) + suffix;
-                int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, entryX);
+                int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, screenX);
 
-                FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), renderingColour, FontHelper.TextType.LABEL);
+                FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), getRenderColour(), FontHelper.TextType.LABEL);
             }
+        }
 
-            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, entryX, compass.util.getYRowOnCompass(screenYRow), renderingColour, FontHelper.TextType.LABEL);
+        protected void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor)
+        {
+            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, screenX, compass.util.getYRowOnCompass(screenYRow), getRenderColour(), FontHelper.TextType.LABEL);
         }
     }
 
     public final static String THINGY = "|";
 
-    private final Vec3 position; // Position of the entry in-game.
+    private Vec3 position; // Position of the entry in-game.
     private final String level; // What dimension the entry was made in.
     private final String entryId; // Unique entry ID. Not used for anything at the moment.
 
-    private final Minecraft mc;
-    private final Compass compass = Compass.getInstance();
-    public final EntryRenderer renderer;
+    protected final Minecraft mc;
+    protected final Compass compass = Compass.getInstance();
+    protected EntryRenderer renderer;
 
     private String marker; // What text will be rendered on the compass.
 
@@ -286,6 +298,16 @@ public class DefaultEntry implements TickableAndExpirable
         return position;
     }
 
+    public void setPosition(Vec3 position)
+    {
+        if (this.isPersistent())
+        {
+            throw new UnsupportedOperationException("Persistent entries cannot have their position modified.");
+        }
+
+        this.position = position;
+    }
+
     public String getLevel()
     {
         return level;
@@ -304,6 +326,16 @@ public class DefaultEntry implements TickableAndExpirable
     public boolean shouldRender()
     {
         return true;
+    }
+
+    public EntryRenderer getRenderer()
+    {
+        return renderer;
+    }
+
+    protected void setRenderer(EntryRenderer renderer)
+    {
+        this.renderer = renderer;
     }
 
     public int getHighlightColor()
@@ -334,7 +366,7 @@ public class DefaultEntry implements TickableAndExpirable
 
     public EntryRenderer.RenderState getRenderState()
     {
-        return this.renderer.renderState;
+        return this.getRenderer().renderState;
     }
 
     public final String getId()

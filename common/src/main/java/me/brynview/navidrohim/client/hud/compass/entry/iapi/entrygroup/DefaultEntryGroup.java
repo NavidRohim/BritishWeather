@@ -6,6 +6,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,28 +16,28 @@ An entry group is just a list of entries. Each entry is normal and can be a subc
 But, the entries will only have the end tick and not any other tick in the TickableAndExpirable interface.
 Instead, the EntryGroup will tick which can dictate behaviour for the child entries.
  */
-public class DefaultEntryGroup implements TickableAndExpirable
+public class DefaultEntryGroup<T extends DefaultEntry> implements TickableAndExpirable
 {
-    private String level;
+    private final String level;
 
-    public DefaultEntryGroup(ResourceKey<Level> level)
+    public DefaultEntryGroup(@Nullable ResourceKey<Level> level)
     {
-        this.level = level.identifier().toString();
+        this.level = level != null ? level.identifier().toString() : "all";
     }
 
-    private final List<DefaultEntry> entries = new ArrayList<>();
+    private final List<T> entries = new ArrayList<>();
 
-    public List<DefaultEntry> getEntries()
+    public List<T> getEntries()
     {
         return entries;
     }
 
-    public void addEntry(DefaultEntry entry)
+    public void addEntry(T entry)
     {
         entries.add(entry);
     }
 
-    public void removeEntry(DefaultEntry entry)
+    public void removeEntry(T entry)
     {
         entries.remove(entry);
     }
