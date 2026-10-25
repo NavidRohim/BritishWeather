@@ -432,9 +432,9 @@ public class PinCreationScreen extends Screen
         Compass compass = Compass.getInstance();
         int scaledWidth = mc.getWindow().getGuiScaledWidth();
 
-        compass.render(guiGraphicsExtractor, scaledWidth, ticks, height, true);
+        compass.render(guiGraphicsExtractor, scaledWidth, ticks, height / 2, true);
 
-        int entryDummyX = compass.compassX + 50;
+        int entryDummyX = compass.centerX + 50;
         int colour = getHighlightColor();
 
         String marker = getMarker();

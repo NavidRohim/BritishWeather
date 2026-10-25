@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.ClientKeybinds;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
@@ -52,17 +53,12 @@ public class Compass
 
         public boolean isXOutOfBounds(int x)
         {
-            return x == Integer.MAX_VALUE || x < compassX - compassScaledWidthHalf || x > compassX + compassScaledWidthHalf;
+            return x == Integer.MAX_VALUE || x < centerX - compassScaledWidthHalf || x > centerX + compassScaledWidthHalf;
         }
 
         public boolean isXHighlightable(int x)
         {
-            return x <= compassX + highlightArea && x >= compassX - highlightArea;
-        }
-
-        public static int getCompassX(int screenWidth, int textWidth)
-        {
-            return (screenWidth - textWidth) / 2;
+            return x <= centerX + highlightArea && x >= centerX - highlightArea;
         }
 
         public int getAngleX(float angle)
@@ -80,7 +76,7 @@ public class Compass
             float lerpZoom = Mth.lerp(1, zoomAmountSmoothOld, zoomAmountSmooth);
             float amountOnCompass = BASE_VISIBLE_AMOUNT / lerpZoom;
             float aDist = Mth.wrapDegrees(angle - yaw) * (compassScaledWidth / amountOnCompass);
-            float csx = compassX + aDist;
+            float csx = centerX + aDist;
 
             // Make sure text is not rendered past the compass bounds
             if (Math.abs(aDist) < compassScaledWidthHalf)
@@ -91,10 +87,10 @@ public class Compass
             // If element should stay on right edge of compass
             if (!shouldDisappearWhenOOB && (aDist >= compassScaledWidthHalf))
             {
-                return compassX + compassScaledWidthHalf;
+                return centerX + compassScaledWidthHalf;
             } else if (!shouldDisappearWhenOOB && aDist <= -compassScaledWidthHalf) // Same but left edge
             {
-                return compassX - compassScaledWidthHalf;
+                return centerX - compassScaledWidthHalf;
             }
 
             // Return max int to make sure whatever is going out of bounds fucks right off so we don't see it
@@ -105,7 +101,7 @@ public class Compass
 
         public int getYRowOnCompass(int row)
         {
-            return yTextMiddle + (mc.font.lineHeight * row);
+            return y + (mc.font.lineHeight * row);
         }
 
         public int getXFromPosition(Vec3 position, boolean disappearWhenOutOfBounds)
@@ -142,12 +138,16 @@ public class Compass
     public int compassScaledWidthHalf;
 
     // x coordinate of the compass. Can change due to scaling
-    public int compassX;
-    public int farLeftX;
-    public int farRightX;
+    public int centerX;
 
-    public int yTextMiddle;
-    public int yMiddle;
+    public int leftX;
+    public int leftContentX;
+
+    public int rightX;
+    public int rightContentX;
+
+    public int y;
+    public int contentY;
 
     public Minecraft mc;
     public RenderUtils util;
@@ -156,8 +156,7 @@ public class Compass
     public int entriesOnLeftEdge = 0;
     public int entriesOnRightEdge = 0;
 
-    public final TreeMap<Float, DefaultEntry> entriesSortedDistanceMap = new TreeMap<>(Comparator.reverseOrder());
-
+    private final TreeMap<Float, DefaultEntry> entriesSortedDistanceMap = new TreeMap<>(Comparator.reverseOrder());
     private @Nullable DefaultEntry highlightedEntry;
 
     private int zoomAlertTick = 0;
@@ -169,20 +168,21 @@ public class Compass
 
     private void calculate(int scaledWidth, int y, float partialTicks, @NotNull LocalPlayer player)
     {
-
-        // uncomment this if something weird happens in pause menu
-        //final float partialTicks = mc.isPaused() ? 0 : _partialTicks;
         this.partialTicks = partialTicks;
-        this.compassX = RenderUtils.getCompassX(scaledWidth, mc.font.width(COMPASS_HEADING));
 
-        this.yMiddle = (y + mc.font.lineHeight - 1) / 2;
-        this.yTextMiddle = yMiddle - mc.font.lineHeight / 2;
+        this.centerX = scaledWidth / 2;
+
+        this.leftX = centerX - compassScaledWidthHalf;
+        this.leftContentX = leftX + 8;
+
+        this.rightX = centerX + compassScaledWidthHalf;
+        this.rightContentX = rightX + 8;
+
+        this.y = y;
+        this.contentY = y + Constants.LINE_HEIGHT_HALVED;
 
         this.compassScaledWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) scaledWidth); // All these float are dumb
         this.compassScaledWidthHalf = compassScaledWidth / 2;
-
-        this.farLeftX = compassX - compassScaledWidthHalf;
-        this.farRightX = compassX + compassScaledWidthHalf;
 
         this.yaw = (!player.isPassenger() ?
                 Mth.lerp(partialTicks, player.yRotO, player.getYRot())
@@ -207,7 +207,7 @@ public class Compass
         calculate(scaledWidth, y, partialTicks, player);
 
         // Compass background
-        drawBackground(guiGraphics, mc, yMiddle);
+        drawBackground(guiGraphics, mc);
 
         // Check if the entry HUD key is pressed.
         boolean shouldShowNormalHud = !ClientKeybinds.ENTRY_HUD_KEY.isDown() && !isDummy;
@@ -235,7 +235,7 @@ public class Compass
             if (BritishWeather.getConfig().shouldRenderHeading())
             {
                 String friendlyDeg = util.getActualDegreesFromYaw(); // Number from 0 to 360
-                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.centerStringAroundX(friendlyDeg, this.compassX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false, FontHelper.TextType.LABEL);
+                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.centerStringAroundX(friendlyDeg, this.centerX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false, FontHelper.TextType.LABEL);
             }
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
@@ -243,26 +243,26 @@ public class Compass
         } else
         {
             // Draw entry groups and entries.
+            drawZoomLevelEffects(guiGraphics, ColorHelper.WHITE);
             if (!isDummy)
             {
                 drawEntries(guiGraphics, player);
             }
-            drawZoomLevelEffects(guiGraphics, ColorHelper.WHITE);
 
             shouldStartTick = false;
         }
 
         // Draw compass heading
-        FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, this.compassX, this.yTextMiddle, ColorHelper.CENTER_COLOR, false, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, this.centerX - 2, this.y, ColorHelper.CENTER_COLOR, false, FontHelper.TextType.NONE);
     }
 
-    private void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, int y)
+    private void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc)
     {
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
-        int decoY = y - mc.font.lineHeight / 2;
+        int decoY = contentY - Constants.LINE_HEIGHT_HALVED;
 
-        guiGraphicsExtractor.horizontalLine(farLeftX + 1, farRightX, y - 1, ColorHelper.COMPASS_BG_COLOR);
-        guiGraphicsExtractor.horizontalLine(farLeftX + 2, farRightX, y, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
+        guiGraphicsExtractor.horizontalLine(leftX + 1, rightX, contentY - 1, ColorHelper.COMPASS_BG_COLOR);
+        guiGraphicsExtractor.horizontalLine(leftX + 2, rightX, contentY, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
 
         if (zoomAlertTick > 0)
         {
@@ -273,20 +273,20 @@ public class Compass
         }
 
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
-        FontHelper.draw(mc, guiGraphicsExtractor, ">", farLeftX - 3, decoY, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
-        FontHelper.draw(mc, guiGraphicsExtractor, "<", farRightX, decoY, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, ">", leftX - 3, decoY, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, "<", rightX, decoY, ColorHelper.COMPASS_BG_COLOR, true, FontHelper.TextType.NONE);
     }
 
     private void drawZoomLevelEffects(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
     {
         String amount = String.valueOf(zoomAmount);
-        FontHelper.draw(mc, guiGraphicsExtractor, amount, farLeftX - (mc.font.width(amount) + 5), util.getYRowOnCompass(0), colour, true, FontHelper.TextType.VALUE);
+        FontHelper.draw(mc, guiGraphicsExtractor, amount, leftX - (mc.font.width(amount) + 5), util.getYRowOnCompass(0), colour, true, FontHelper.TextType.VALUE);
 
-        int right = compassX + highlightArea;
-        if (right < farRightX)
+        int right = centerX + highlightArea;
+        if (right < rightX)
         {
-            FontHelper.draw(mc, guiGraphicsExtractor, "+", compassX - highlightArea - 4, yTextMiddle, colour, true, FontHelper.TextType.VALUE);
-            FontHelper.draw(mc, guiGraphicsExtractor, "+", right, yTextMiddle, colour, true, FontHelper.TextType.VALUE);
+            FontHelper.draw(mc, guiGraphicsExtractor, "+", centerX - highlightArea - 8, y, colour, true, FontHelper.TextType.VALUE);
+            FontHelper.draw(mc, guiGraphicsExtractor, "+", right, y, colour, true, FontHelper.TextType.VALUE);
         }
     }
 
@@ -302,7 +302,7 @@ public class Compass
             int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
 
             // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
-            FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, xForEntity, yTextMiddle, livingEntity, false, FontHelper.TextType.NONE);
+            FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, xForEntity, y, livingEntity, false, FontHelper.TextType.NONE);
 
         });
     }
@@ -313,7 +313,7 @@ public class Compass
     private void drawCardinal(GuiGraphicsExtractor guiGraphics, float angle, String text)
     {
         int dx = util.getAngleX(angle) - 3;
-        FontHelper.draw(mc, guiGraphics, text, dx, yTextMiddle, ColorHelper.WHITE, true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphics, text, dx, y, ColorHelper.WHITE, true, FontHelper.TextType.NONE);
     }
 
     /*
@@ -342,6 +342,7 @@ public class Compass
                 group.startTick(player);
             }
 
+            group.renderExtra(guiGraphicsExtractor, this);
             group.getEntries().forEach(groupEntry -> groupEntry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, true));
         }
 

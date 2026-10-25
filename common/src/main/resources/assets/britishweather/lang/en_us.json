@@ -43,6 +43,7 @@
 
   "br.command.brweather.message": "Weather is currently %s in %s",
   "br.command.brweather.message_no_location": "Weather is currently %s",
+  "br.command.refresh.success": "Refreshed weather",
 
   "key.category.britishweather.keybinds": "British Weather",
   "br.keybind.showPins": "Show compass pins (SCP)",

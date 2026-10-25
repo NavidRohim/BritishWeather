@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Pin;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
@@ -9,13 +10,11 @@ import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import org.apache.commons.lang3.NotImplementedException;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
 
@@ -67,8 +66,8 @@ public class DefaultEntry implements TickableAndExpirable
 
             boolean isHighlightable = compass.util.isXHighlightable(screenX) && !owner.isBuiltIn();
 
-            isOnLeftEdge = screenX == compass.farLeftX;
-            isOnRightEdge = screenX == compass.farRightX;
+            isOnLeftEdge = screenX == compass.leftX;
+            isOnRightEdge = screenX == compass.rightX;
             distanceFromHeading = Math.abs(Mth.wrapDegrees(compass.yawInt - angle));
 
             if (isHighlightable)
@@ -144,13 +143,12 @@ public class DefaultEntry implements TickableAndExpirable
             );
         }
 
-        private static @NonNull String getDisplayableMarker(DefaultEntry entryRenderable, boolean smart, Compass compass, int compassX)
+        protected static @NonNull String getDisplayableMarker(DefaultEntry entryRenderable, boolean smart, int compassX)
         {
             // Draw entry marker
+            String displayableMarker;
             String marker = entryRenderable.getMarker();
             int markerLength = marker.length();
-
-            String displayableMarker;
 
             if (entryRenderable.getRenderState() == RenderState.FOCUSED || markerLength <= MINIMUM_MARKER_LENGTH)
             {
@@ -160,23 +158,21 @@ public class DefaultEntry implements TickableAndExpirable
                 displayableMarker = marker.substring(0, MINIMUM_MARKER_LENGTH) + "...";
             } else
             {
-
-                int safeX = Math.min(compassX, compass.compassX);
                 int compassHalf = compass.compassScaledWidthHalf;
 
                 float markerLengthWithoutBeginning = markerLength - MINIMUM_MARKER_LENGTH;
-                int distFromCenter = compassHalf - Math.abs(compass.compassX - safeX);
+                int distFromCenter = compassHalf - Math.abs(compass.centerX - compassX);
                 float perCharAmt = markerLengthWithoutBeginning / compassHalf;
                 int showLen = (int) Math.min(MINIMUM_MARKER_LENGTH + (perCharAmt * distFromCenter), markerLength);
 
-                if (compassX < compass.compassX) // left side
+                if (compassX < compass.centerX) // left side
                 {
                     String baseMarker = marker.substring(0, MINIMUM_MARKER_LENGTH);
                     String displayableRest = marker.substring(MINIMUM_MARKER_LENGTH, showLen);
                     displayableMarker = baseMarker + displayableRest + "...";
                 } else
                 {
-                    String baseMarker = marker.substring(markerLength - MINIMUM_MARKER_LENGTH, markerLength);
+                    String baseMarker = marker.substring(markerLength - MINIMUM_MARKER_LENGTH, markerLength); // This part of the marker will always be visible. A preview basically.
                     String displayableRest = marker.substring((markerLength - showLen), markerLength - MINIMUM_MARKER_LENGTH);
                     displayableMarker = "..." + displayableRest + baseMarker;
                 }
@@ -198,7 +194,7 @@ public class DefaultEntry implements TickableAndExpirable
 
         protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
         {
-            String displayableMarker = getDisplayableMarker(owner, owner.getMarker().length() <= 15, compass, screenX);
+            String displayableMarker = getDisplayableMarker(owner, owner.getMarker().length() <= 15, screenX);
             FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, screenX - mc.font.width(displayableMarker) / 2, compass.util.getYRowOnCompass(screenYRow - 1), getRenderColour(), true, FontHelper.TextType.NONE);
         }
 
@@ -255,7 +251,7 @@ public class DefaultEntry implements TickableAndExpirable
     private final String entryId; // Unique entry ID. Not used for anything at the moment.
 
     protected final Minecraft mc;
-    protected final Compass compass = Compass.getInstance();
+    protected static final Compass compass = Compass.getInstance();
     protected EntryRenderer renderer;
 
     private String marker; // What text will be rendered on the compass.
@@ -274,7 +270,8 @@ public class DefaultEntry implements TickableAndExpirable
 
     public DefaultEntry(Vec3 position, String level, String marker, int colour)
     {
-        this.renderer = new EntryRenderer();
+
+        this.setRenderer(initRenderer());
         this.mc = Minecraft.getInstance();
         this.level = level;
         this.position = position;
@@ -316,6 +313,11 @@ public class DefaultEntry implements TickableAndExpirable
     public boolean shouldRender()
     {
         return true;
+    }
+
+    protected EntryRenderer initRenderer()
+    {
+        return new EntryRenderer();
     }
 
     public EntryRenderer getRenderer()

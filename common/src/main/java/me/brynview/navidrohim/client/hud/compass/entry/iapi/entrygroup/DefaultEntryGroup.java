@@ -1,7 +1,9 @@
 package me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup;
 
+import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -46,6 +48,8 @@ public class DefaultEntryGroup<T extends DefaultEntry> implements TickableAndExp
     {
         entries.clear();
     }
+
+    public void renderExtra(GuiGraphicsExtractor guiGraphicsExtractor, Compass compass) {}
 
     @Override
     public void endTick(@NotNull LocalPlayer player)

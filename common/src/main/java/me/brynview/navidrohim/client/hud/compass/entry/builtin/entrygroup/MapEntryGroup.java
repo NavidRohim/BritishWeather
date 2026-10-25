@@ -19,7 +19,7 @@ Entry group for each map in a players inventory.
 For each explorer / abandoned camp map, an entry will be added to the compass so the player can go there
 without having to hold the map out.
  */
-public class MapEntryGroup extends DefaultEntryGroup
+public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapObjectiveEntry>
 {
     private static final String MARKER = "⛺";
 
@@ -28,7 +28,7 @@ public class MapEntryGroup extends DefaultEntryGroup
         super(level);
     }
 
-    private static final class MapObjectiveEntry extends DefaultEntry
+    public static final class MapObjectiveEntry extends DefaultEntry
     {
         public MapObjectiveEntry(Vec3 position)
         {

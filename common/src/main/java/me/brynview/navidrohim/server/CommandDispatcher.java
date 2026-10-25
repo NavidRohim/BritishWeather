@@ -5,6 +5,7 @@ import com.mojang.brigadier.context.CommandContext;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.common.WeatherCondition;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
+import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
@@ -18,9 +19,10 @@ public class CommandDispatcher
     {
         dispatcher.register(Commands.literal("brweather") // Base
                         // Change BR weather (debug only)
-                        .then(Commands.literal("change").requires((c) -> !c.isPlayer() || c.getPlayer().permissions().hasPermission(Permissions.COMMANDS_ADMIN)).then(Commands.argument("weather_condition", StringArgumentType.string()).executes(CommandDispatcher::getWeather)))
+                        .then(Commands.literal("change").requires((c) -> !c.isPlayer() || c.getPlayer().permissions().hasPermission(Permissions.COMMANDS_ADMIN)).then(Commands.argument("weather_condition", StringArgumentType.string()).executes(CommandDispatcher::changeWeather)))
                         // Get current BR weather
-                        .then(Commands.literal("get").executes(CommandDispatcher::changeWeather)));
+                        .then(Commands.literal("get").executes(CommandDispatcher::getWeather))
+                        .then(Commands.literal("refresh").executes(CommandDispatcher::refreshWeather)));
     }
 
     private static int changeWeather(CommandContext<CommandSourceStack> commandSourceStackCommandContext)
@@ -52,15 +54,23 @@ public class CommandDispatcher
         return 0;
     }
 
+    private static int refreshWeather(CommandContext<CommandSourceStack> commandSourceStackCommandContext)
+    {
+        BritishWeather.getWeatherManager().setWeather(commandSourceStackCommandContext.getSource().getServer());
+        commandSourceStackCommandContext.getSource().sendSuccess(() -> Component.translatable("br.command.refresh.success"), false);
+
+        return 0;
+    }
+
     private static int getWeather(CommandContext<CommandSourceStack> cmd)
     {
         ServerWeatherManager.WeatherState weatherState = BritishWeather.getWeatherManager().getState();
         String weatherStr = weatherState.getWeatherCondition().getDisplayName();
-        String location = weatherState.getLocation().name();
+        WeatherLocationSource.Location location = weatherState.getLocation();
 
         // Check if location should be shown. We don't want people getting doxxed
-        Component message = BritishWeather.getConfig().shouldShowLocationToClients()
-                ? Component.translatable("br.command.brweather.message", weatherStr, location)
+        Component message = BritishWeather.getConfig().shouldShowLocationToClients() && location != null
+                ? Component.translatable("br.command.brweather.message", weatherStr, location.name())
                 : Component.translatable("br.command.brweather.message_no_location", weatherStr);
 
         cmd.getSource().sendSuccess(() -> message, false);
