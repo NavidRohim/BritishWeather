@@ -7,7 +7,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RealTime implements TimeMethod
 {
-    private long endTime;
+    private final long endTime;
 
     public RealTime(TimeUnit unit, int duration)
     {

@@ -94,9 +94,9 @@ public class DefaultEntry implements TickableAndExpirable
         protected int getBackgroundColour(int colour)
         {
             // 16777215 is #FFFFFF in base-10
-            int invertedRenderColour = colour ^ 0x40FFFFFF;
+            int invertedRenderColour = colour ^ 0x00FFFFFF;
             // 1. Extract channels using the unsigned right-shift operator (>>>)
-            int a = (invertedRenderColour >>> 24) & 0x7F; // half opacity
+            int a = (invertedRenderColour >>> 24) & 0xBF; // half opacity
             int r = (invertedRenderColour >>> 16) & 0xFF;
             int g = (invertedRenderColour >>> 8) & 0xFF;
             int b = invertedRenderColour & 0xFF;
@@ -205,7 +205,7 @@ public class DefaultEntry implements TickableAndExpirable
                 guiGraphicsExtractor.fill(renderX - 2, renderY - 2, renderX + markerWidth + 2, renderY + mc.font.lineHeight, owner.highlightBgColour);
             }
 
-            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, renderX, renderY, getRenderColour(), true, FontHelper.TextType.NONE);
+            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, renderX, renderY, getRenderColour(), false, FontHelper.TextType.NONE);
         }
 
         protected void drawDistanceAndDebug(GuiGraphicsExtractor guiGraphicsExtractor)
@@ -250,7 +250,7 @@ public class DefaultEntry implements TickableAndExpirable
 
         protected void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor)
         {
-            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, screenX, compass.util.getYRowOnCompass(screenYRow), getRenderColour(), FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, screenX, compass.util.getYRowOnCompass(screenYRow), getRenderColour(), false, FontHelper.TextType.LABEL);
         }
     }
 

@@ -63,7 +63,7 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
             protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
             {
                 TextureAtlasSprite texture = atlas.getSprite(vehicleTexture);
-                guiGraphicsExtractor.blitSprite(RenderPipelines.GUI_TEXTURED, texture, screenX - SPRITE_SIZE_HALF, compass.util.getYRowOnCompass(screenYRow), 8, 8);
+                guiGraphicsExtractor.blitSprite(RenderPipelines.GUI_TEXTURED, texture, screenX - SPRITE_SIZE_HALF, compass.util.getYRowOnCompass(screenYRow) - 1, 9, 9);
             }
 
             private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor)
