@@ -30,6 +30,7 @@ public class TimedPinEntry extends DefaultTimedEntry
 
         this.isPersistent = friendlyByteBuf.readBoolean();
         this.shouldShowDistance = friendlyByteBuf.readBoolean();
+        this.shouldDisappearWhenNotInView = friendlyByteBuf.readBoolean();
 
         super(vec3, level, s, remainingTimeMethod, colour);
 
@@ -41,6 +42,7 @@ public class TimedPinEntry extends DefaultTimedEntry
         super.serialise(friendlyByteBuf);
         friendlyByteBuf.writeBoolean(isPersistent);
         friendlyByteBuf.writeBoolean(shouldShowDistance);
+        friendlyByteBuf.writeBoolean(shouldDisappearWhenNotInView);
     }
 
     @Override
