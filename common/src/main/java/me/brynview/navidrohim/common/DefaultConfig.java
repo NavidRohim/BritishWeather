@@ -87,6 +87,12 @@ public class DefaultConfig implements CommonConfig
     public boolean shouldShowBuiltinObjectives() {return Constants.DefaultConfigValues.shouldShowBuiltinObjectives;}
 
     @Override
+    public boolean shouldShowPinBackground()
+    {
+        return Constants.DefaultConfigValues.shouldShowPinBackground;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return Constants.DefaultConfigValues.compassSize;

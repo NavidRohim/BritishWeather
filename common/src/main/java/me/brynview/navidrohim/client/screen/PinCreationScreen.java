@@ -7,6 +7,7 @@ import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.device.GpuDevice;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.DefaultPinEntry;

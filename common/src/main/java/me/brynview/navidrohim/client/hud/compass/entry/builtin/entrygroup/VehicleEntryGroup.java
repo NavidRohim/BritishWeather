@@ -10,7 +10,14 @@ import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.data.AtlasIds;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
@@ -23,12 +30,14 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.VehicleEntry>
 {
+    private static final int SPRITE_SIZE = 16;
+    private static final int SPRITE_SIZE_HALF = SPRITE_SIZE / 2;
 
-    private static final String ROWBOAT = "\uD83D\uDEA3";
-    private static final String TRAIN = "\uD83D\uDE86";
-
+    private TextureAtlas atlas;
     private String displayDepth = "";
     private BlockPos pos = BlockPos.ZERO;
     private @Nullable Entity currentlyRiddenVehicle = null;
@@ -36,17 +45,25 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
     public VehicleEntryGroup(@Nullable ResourceKey<Level> level)
     {
         super(level);
+        this.atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.ITEMS);
     }
 
-    public static final class VehicleEntry extends DefaultEntry
+    public final class VehicleEntry extends DefaultEntry
     {
         public final class VehicleRenderer extends EntryRenderer
         {
             @Override
-            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc, @NotNull LocalPlayer player, @NotNull Compass compass)
+            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
             {
                 drawMarker(guiGraphicsExtractor);
                 drawSpeed(guiGraphicsExtractor);
+            }
+
+            @Override
+            protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
+            {
+                TextureAtlasSprite texture = atlas.getSprite(vehicleTexture);
+                guiGraphicsExtractor.blitSprite(RenderPipelines.GUI_TEXTURED, texture, screenX - SPRITE_SIZE_HALF, compass.util.getYRowOnCompass(screenYRow), 8, 8);
             }
 
             private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor)
@@ -60,11 +77,13 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
         }
 
         private final VehicleEntity vehicle;
+        private final Identifier vehicleTexture;
 
-        public VehicleEntry(VehicleEntity entity, String marker)
+        public VehicleEntry(VehicleEntity entity, Identifier vehicleTexture)
         {
             this.vehicle = entity;
-            super(entity.position(), entity.level().dimension().identifier().toString(), marker);
+            super(entity.position(), entity.level().dimension().identifier().toString(), "V");
+            this.vehicleTexture = vehicleTexture.withPrefix("item/");
         }
 
         @Override
@@ -91,13 +110,11 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
     {
         currentlyRiddenVehicle = player.getVehicle();
         GeneralUtils.getEntitiesInView(player, VehicleEntity.class).forEach(entity -> {
-            String marker = ROWBOAT;
-            if (entity instanceof AbstractMinecart)
+            Identifier flatModel = entity.getPickResult().get(DataComponents.ITEM_MODEL);
+            if (flatModel != null)
             {
-                marker = TRAIN;
+                this.addEntry(new VehicleEntry(entity, flatModel));
             }
-
-            this.addEntry(new VehicleEntry(entity, marker));
         });
     }
 
@@ -111,7 +128,7 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
 
             if (currentlyRiddenVehicle instanceof AbstractBoat boat)
             {
-                if (!boat.blockPosition().equals(pos))
+                if (!boat.blockPosition().equals(pos) || pos == BlockPos.ZERO)
                 {
                     int depth = ((int) boat.getY()) - findOceanFloor(boat);
                     displayDepth = "Depth: " + depth + "m";

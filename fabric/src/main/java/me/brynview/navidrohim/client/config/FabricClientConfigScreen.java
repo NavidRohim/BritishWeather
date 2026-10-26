@@ -133,6 +133,13 @@ public class FabricClientConfigScreen
                                 .controller(TickBoxControllerBuilder::create)
                                 .build()
                         )
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.shouldShowPinBackground"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.shouldShowPinBackground.description")))
+                                .binding(FabricConfigSerializer.shouldShowPinBackground, () -> FabricConfigSerializer.shouldShowPinBackground, (bool) -> FabricConfigSerializer.shouldShowPinBackground = bool)
+                                .controller(TickBoxControllerBuilder::create)
+                                .build()
+                        )
                         .option(Option.<Integer>createBuilder() // Compass width. Percentage of screen width
                                 .name(Component.translatable("br.config.category.compass.size"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.compass.size.description")))

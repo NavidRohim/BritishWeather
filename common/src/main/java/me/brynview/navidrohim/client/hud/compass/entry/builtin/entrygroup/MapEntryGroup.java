@@ -2,8 +2,16 @@ package me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup;
 
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.util.ColorHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.data.AtlasIds;
+import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -19,26 +27,63 @@ Entry group for each map in a players inventory.
 For each explorer / abandoned camp map, an entry will be added to the compass so the player can go there
 without having to hold the map out.
  */
-public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapObjectiveEntry>
+public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
 {
     private static final String MARKER = "⛺";
+    private final TextureAtlas atlas;
 
     public MapEntryGroup(ResourceKey<Level> level)
     {
         super(level);
+
+        // This constructor is called inside static init block, so I thought getInstance() or getAtlasManager() would fail because they are called too early.
+        // But this class must be loaded later or something?
+        this.atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.MAP_DECORATIONS);
     }
 
-    public static final class MapObjectiveEntry extends DefaultEntry
+    public final class MapEntry extends DefaultEntry
     {
-        public MapObjectiveEntry(Vec3 position)
+        private final class MapEntryRenderer extends EntryRenderer
+        {
+            @Override
+            protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
+            {
+                TextureAtlasSprite sprite = atlas.getSprite(decoId);
+                guiGraphicsExtractor.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, screenX - 4, compass.util.getYRowOnCompass(screenYRow) - 1, 8, 8);
+            }
+
+            @Override
+            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
+            {
+                drawMarker(guiGraphicsExtractor);
+                drawDistanceAndDebug(guiGraphicsExtractor);
+            }
+
+            @Override
+            public int getRenderColour()
+            {
+                return ColorHelper.WHITE;
+            }
+        }
+
+        private final Identifier decoId;
+
+        public MapEntry(Vec3 position, Identifier mapDeco)
         {
             super(position, Level.OVERWORLD.identifier().toString(), MARKER);
+            this.decoId = mapDeco;
         }
 
         @Override
         public boolean isBuiltIn()
         {
             return true;
+        }
+
+        @Override
+        protected EntryRenderer initRenderer()
+        {
+            return new MapEntryRenderer();
         }
     }
 
@@ -59,12 +104,19 @@ public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapObjectiveE
                     MapDecorations.Entry saved = itemStack.get(DataComponents.MAP_DECORATIONS).decorations().get("+"); // What is this key?
                     Vec3 pos = new Vec3(saved.x(), 0, saved.z());
 
-                    this.addEntry(new MapObjectiveEntry(pos));
+                    // Pure bodge dog shit I swear
+                    MapItem.getSavedData(itemStack, player.level())
+                            .getDecorations()
+                            .forEach(d ->
+                                    {
+                                        if (saved.type().is(d.getSpriteLocation()))
+                                        {
+                                            this.addEntry(new MapEntry(pos, d.getSpriteLocation()));
+                                        }
+                                    }
+                            );
                 }
-            } catch (
-                    NullPointerException _) // Will be thrown if the map doesn't have a decoration. Which will be the case if the map is just a normal map. Ignore.
-            {
-            }
+            } catch (NullPointerException _) {} // Will be thrown if the map doesn't have a decoration. Which will be the case if the map is just a normal map. Ignore.}
         }
     }
 

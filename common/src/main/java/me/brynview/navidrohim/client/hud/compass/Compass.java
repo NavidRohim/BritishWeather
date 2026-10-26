@@ -15,6 +15,7 @@ import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.render.GuiRenderer;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
@@ -73,8 +74,7 @@ public class Compass
             // yaw: float between 0.0 and 360.0
             // angle: float between 0 and 270
             // aDist example: (yaw = 90, angle = 0) aDist = angle - yaw = -90
-            float lerpZoom = Mth.lerp(1, zoomAmountSmoothOld, zoomAmountSmooth);
-            float amountOnCompass = BASE_VISIBLE_AMOUNT / lerpZoom;
+            float amountOnCompass = BASE_VISIBLE_AMOUNT / zoomAmountSmooth;
             float aDist = Mth.wrapDegrees(angle - yaw) * (compassScaledWidth / amountOnCompass);
             float csx = centerX + aDist;
 
@@ -162,7 +162,6 @@ public class Compass
     private int zoomAlertTick = 0;
     private int zoomAmount = 1;
     private float zoomAmountSmooth = 1;
-    private float zoomAmountSmoothOld = 1;
 
     private int highlightArea = 0;
 
@@ -380,7 +379,6 @@ public class Compass
         }
 
         zoomAmount = newZoomAmount;
-        zoomAmountSmoothOld = zoomAmountSmooth;
         zoomAmountSmooth = 1.0f + (zoomAmount - 1.0f) * 0.5f;
         zoomAlertTick = Compass.ZOOM_ALERT_DURATION;
 

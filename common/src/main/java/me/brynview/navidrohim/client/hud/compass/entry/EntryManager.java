@@ -133,11 +133,6 @@ public class EntryManager
         // Current entries
         Collection<DefaultEntry> defaultEntries = Compass.getEntries();
 
-        if (defaultEntries.isEmpty())
-        {
-            return;
-        }
-
         CompoundTag master = new CompoundTag();
 
         for (DefaultEntry entry : defaultEntries)
@@ -196,7 +191,7 @@ public class EntryManager
     public final static class ProviderRegistry
     {
 
-        // Internal map of all entries and group entries.
+        // Internal map of all entries and group entries. This is messy and should be changed somehow, but I don't know to what.
         private static final HashMap<String, DefaultEntry> PROVIDERS = new HashMap<>();
         private static final HashMap<String, HashMap<String, DefaultEntry>> PROVIDERS_DIMENSION_SORTED = new HashMap<>();
 

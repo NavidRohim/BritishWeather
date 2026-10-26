@@ -31,6 +31,8 @@ public interface CommonConfig
 
     boolean shouldShowBuiltinObjectives();
 
+    boolean shouldShowPinBackground();
+
     int getCompassSize();
 
     int getCompassY();
