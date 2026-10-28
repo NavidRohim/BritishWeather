@@ -5,8 +5,9 @@ import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEn
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiPipeline;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.pipeline.RenderPipelines;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.component.DataComponents;
@@ -49,7 +50,7 @@ public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
             protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
             {
                 TextureAtlasSprite sprite = atlas.getSprite(decoId);
-                guiGraphicsExtractor.blitSprite(RenderPipelines.GUI_TEXTURED, sprite, screenX - 4, compass.util.getYRowOnCompass(screenYRow) - 1, 8, 8);
+                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, sprite, screenX - 4, compass.util.getYRowOnCompass(screenYRow) - 1, 8, 8);
             }
 
             @Override

@@ -108,6 +108,11 @@ public class Compass
             return y + (mc.font.lineHeight * row);
         }
 
+        public int getYOnRowCentered(int row, int height)
+        {
+            return getYRowOnCompass(row) - (height / 4);
+        }
+
         public int getXFromPosition(Vec3 position, boolean disappearWhenOutOfBounds)
         {
             double angleRelativeToPosition = MathHelper.angleFromPos(position, mc.player.position());

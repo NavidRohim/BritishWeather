@@ -179,9 +179,9 @@ public class DefaultEntry implements TickableAndExpirable
 
         public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
         {
-            //drawMarker(guiGraphicsExtractor);
+            drawMarker(guiGraphicsExtractor);
             drawDecoration(guiGraphicsExtractor);
-            //drawDistanceAndDebug(guiGraphicsExtractor);
+            drawDistanceAndDebug(guiGraphicsExtractor);
         }
 
         protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)

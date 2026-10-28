@@ -50,9 +50,9 @@ public class FabricMainClient implements ClientModInitializer
 
     private HudElement compassHudLayer()
     {
-        return (gpu, deltaTickTracker) ->
+        return (gpu) ->
         {
-            tickCount += deltaTickTracker.getGameTimeDeltaPartialTick(true);
+            tickCount += gpu.partialTicks();
 
             if (!BritishWeather.getConfig().shouldRenderCompass())
             {

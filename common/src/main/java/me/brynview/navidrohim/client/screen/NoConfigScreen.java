@@ -21,9 +21,9 @@ public class NoConfigScreen extends Screen
     }
 
     @Override
-    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
+    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics)
     {
-        super.extractRenderState(graphics, mouseX, mouseY, a);
+        super.extractRenderState(graphics);
         graphics.centeredText(font, errorComponent, width / 2, height / 2, 0xFFFFFFFF);
     }
 

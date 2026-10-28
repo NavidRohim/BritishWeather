@@ -25,18 +25,6 @@ public class BRCheckbox extends AbstractJMWSButton {
         this.uncheckedTooltip = uncheckedTooltip;
     }
 
-    @Override
-    protected void extractContents(@NonNull GuiGraphicsExtractor guiGraphicsExtractor, int i, int i1, float v) {
-        super.extractContents(guiGraphicsExtractor, i, i1, v);
-
-        if (isChecked)
-        {
-            guiGraphicsExtractor.centeredText(Minecraft.getInstance().font, CHECKMARK, this.getX() + (width / 2), this.getY() + (height / 2) - 3, 0xFFFFFFFF);
-        }
-
-        guiGraphicsExtractor.text(Minecraft.getInstance().font, this.getMessage(), this.getX() + this.width + 3, this.getY() + 2, 0xFFFFFFFF);
-    }
-
     public void check()
     {
         isChecked = true;
@@ -61,6 +49,18 @@ public class BRCheckbox extends AbstractJMWSButton {
         }
 
         this.onPress.onPress(this);
+    }
+
+    @Override
+    protected void extractContents(@NonNull GuiGraphicsExtractor guiGraphicsExtractor)
+    {
+        super.extractContents(guiGraphicsExtractor);
+        if (isChecked)
+        {
+            guiGraphicsExtractor.centeredText(Minecraft.getInstance().font, CHECKMARK, this.getX() + (width / 2), this.getY() + (height / 2) - 3, 0xFFFFFFFF);
+        }
+
+        guiGraphicsExtractor.text(Minecraft.getInstance().font, this.getMessage(), this.getX() + this.width + 3, this.getY() + 2, 0xFFFFFFFF);
     }
 
     public static BRCheckbox buildCheckbox(Component label, OnCheckboxPress onPress, Tooltip checkedTooltip, Tooltip uncheckedTooltip) {

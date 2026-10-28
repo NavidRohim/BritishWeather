@@ -6,8 +6,8 @@ import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
 import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiPipeline;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -26,7 +26,7 @@ public class JMWaypointGroup extends DefaultEntryGroup<JMWaypointGroup.WaypointE
             protected void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor)
             {
                 guiGraphicsExtractor.blit(
-                        RenderPipelines.GUI_TEXTURED,
+                        GuiPipeline.OPAQUE_TEXTURED_BACKGROUND,
                         waypoint.getIconIdentifier(),
                         compass.util.centerWidthAroundX(12, screenX), compass.util.getYRowOnCompass(screenYRow) - 2,
                         0, 0,

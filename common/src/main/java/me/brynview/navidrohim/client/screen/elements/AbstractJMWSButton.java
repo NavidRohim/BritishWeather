@@ -4,9 +4,9 @@ import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiPipeline;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.NonNull;
@@ -36,8 +36,9 @@ public abstract class AbstractJMWSButton extends Button
         super.onRelease(event);
     }
 
+
     @Override
-    protected void extractContents(@NonNull GuiGraphicsExtractor guiGraphicsExtractor, int i, int i1, float v) {
+    protected void extractContents(@NonNull GuiGraphicsExtractor guiGraphicsExtractor) {
 
         renderBackground(guiGraphicsExtractor);
         renderBorder(guiGraphicsExtractor);
@@ -62,6 +63,6 @@ public abstract class AbstractJMWSButton extends Button
     }
 
     public void renderBackground(@NonNull GuiGraphicsExtractor graphics) {
-        graphics.blitSprite(RenderPipelines.GUI_TEXTURED, BUTTON_BG, this.getX(), this.getY(), width, height);
+        graphics.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, BUTTON_BG, this.getX(), this.getY(), width, height);
     }
 }

@@ -8,8 +8,8 @@ import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiPipeline;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -30,8 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.VehicleEntry>
 {
-    private static final int SPRITE_SIZE = 16;
-    private static final int SPRITE_SIZE_HALF = SPRITE_SIZE / 2;
+    private static final int SPRITE_SIZE = 10;
 
     private TextureAtlas atlas;
     private String displayDepth = "";
@@ -59,7 +58,7 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
             protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
             {
                 TextureAtlasSprite vehicleSprite = atlas.getSprite(texture);
-                guiGraphicsExtractor.blitSprite(RenderPipelines.GUI_TEXTURED, vehicleSprite, screenX - 5, compass.util.getYRowOnCompass(screenYRow) - 1, 10, 10);
+                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, vehicleSprite, screenX - 5, compass.util.getYOnRowCentered(screenYRow, SPRITE_SIZE), SPRITE_SIZE, SPRITE_SIZE);
             }
 
             private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor)

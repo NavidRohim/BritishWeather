@@ -127,9 +127,9 @@ public class PinCreationScreen extends Screen
         }
 
         @Override
-        public void extractWidgetRenderState(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
+        public void extractWidgetRenderState(@NonNull GuiGraphicsExtractor graphics)
         {
-            super.extractWidgetRenderState(graphics, mouseX, mouseY, a);
+            super.extractWidgetRenderState(graphics);
             graphics.outline(this.getX(), this.getY(), this.getWidth(), this.getHeight(), this.outlineColour);
         }
     }
@@ -308,23 +308,23 @@ public class PinCreationScreen extends Screen
     }
 
     @Override
-    public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
+    public void extractRenderState(GuiGraphicsExtractor graphics)
     {
         if (!isSelectingColour)
         {
-            super.extractRenderState(graphics, mouseX, mouseY, a);
-            renderDummy(graphics, a);
+            super.extractRenderState(graphics);
+            renderDummy(graphics, graphics.partialTicks());
         } else {
-            renderColourDropper(graphics, mouseX, mouseY);
+            renderColourDropper(graphics);
         }
     }
 
     @Override
-    public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a)
+    public void extractBackground(GuiGraphicsExtractor graphics)
     {
         if (!isSelectingColour)
         {
-            super.extractBackground(graphics, mouseX, mouseY, a);
+            super.extractBackground(graphics);
         }
     }
 
@@ -378,10 +378,12 @@ public class PinCreationScreen extends Screen
     }
 
 
-    private void renderColourDropper(GuiGraphicsExtractor guiGraphicsExtractor, int mX, int mY)
+    private void renderColourDropper(GuiGraphicsExtractor guiGraphicsExtractor)
     {
         frameCounter++;
         guiGraphicsExtractor.centeredText(font, pressAnyToExit, width / 2, 25, ColorHelper.WHITE);
+        int mX = guiGraphicsExtractor.mouseX();
+        int mY = guiGraphicsExtractor.mouseY();
 
         if (frameCounter % 10 == 0)
         {
@@ -391,17 +393,16 @@ public class PinCreationScreen extends Screen
             int x = mX * width / mc.getWindow().getGuiScaledWidth();
             int y = height - 1 - mY * height / mc.getWindow().getGuiScaledHeight();
 
+            // Check `FrontendCommandEncoder` for actual param names
             encoder.copyTextureToBuffer(
                     mainRenderTarget.getColorTexture(),
                     pixelBuffer,
-                    0L,
-                    () -> readPixel(pixelBuffer),
-                    0,
-                    x,
-                    y,
-                    1,
-                    1
+                    0, 0, // offset, mip
+                    x, y, // x, y of screen
+                    1, 1 // width, height of area to capture relative to x, y
             );
+
+            readPixel(pixelBuffer);
         }
 
         int mXOutline = mX - PICKER_GLASS_OFFSET;
