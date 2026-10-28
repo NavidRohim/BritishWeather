@@ -63,9 +63,16 @@ public class BRCheckbox extends AbstractJMWSButton {
         guiGraphicsExtractor.text(Minecraft.getInstance().font, this.getMessage(), this.getX() + this.width + 3, this.getY() + 2, 0xFFFFFFFF);
     }
 
-    public static BRCheckbox buildCheckbox(Component label, OnCheckboxPress onPress, Tooltip checkedTooltip, Tooltip uncheckedTooltip) {
+    public static BRCheckbox buildCheckbox(Component label, OnCheckboxPress onPress, Tooltip checkedTooltip, Tooltip uncheckedTooltip, boolean defaultState) {
         BRCheckbox box = new BRCheckbox(0, 0, 15, 15, label, onPress, Button.DEFAULT_NARRATION, checkedTooltip, uncheckedTooltip);
-        box.setTooltip(uncheckedTooltip);
+
+        if (defaultState)
+        {
+            box.check();
+            box.setTooltip(checkedTooltip);
+        } else {
+            box.setTooltip(uncheckedTooltip);
+        }
 
         return box;
     }

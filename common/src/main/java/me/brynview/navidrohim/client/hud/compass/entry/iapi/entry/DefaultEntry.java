@@ -190,14 +190,17 @@ public class DefaultEntry implements TickableAndExpirable
 
             int markerWidth = mc.font.width(displayableMarker);
             int renderX = compass.util.centerWidthAroundX(markerWidth, screenX);
-            int renderY = compass.util.getYRowOnCompass(screenYRow - 1);
+            int renderY = compass.util.getYRowOnCompass(screenYRow - 1) - 1;
 
+            boolean shadow = true;
             if (renderState == RenderState.FOCUSED && BritishWeather.getConfig().shouldShowPinBackground())
             {
+                shadow = false;
                 guiGraphicsExtractor.fill(renderX - 2, renderY - 2, renderX + markerWidth + 2, renderY + mc.font.lineHeight, owner.highlightBgColour);
+                guiGraphicsExtractor.outline(renderX - 3, renderY - 2, markerWidth + 5, mc.font.lineHeight + 3, getRenderColour());
             }
 
-            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, renderX, renderY, getRenderColour(), false);
+            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, renderX, renderY, getRenderColour(), shadow);
         }
 
         protected void drawDistanceAndDebug(GuiGraphicsExtractor guiGraphicsExtractor)

@@ -217,9 +217,9 @@ public class PinCreationScreen extends Screen
         LinearLayout personalisationLayout = LinearLayout.vertical().spacing(5);
 
         // Define main layout elements
-        this.isPersistentCheckbox = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, selectedPersistent, unselectedPersistent);
-        this.shouldShowDistCheckbox = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, shouldShowDistSelected, shouldShowDistUnSelected);
-        this.shouldDisappearWhenOOB = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, shouldDisappearWhenOOBTooltipSelected, shouldDisappearWhenOOBTooltipUnselected);
+        this.isPersistentCheckbox = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, selectedPersistent, unselectedPersistent, true);
+        this.shouldShowDistCheckbox = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, shouldShowDistSelected, shouldShowDistUnSelected, false);
+        this.shouldDisappearWhenOOB = BRCheckbox.buildCheckbox(EMPTY, (_) -> {}, shouldDisappearWhenOOBTooltipSelected, shouldDisappearWhenOOBTooltipUnselected, true);
 
         this.integerEditBox = new IntegerEditBox(mc.font, Component.empty());
 
