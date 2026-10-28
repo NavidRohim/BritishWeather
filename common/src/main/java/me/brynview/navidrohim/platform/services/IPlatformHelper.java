@@ -1,5 +1,10 @@
 package me.brynview.navidrohim.platform.services;
 
+import journeymap.api.v2.client.IClientAPI;
+import journeymap.api.v2.client.IClientPlugin;
+import me.brynview.navidrohim.Constants;
+import org.jetbrains.annotations.Nullable;
+
 public interface IPlatformHelper {
 
     /**
@@ -24,13 +29,17 @@ public interface IPlatformHelper {
      */
     boolean isDevelopmentEnvironment();
 
+    default @Nullable IClientAPI getJourneyMapIntegration()
+    {
+        return null;
+    }
+
     /**
      * Gets the name of the environment type as a string.
      *
      * @return The name of the environment type.
      */
     default String getEnvironmentName() {
-
         return isDevelopmentEnvironment() ? "development" : "production";
     }
 }

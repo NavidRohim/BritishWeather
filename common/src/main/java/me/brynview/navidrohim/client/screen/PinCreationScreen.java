@@ -7,7 +7,6 @@ import com.mojang.renderpearl.api.buffers.GpuBuffer;
 import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.device.GpuDevice;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.DefaultPinEntry;
@@ -440,14 +439,14 @@ public class PinCreationScreen extends Screen
 
         String marker = getMarker();
         int finalMarkerLen = mc.font.width(marker) / 2;
-        FontHelper.draw(mc, guiGraphicsExtractor, marker, entryDummyX - finalMarkerLen, compass.util.getYRowOnCompass(-1), colour, true, FontHelper.TextType.NONE);
+        FontHelper.draw(mc, guiGraphicsExtractor, marker, entryDummyX - finalMarkerLen, compass.util.getYRowOnCompass(-1), colour, true);
 
         if (shouldShowDistance())
         {
             // 11 represents half the text width of the dummy distance marker. Because the distance marker in this case is final (won't change) there is no reason to calculate the width every time.
-            FontHelper.draw(mc, guiGraphicsExtractor, DUMMY_DISTANCE_MARKER, entryDummyX - 11, compass.util.getYRowOnCompass(1), colour, FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, DUMMY_DISTANCE_MARKER, entryDummyX - 11, compass.util.getYRowOnCompass(1), colour);
         }
 
-        FontHelper.draw(mc, guiGraphicsExtractor, DefaultEntry.THINGY, entryDummyX, compass.util.getYRowOnCompass(0), colour, FontHelper.TextType.LABEL);
+        FontHelper.draw(mc, guiGraphicsExtractor, DefaultEntry.THINGY, entryDummyX, compass.util.getYRowOnCompass(0), colour);
     }
 }

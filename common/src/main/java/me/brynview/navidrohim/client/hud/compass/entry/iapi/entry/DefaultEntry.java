@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
@@ -11,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +57,7 @@ public class DefaultEntry implements TickableAndExpirable
 
             float angle = (float) MathHelper.angleFromPos(getPosition(), mc.player.position());
 
-            screenX = (int) compass.util.getAngleX(angle, shouldDisappearWhenNotInView());
+            screenX = compass.util.getAngleX(angle, shouldDisappearWhenNotInView());
             screenYRow = 0;
 
             boolean isHighlightable = compass.util.isXHighlightable(screenX) && !owner.isBuiltIn();
@@ -93,18 +95,8 @@ public class DefaultEntry implements TickableAndExpirable
 
         protected int getBackgroundColour(int colour)
         {
-            // 16777215 is #FFFFFF in base-10
             int invertedRenderColour = colour ^ 0x00FFFFFF;
-            // 1. Extract channels using the unsigned right-shift operator (>>>)
-            int a = (invertedRenderColour >>> 24) & 0xBF; // half opacity
-            int r = (invertedRenderColour >>> 16) & 0xFF;
-            int g = (invertedRenderColour >>> 8) & 0xFF;
-            int b = invertedRenderColour & 0xFF;
-
-            // 2. Perceptual grayscale calculation
-            int gray = (int) Math.round((0.299 * r) + (0.587 * g) + (0.114 * b));
-            // 3. Pack everything back together, maintaining the original Alpha channel
-            return (a << 24) | (gray << 16) | (gray << 8) | gray;
+            return ARGB.greyscale(invertedRenderColour);
         }
 
         public RenderState getRenderState()
@@ -124,15 +116,15 @@ public class DefaultEntry implements TickableAndExpirable
 
         public void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, boolean calculate)
         {
-            if (calculate)
-            {
-                calculateState(compass);
-            }
-
             // Check if the entry should be rendered and the entry dimension matches the players current dimension
             if (!owner.shouldRender() || getRenderState() == RenderState.NONE)
             {
                 return;
+            }
+
+            if (calculate)
+            {
+                calculateState(compass);
             }
 
             if (shouldStartTick)
@@ -187,9 +179,9 @@ public class DefaultEntry implements TickableAndExpirable
 
         public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
         {
-            drawMarker(guiGraphicsExtractor);
-            drawDistanceAndDebug(guiGraphicsExtractor);
+            //drawMarker(guiGraphicsExtractor);
             drawDecoration(guiGraphicsExtractor);
+            //drawDistanceAndDebug(guiGraphicsExtractor);
         }
 
         protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
@@ -197,7 +189,7 @@ public class DefaultEntry implements TickableAndExpirable
             String displayableMarker = getDisplayableMarker(owner, owner.getMarker().length() <= 15, screenX);
 
             int markerWidth = mc.font.width(displayableMarker);
-            int renderX = screenX - markerWidth / 2;
+            int renderX = compass.util.centerWidthAroundX(markerWidth, screenX);
             int renderY = compass.util.getYRowOnCompass(screenYRow - 1);
 
             if (renderState == RenderState.FOCUSED && BritishWeather.getConfig().shouldShowPinBackground())
@@ -205,7 +197,7 @@ public class DefaultEntry implements TickableAndExpirable
                 guiGraphicsExtractor.fill(renderX - 2, renderY - 2, renderX + markerWidth + 2, renderY + mc.font.lineHeight, owner.highlightBgColour);
             }
 
-            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, renderX, renderY, getRenderColour(), false, FontHelper.TextType.NONE);
+            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, renderX, renderY, getRenderColour(), false);
         }
 
         protected void drawDistanceAndDebug(GuiGraphicsExtractor guiGraphicsExtractor)
@@ -237,20 +229,21 @@ public class DefaultEntry implements TickableAndExpirable
                 String debugString = getDebugString();
                 if (BritishWeather.getConfig().debug() && debugString != null)
                 {
-                    FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.centerStringAroundX(debugString, screenX), compass.util.getYRowOnCompass(screenYRow + 2), getRenderColour(), FontHelper.TextType.NONE);
+                    FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.centerStringAroundX(debugString, screenX), compass.util.getYRowOnCompass(screenYRow + 2), getRenderColour());
+                    guiGraphicsExtractor.verticalLine(compass.util.centerWidthAroundX(2, screenX), compass.util.getYRowOnCompass(-1), compass.util.getYRowOnCompass(screenYRow + 3), getRenderColour());
                 }
 
                 // Draw distance from entry
                 String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition()) + suffix;
                 int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, screenX);
 
-                FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), getRenderColour(), FontHelper.TextType.LABEL);
+                FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), getRenderColour());
             }
         }
 
         protected void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor)
         {
-            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, screenX, compass.util.getYRowOnCompass(screenYRow), getRenderColour(), false, FontHelper.TextType.LABEL);
+            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, screenX, compass.util.getYRowOnCompass(screenYRow), getRenderColour(), false);
         }
     }
 
@@ -281,8 +274,7 @@ public class DefaultEntry implements TickableAndExpirable
 
     public DefaultEntry(Vec3 position, String level, String marker, int colour)
     {
-
-        this.setRenderer(initRenderer());
+        this.renderer = new EntryRenderer();
         this.mc = Minecraft.getInstance();
         this.level = level;
         this.position = position;
@@ -326,19 +318,9 @@ public class DefaultEntry implements TickableAndExpirable
         return true;
     }
 
-    protected EntryRenderer initRenderer()
-    {
-        return new EntryRenderer();
-    }
-
     public EntryRenderer getRenderer()
     {
         return renderer;
-    }
-
-    protected void setRenderer(EntryRenderer renderer)
-    {
-        this.renderer = renderer;
     }
 
     public int getHighlightColor()

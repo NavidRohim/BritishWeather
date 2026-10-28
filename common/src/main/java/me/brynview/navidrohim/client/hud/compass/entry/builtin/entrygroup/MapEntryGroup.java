@@ -72,18 +72,13 @@ public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
         {
             super(position, Level.OVERWORLD.identifier().toString(), MARKER);
             this.decoId = mapDeco;
+            this.renderer = new MapEntryRenderer();
         }
 
         @Override
         public boolean isBuiltIn()
         {
             return true;
-        }
-
-        @Override
-        protected EntryRenderer initRenderer()
-        {
-            return new MapEntryRenderer();
         }
     }
 

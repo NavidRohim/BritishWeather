@@ -5,12 +5,15 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.JMWaypointGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.VehicleEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.PersistentEntryConstructor;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.client.particle.HailParticle;
+import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.*;
@@ -202,6 +205,11 @@ public class EntryManager
         {
             ProviderRegistry.addEntryGroup(new MapEntryGroup(Level.OVERWORLD));
             ProviderRegistry.addEntryGroup(new VehicleEntryGroup(null));
+
+            if (Services.PLATFORM.isModLoaded(Constants.JM_MOD_ID))
+            {
+                ProviderRegistry.addEntryGroup(new JMWaypointGroup(null));
+            }
         }
 
         /*

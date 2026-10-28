@@ -1,6 +1,5 @@
 package me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup;
 
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
@@ -13,7 +12,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
-import net.minecraft.client.resources.model.sprite.AtlasManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.data.AtlasIds;
@@ -23,14 +21,12 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
-import net.minecraft.world.entity.vehicle.minecart.AbstractMinecart;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.VehicleEntry>
 {
@@ -62,8 +58,8 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
             @Override
             protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
             {
-                TextureAtlasSprite texture = atlas.getSprite(vehicleTexture);
-                guiGraphicsExtractor.blitSprite(RenderPipelines.GUI_TEXTURED, texture, screenX - SPRITE_SIZE_HALF, compass.util.getYRowOnCompass(screenYRow) - 1, 9, 9);
+                TextureAtlasSprite vehicleSprite = atlas.getSprite(texture);
+                guiGraphicsExtractor.blitSprite(RenderPipelines.GUI_TEXTURED, vehicleSprite, screenX - 5, compass.util.getYRowOnCompass(screenYRow) - 1, 10, 10);
             }
 
             private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor)
@@ -71,19 +67,20 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
                 String displayableSpeed = getDisplayableSpeed(vehicle, false);
                 if (!displayableSpeed.equals("0m/s"))
                 {
-                    FontHelper.draw(mc, guiGraphicsExtractor, displayableSpeed, compass.util.centerStringAroundX(displayableSpeed, screenX), compass.util.getYRowOnCompass(screenYRow + 1), getRenderColour(), FontHelper.TextType.VALUE);
+                    FontHelper.draw(mc, guiGraphicsExtractor, displayableSpeed, compass.util.centerStringAroundX(displayableSpeed, screenX), compass.util.getYRowOnCompass(screenYRow + 1), getRenderColour());
                 }
             }
         }
 
         private final VehicleEntity vehicle;
-        private final Identifier vehicleTexture;
+        private final Identifier texture;
 
-        public VehicleEntry(VehicleEntity entity, Identifier vehicleTexture)
+        public VehicleEntry(VehicleEntity entity, Identifier texture)
         {
             this.vehicle = entity;
-            super(entity.position(), entity.level().dimension().identifier().toString(), "V");
-            this.vehicleTexture = vehicleTexture.withPrefix("item/");
+            super(entity.position(), entity.level().dimension().identifier().toString(), "?", ColorHelper.WHITE);
+            this.texture = texture.withPrefix("item/");
+            this.renderer = new VehicleRenderer();
         }
 
         @Override
@@ -98,24 +95,28 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
             return vehicle.position();
         }
 
-        @Override
-        protected EntryRenderer initRenderer()
-        {
-            return new VehicleRenderer();
-        }
     }
 
     @Override
     public void startTick(@NotNull LocalPlayer player)
     {
         currentlyRiddenVehicle = player.getVehicle();
-        GeneralUtils.getEntitiesInView(player, VehicleEntity.class).forEach(entity -> {
-            Identifier flatModel = entity.getPickResult().get(DataComponents.ITEM_MODEL);
-            if (flatModel != null)
+        GeneralUtils.getEntitiesInView(player, VehicleEntity.class).forEach(entity ->
+        {
+            @Nullable ItemStack vehicleItemStack = entity.getPickResult();
+            if (vehicleItemStack == null)
             {
-                this.addEntry(new VehicleEntry(entity, flatModel));
+                return;
             }
-        });
+            @Nullable Identifier vehicleTexture = vehicleItemStack.get(DataComponents.ITEM_MODEL);
+            if (vehicleTexture == null)
+            {
+                return;
+            }
+
+            this.addEntry(new VehicleEntry(entity, vehicleTexture));
+        }
+        );
     }
 
     @Override
@@ -124,7 +125,7 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
         if (currentlyRiddenVehicle != null)
         {
             String rawSpeedString = "Speed: " + getDisplayableSpeed(currentlyRiddenVehicle, !(currentlyRiddenVehicle instanceof AbstractHorse));
-            FontHelper.draw(compass.mc, guiGraphicsExtractor, rawSpeedString, compass.rightContentX, compass.util.getYRowOnCompass(0), ColorHelper.WHITE, FontHelper.TextType.VALUE);
+            FontHelper.draw(compass.mc, guiGraphicsExtractor, rawSpeedString, compass.rightContentX, compass.util.getYRowOnCompass(0), ColorHelper.WHITE);
 
             if (currentlyRiddenVehicle instanceof AbstractBoat boat)
             {
@@ -134,7 +135,7 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
                     displayDepth = "Depth: " + depth + "m";
                 }
 
-                FontHelper.draw(compass.mc, guiGraphicsExtractor, displayDepth, compass.rightContentX, compass.util.getYRowOnCompass(1), ColorHelper.WHITE,  FontHelper.TextType.VALUE);
+                FontHelper.draw(compass.mc, guiGraphicsExtractor, displayDepth, compass.rightContentX, compass.util.getYRowOnCompass(1), ColorHelper.WHITE);
                 pos = boat.blockPosition();
             }
         }
