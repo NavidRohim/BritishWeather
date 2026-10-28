@@ -39,15 +39,9 @@ public class ClientKeybinds
             CATEGORY
     );
 
-    public static final KeyMapping LEFT_SNAP = new KeyMapping(
-            "br.keybind.snap_left",
-            InputConstants.KEYCODE_RIGHT,
-            CATEGORY
-    );
-
-    public static final KeyMapping RIGHT_SNAP = new KeyMapping(
-            "br.keybind.snap_right",
-            InputConstants.KEYCODE_RIGHT,
+    public static final KeyMapping SNAP_TO_NEAREST = new KeyMapping(
+            "br.keybind.snap_nearest",
+            InputConstants.KEYCODE_UP,
             CATEGORY
     );
 }

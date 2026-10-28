@@ -50,8 +50,10 @@ public class FabricConfigSerializer
     public static boolean shouldRenderHeading = Constants.DefaultConfigValues.shouldRenderHeading;
     @SerialEntry
     public static boolean shouldShowEntitiesOnCompass = Constants.DefaultConfigValues.shouldShowEntitiesOnCompass;
-    @Serial
+    @SerialEntry
     public static boolean shouldShowBuiltinObjectives = Constants.DefaultConfigValues.shouldShowBuiltinObjectives;
+    @SerialEntry
+    public static boolean shouldShowPinBackground =  Constants.DefaultConfigValues.shouldShowPinBackground;
 
     @SerialEntry
     public static int compassSize = Constants.DefaultConfigValues.compassSize;

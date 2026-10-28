@@ -20,7 +20,7 @@ public class FleeHailGoal extends FleeSunGoal
     public boolean canUse()
     {
         // Only activate goal if hail damage is enabled and entity isn't sheltered
-        if (BritishWeather.getConfig().hailShouldDealDamage() && mob.level().canSeeSky(mob.blockPosition()) && WeatherUtil.isHailing())
+        if (WeatherUtil.isHailing() && BritishWeather.getConfig().hailShouldDealDamage() && mob.level().canSeeSky(mob.blockPosition()))
         {
             return this.setWantedPos();
         }

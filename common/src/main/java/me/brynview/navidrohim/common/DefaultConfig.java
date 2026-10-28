@@ -14,7 +14,7 @@ public class DefaultConfig implements CommonConfig
 
     public DefaultConfig()
     {
-        Constants.LOG.info("Using default config as YACL is not installed.");
+        Constants.LOG.warn("Using default config as YACL is not installed.");
     }
 
     @Override
@@ -85,6 +85,12 @@ public class DefaultConfig implements CommonConfig
 
     @Override
     public boolean shouldShowBuiltinObjectives() {return Constants.DefaultConfigValues.shouldShowBuiltinObjectives;}
+
+    @Override
+    public boolean shouldShowPinBackground()
+    {
+        return Constants.DefaultConfigValues.shouldShowPinBackground;
+    }
 
     @Override
     public int getCompassSize()

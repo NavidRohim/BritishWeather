@@ -2,6 +2,7 @@ package me.brynview.navidrohim.mixin.client;
 
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.builtin.DeathEntry;
+import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.gui.screens.DeathScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
@@ -26,6 +27,6 @@ public class DeathScreenMixin
     @Inject(method = "mouseClicked", at = @At("TAIL"))
     private void handlePlayerDeath(MouseButtonEvent event, boolean doubleClick, CallbackInfoReturnable<Boolean> cir)
     {
-        Compass.addEntry(new DeathEntry(player.position(), player.level().dimension().identifier().toString()));
+        Compass.addEntry(new DeathEntry(player.position(), GeneralUtils.getDimensionFromPlayer(player)));
     }
 }

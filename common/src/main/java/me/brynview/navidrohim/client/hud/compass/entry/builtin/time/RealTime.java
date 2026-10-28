@@ -7,11 +7,11 @@ import java.util.concurrent.TimeUnit;
 
 public class RealTime implements TimeMethod
 {
-    private long endTime;
+    private final long endTime;
 
     public RealTime(TimeUnit unit, int duration)
     {
-        this.endTime = System.nanoTime() + unit.toNanos(duration);
+        this.endTime = System.currentTimeMillis() + unit.toMillis(duration);
     }
 
     public RealTime(long remaining)
@@ -22,13 +22,13 @@ public class RealTime implements TimeMethod
     @Override
     public boolean isExpired()
     {
-        return System.nanoTime() >= endTime;
+        return System.currentTimeMillis() >= endTime;
     }
 
     @Override
     public long timeLeft()
     {
-        return TimeUnit.NANOSECONDS.toSeconds(endTime - System.nanoTime());
+        return TimeUnit.MILLISECONDS.toSeconds(endTime - System.currentTimeMillis());
     }
 
     @Override

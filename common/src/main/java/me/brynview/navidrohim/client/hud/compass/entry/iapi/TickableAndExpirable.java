@@ -25,4 +25,6 @@ public interface TickableAndExpirable
         return false;
     }
 
+    String getLevel();
+
 }

@@ -21,6 +21,11 @@ public class Constants {
 
     public static final String DEFAULT_LOCATION_NAME = "Earth";
     public static final String YACL_MOD_ID = "yet_another_config_lib_v3";
+    public static final String JM_MOD_ID = "journeymap";
+
+    // This value is Minecraft.font.lineHeight, halved, and rounded down. I don't think the value ever changes so this is here.
+    // Maybe in the future it will be glaringly obvious why I shouldn't hardcode this value.
+    public static final int LINE_HEIGHT_HALVED = 4;
 
     public static final class DefaultConfigValues
     {
@@ -41,9 +46,10 @@ public class Constants {
         public static final boolean shouldRenderHeading = false;
         public static final boolean shouldShowEntitiesOnCompass = true;
         public static final boolean shouldShowBuiltinObjectives = true;
+        public static final boolean shouldShowPinBackground = true;
 
         public static final int compassSize = 35;
-        public static int compassY = 32;
+        public static int compassY = 56;
 
     }
 

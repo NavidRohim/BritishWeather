@@ -1,6 +1,5 @@
 package me.brynview.navidrohim.client.hud.compass.entry.builtin;
 
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.Pin;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultTimedEntry;
 import net.minecraft.network.FriendlyByteBuf;
@@ -9,10 +8,10 @@ import net.minecraft.world.phys.Vec3;
 /*
 Same as PinEntry but timed.
  */
-public class TimedPinEntry extends DefaultTimedEntry implements Pin
+public class TimedPinEntry extends DefaultTimedEntry
 {
-    private boolean isPersistent;
-    private boolean shouldShowDistance;
+    private final boolean isPersistent;
+    private final boolean shouldShowDistance;
     private boolean shouldDisappearWhenNotInView;
 
     public TimedPinEntry(Vec3 position, String level, String marker, TimeMethod timeMethod, boolean isPersistent, int colour, boolean shouldShowDistance, boolean shouldDisappearWhenNotInView)
@@ -31,6 +30,7 @@ public class TimedPinEntry extends DefaultTimedEntry implements Pin
 
         this.isPersistent = friendlyByteBuf.readBoolean();
         this.shouldShowDistance = friendlyByteBuf.readBoolean();
+        this.shouldDisappearWhenNotInView = friendlyByteBuf.readBoolean();
 
         super(vec3, level, s, remainingTimeMethod, colour);
 
@@ -42,6 +42,7 @@ public class TimedPinEntry extends DefaultTimedEntry implements Pin
         super.serialise(friendlyByteBuf);
         friendlyByteBuf.writeBoolean(isPersistent);
         friendlyByteBuf.writeBoolean(shouldShowDistance);
+        friendlyByteBuf.writeBoolean(shouldDisappearWhenNotInView);
     }
 
     @Override

@@ -20,6 +20,9 @@
         ],
         "modmenu": [
           "me.brynview.navidrohim.client.config.FabricClientConfig"
+        ],
+        "journeymap": [
+            "me.brynview.navidrohim.client.integration.JourneyMapFabric"
         ]
     },
     "mixins": [

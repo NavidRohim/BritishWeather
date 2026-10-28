@@ -1,6 +1,5 @@
 package me.brynview.navidrohim.client.hud.compass.entry.builtin;
 
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.Pin;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
@@ -8,11 +7,11 @@ import net.minecraft.world.phys.Vec3;
 /*
 Normal pin to indicate a POI or any other place of significance.
  */
-public class DefaultPinEntry extends DefaultEntry implements Pin
+public class DefaultPinEntry extends DefaultEntry
 {
-    private boolean isPersistent;
-    private boolean shouldShowDistance;
-    private boolean shouldDisappearWhenNotInView;
+    private final boolean isPersistent;
+    private final boolean shouldShowDistance;
+    private final boolean shouldDisappearWhenNotInView;
 
     public DefaultPinEntry(Vec3 position, String level, String pinIcon, boolean isPersistent, int colour, boolean showDistance, boolean shouldDisappearWhenNotInView)
     {

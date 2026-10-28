@@ -80,6 +80,12 @@ public class FabricConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldShowPinBackground()
+    {
+        return FabricConfigSerializer.shouldShowPinBackground;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return FabricConfigSerializer.compassSize;

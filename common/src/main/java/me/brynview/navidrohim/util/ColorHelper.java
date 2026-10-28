@@ -20,6 +20,7 @@ public class ColorHelper {
     public static final int CENTER_COLOR = decode("#FF0A01").getRGB(); // Red
     public static final int COMPASS_BG_COLOR = decode("#FFFFFF").getRGB();
     public static final int COMPASS_BG_SHADOW_COLOUR = ARGB.scaleRGB(COMPASS_BG_COLOR, 0.25f);
+    public static final int FOCUS_BACKGROUND = rgb(90, 90, 90, 130);
 
     public static final int WHITE = decode("#FFFFFF").getRGB();
     public static final int RED = decode("#FF0000").getRGB();

@@ -37,12 +37,15 @@
   "br.config.category.compass.shouldShowEntities.description": "If entities should be shown on the compass.",
   "br.config.category.compass.showBuiltinObjectives": "Should show objectives",
   "br.config.category.compass.showBuiltinObjectives.description": "If built-in objectives will be shown.\n\nWhat is an objective?\n\nObjectives are things that the compass can smartly pickup and display on the compass. An example is an explorer map or abandoned camp map.\nWhen the player is holding one, the compass will read that and display it on the compass even if you aren't holding the map. But it must be in your inventory.",
+  "br.config.category.compass.shouldShowPinBackground": "Should show pin background",
+  "br.config.category.compass.shouldShowPinBackground.description": "Shows a background behind the pin name. This can improve readability but may not look as nice.",
 
   "br.config.no_config": "YACL is not installed!",
   "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?",
 
   "br.command.brweather.message": "Weather is currently %s in %s",
   "br.command.brweather.message_no_location": "Weather is currently %s",
+  "br.command.refresh.success": "Refreshed weather",
 
   "key.category.britishweather.keybinds": "British Weather",
   "br.keybind.showPins": "Show compass pins (SCP)",
@@ -50,8 +53,7 @@
   "br.keybind.delete_pin": "Delete pin (use with SCP)",
   "br.keybind.create_pin": "Create pin (use with SCP)",
   "br.keybind.zoom_modifier": "Zoom modifier (scroll)",
-  "br.keybind.snap_right": "Snap next pin",
-  "br.keybind.snap_left": "Snap last pin",
+  "br.keybind.snap_nearest": "Snap to nearest pin",
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
   "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline.",
@@ -60,7 +62,9 @@
   "br.pin_creation_screen.should_show_dist.selected.tooltip": "Show distance from pin",
   "br.pin_creation_screen.should_show_dist.unselected.tooltip": "Don't show distance from pin",
   "br.pin_creation_screen.should_disappear_oob.selected.tooltip": "Disappear when on the end of compass",
-  "br.pin_creation_screen.should_disappear_oob.unselected.tooltip": "Don't disappear when on the end of compass (Might clutter)"
+  "br.pin_creation_screen.should_disappear_oob.unselected.tooltip": "Don't disappear when on the end of compass (Might clutter)",
+  "br.pin_creation_screen.colour_picker.tooltip": "Pick colour from game window.",
 
+  "br.pin_creation_screen.press_any_to_exit": "Press any key to exit colour picker. Click to select colour."
 
 }

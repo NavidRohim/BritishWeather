@@ -5,15 +5,21 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapObjectiveEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.JMWaypointGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.VehicleEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.PersistentEntryConstructor;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.client.particle.HailParticle;
+import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.*;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,7 +121,7 @@ public class EntryManager
 
         } catch (NullPointerException exc)
         {
-            Constants.LOG.error("Corrupted pin.");
+            Constants.LOG.error("Corrupted pin. Error: {}", exc.getMessage());
         } catch (IOException exc)
         {
             exc.printStackTrace();
@@ -129,11 +135,6 @@ public class EntryManager
     {
         // Current entries
         Collection<DefaultEntry> defaultEntries = Compass.getEntries();
-
-        if (defaultEntries.isEmpty())
-        {
-            return;
-        }
 
         CompoundTag master = new CompoundTag();
 
@@ -155,7 +156,7 @@ public class EntryManager
 
             // Write metadata used to reconstruct
             buffer.writeUtf(entry.getMarker());
-            buffer.writeInt(entry.getColour());
+            buffer.writeInt(entry.getHighlightColor());
             buffer.writeUtf(entry.getClass().getSimpleName());
             buffer.writeVector3f(entry.getPosition().toVector3f());
             buffer.writeUtf(entry.getLevel());
@@ -193,13 +194,22 @@ public class EntryManager
     public final static class ProviderRegistry
     {
 
-        // Internal map of all entries and group entries.
+        // Internal map of all entries and group entries. This is messy and should be changed somehow, but I don't know to what.
         private static final HashMap<String, DefaultEntry> PROVIDERS = new HashMap<>();
-        public static final Set<DefaultEntryGroup> PROVIDER_GROUPS = Sets.newHashSet(); // Only one type of group entry can appear at once
+        private static final HashMap<String, HashMap<String, DefaultEntry>> PROVIDERS_DIMENSION_SORTED = new HashMap<>();
+
+        private static final Set<DefaultEntryGroup<?>> PROVIDER_GROUPS = Sets.newHashSet(); // Only one type of group entry can appear at once
+        private static final HashMap<String, Set<DefaultEntryGroup<DefaultEntry>>> PROVIDER_GROUPS_DIMENSION_SORTED = new HashMap<>();
 
         static
         {
-            ProviderRegistry.addEntryGroup(new MapObjectiveEntryGroup());
+            ProviderRegistry.addEntryGroup(new MapEntryGroup(Level.OVERWORLD));
+            ProviderRegistry.addEntryGroup(new VehicleEntryGroup(null));
+
+            if (Services.PLATFORM.isModLoaded(Constants.JM_MOD_ID))
+            {
+                ProviderRegistry.addEntryGroup(new JMWaypointGroup(null));
+            }
         }
 
         /*
@@ -207,16 +217,37 @@ public class EntryManager
          */
         public static void tick(@NotNull LocalPlayer player)
         {
+            // check providers
             PROVIDERS.values().removeIf(DefaultEntry::hasExpired);
+            PROVIDERS_DIMENSION_SORTED.forEach((_, innerMap) -> innerMap.values().removeIf(DefaultEntry::hasExpired));
+
             PROVIDERS.values().forEach((p) -> p.tick(player));
 
+            // check provider groups
             PROVIDER_GROUPS.removeIf(DefaultEntryGroup::hasExpired);
+            PROVIDER_GROUPS_DIMENSION_SORTED.forEach((_, innerSet) -> innerSet.removeIf(DefaultEntryGroup::hasExpired));
+
             PROVIDER_GROUPS.forEach((pg) -> pg.tick(player));
         }
 
-        public static Collection<DefaultEntry> getEntries()
+        public static Collection<DefaultEntry> getAllEntries()
         {
             return PROVIDERS.values();
+        }
+
+        public static Collection<DefaultEntry> getEntriesInDimension(ResourceKey<Level> key)
+        {
+            return PROVIDERS_DIMENSION_SORTED.computeIfAbsent(key.identifier().toString(), _ -> new HashMap<>()).values();
+        }
+
+        public static Set<DefaultEntryGroup<DefaultEntry>> getEntryGroupsInDimension(ResourceKey<Level> key)
+        {
+            return PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent(key.identifier().toString(), _ -> new HashSet<>());
+        }
+
+        public static Set<DefaultEntryGroup<DefaultEntry>> getEntryGroupsInAll()
+        {
+            return PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent("all",  _ -> new HashSet<>());
         }
 
         public static void addEntry(DefaultEntry entry)
@@ -226,10 +257,12 @@ public class EntryManager
             {
                 if (!PROVIDERS.containsKey(id)) // Check if singleton exists, if not, put.
                 {
+                    PROVIDERS_DIMENSION_SORTED.computeIfAbsent(entry.getLevel(), _ -> new HashMap<>()).put(id, entry);
                     PROVIDERS.put(id, entry);
                 }
             } else
             {
+                PROVIDERS_DIMENSION_SORTED.computeIfAbsent(entry.getLevel(), _ -> new HashMap<>()).put(id, entry);
                 PROVIDERS.put(id, entry);
             }
         }
@@ -237,6 +270,7 @@ public class EntryManager
         public static void removeEntry(DefaultEntry highlightedEntry)
         {
             PROVIDERS.remove(highlightedEntry.getId());
+            PROVIDERS_DIMENSION_SORTED.get(highlightedEntry.getLevel()).remove(highlightedEntry.getId());
         }
 
         /*
@@ -245,6 +279,7 @@ public class EntryManager
         public static void addEntryGroup(DefaultEntryGroup group)
         {
             PROVIDER_GROUPS.add(group);
+            PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent(group.getLevel(), _ -> new HashSet<>()).add(group);
         }
 
         /*
@@ -260,7 +295,10 @@ public class EntryManager
         public static void clear()
         {
             PROVIDERS.clear();
+            PROVIDERS_DIMENSION_SORTED.forEach((_, subMap) -> subMap.clear());
+
             PROVIDER_GROUPS.removeIf((g) -> !g.isBuiltIn());
+            PROVIDER_GROUPS_DIMENSION_SORTED.forEach((_, subSet) -> subSet.removeIf((g) -> !g.isBuiltIn()));
         }
     }
 }
