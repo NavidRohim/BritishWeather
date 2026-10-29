@@ -1,18 +1,14 @@
-package me.brynview.navidrohim.client.hud.compass.entry;
+package me.brynview.navidrohim.client.hud.compass;
 
 import com.google.common.collect.Sets;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.JMWaypointGroup;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.MapEntryGroup;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.VehicleEntryGroup;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.PersistentEntryConstructor;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
-import me.brynview.navidrohim.client.particle.HailParticle;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.JMWaypointGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.MapEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.VehicleEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
 import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -253,7 +249,7 @@ public class EntryManager
         public static void addEntry(DefaultEntry entry)
         {
             String id = entry.getId(); // Check if the entry is a singleton and will not just override an existing singleton.
-            if (entry instanceof Singleton && !((Singleton) entry).isAbsolute())
+            if (entry.isSingleton())
             {
                 if (!PROVIDERS.containsKey(id)) // Check if singleton exists, if not, put.
                 {
@@ -300,5 +296,16 @@ public class EntryManager
             PROVIDER_GROUPS.removeIf((g) -> !g.isBuiltIn());
             PROVIDER_GROUPS_DIMENSION_SORTED.forEach((_, subSet) -> subSet.removeIf((g) -> !g.isBuiltIn()));
         }
+    }
+
+    /*
+        Callback interface for when a persistent entry is reconstructed from NBT file.
+         */
+    public static interface PersistentEntryConstructor
+    {
+        /*
+        This should be used in lambda, and return an instance of whatever entry is persistent. See BritishWeather class for more info.
+         */
+        DefaultEntry constructEntryWithExtraData(String marker, int colour, Vec3 pos, String level, FriendlyByteBuf extraData);
     }
 }

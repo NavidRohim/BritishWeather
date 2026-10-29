@@ -1,12 +1,9 @@
-package me.brynview.navidrohim.client.hud.compass.entry.iapi.entry;
+package me.brynview.navidrohim.client.hud.compass.entry.entry;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.TickableAndExpirable;
+import me.brynview.navidrohim.client.hud.compass.entry.TickableAndExpirable;
 import me.brynview.navidrohim.util.ColorHelper;
-import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -24,7 +21,7 @@ import static me.brynview.navidrohim.client.hud.compass.Compass.ENTRIES_ALLOWED_
  * DefaultEntry should be extended but is not abstract as it does have functionality by itself.
  * An "entry" in HudCompass context is something that can be rendered on the compass. Perhaps a pin, objective or waypoint.
  */
-public class DefaultEntry implements TickableAndExpirable
+public abstract class DefaultEntry implements TickableAndExpirable
 {
     // Might ditch
     public class EntryRenderer
@@ -56,7 +53,6 @@ public class DefaultEntry implements TickableAndExpirable
             RenderState state = RenderState.NORMAL;
 
             float angle = (float) MathHelper.angleFromPos(getPosition(), mc.player.position());
-
             screenX = compass.util.getAngleX(angle, shouldDisappearWhenNotInView());
             screenYRow = 0;
 
@@ -69,7 +65,7 @@ public class DefaultEntry implements TickableAndExpirable
             if (isHighlightable)
             {
                 state = RenderState.HIGHLIGHT;
-            } else if ( (isOnLeftEdge && compass.entriesOnLeftEdge >= ENTRIES_ALLOWED_ON_SIDE) || (isOnRightEdge && compass.entriesOnRightEdge >= ENTRIES_ALLOWED_ON_SIDE) )
+            } else if (screenX == Integer.MAX_VALUE || (isOnLeftEdge && compass.entriesOnLeftEdge >= ENTRIES_ALLOWED_ON_SIDE) || (isOnRightEdge && compass.entriesOnRightEdge >= ENTRIES_ALLOWED_ON_SIDE) )
             {
                 this.setRenderState(RenderState.NONE);
                 return;
@@ -137,7 +133,7 @@ public class DefaultEntry implements TickableAndExpirable
                 return;
             }
 
-            drawRawEntry(guiGraphicsExtractor);
+            drawRawEntry(guiGraphicsExtractor, getRenderColour());
         }
 
         protected static @NonNull String getDisplayableMarker(DefaultEntry entryRenderable, boolean smart, int compassX)
@@ -177,14 +173,17 @@ public class DefaultEntry implements TickableAndExpirable
             return displayableMarker;
         }
 
-        public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
+        public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, int renderColour)
         {
-            drawMarker(guiGraphicsExtractor);
-            drawDecoration(guiGraphicsExtractor);
-            drawDistanceAndDebug(guiGraphicsExtractor);
+            drawMarker(guiGraphicsExtractor, renderColour);
+            if (getRenderState() == RenderState.FOCUSED)
+            {
+                drawDecoration(guiGraphicsExtractor, renderColour);
+            }
+            drawDistanceAndDebug(guiGraphicsExtractor, renderColour);
         }
 
-        protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
+        protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
         {
             String displayableMarker = getDisplayableMarker(owner, owner.getMarker().length() <= 15, screenX);
 
@@ -197,13 +196,13 @@ public class DefaultEntry implements TickableAndExpirable
             {
                 shadow = false;
                 guiGraphicsExtractor.fill(renderX - 2, renderY - 2, renderX + markerWidth + 2, renderY + mc.font.lineHeight, owner.highlightBgColour);
-                guiGraphicsExtractor.outline(renderX - 3, renderY - 2, markerWidth + 5, mc.font.lineHeight + 3, getRenderColour());
+                guiGraphicsExtractor.outline(renderX - 3, renderY - 3, markerWidth + 5, mc.font.lineHeight + 4, colour);
             }
 
-            FontHelper.draw(mc, guiGraphicsExtractor, displayableMarker, renderX, renderY, getRenderColour(), shadow);
+            guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, colour, shadow);
         }
 
-        protected void drawDistanceAndDebug(GuiGraphicsExtractor guiGraphicsExtractor)
+        protected void drawDistanceAndDebug(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
         {
             // If in view, render the distance from entry and if the player should go up or down to reach it
             Vec3 playerPos = mc.player.position();
@@ -232,31 +231,30 @@ public class DefaultEntry implements TickableAndExpirable
                 String debugString = getDebugString();
                 if (BritishWeather.getConfig().debug() && debugString != null)
                 {
-                    FontHelper.draw(mc, guiGraphicsExtractor, debugString, compass.util.centerStringAroundX(debugString, screenX), compass.util.getYRowOnCompass(screenYRow + 2), getRenderColour());
-                    guiGraphicsExtractor.verticalLine(compass.util.centerWidthAroundX(2, screenX), compass.util.getYRowOnCompass(-1), compass.util.getYRowOnCompass(screenYRow + 3), getRenderColour());
+                    guiGraphicsExtractor.text(mc.font, debugString, compass.util.centerStringAroundX(debugString, screenX), compass.util.getYRowOnCompass(screenYRow + 2), colour);
+                    guiGraphicsExtractor.verticalLine(compass.util.centerWidthAroundX(2, screenX), compass.util.getYRowOnCompass(-1), compass.util.getYRowOnCompass(screenYRow + 3), colour);
                 }
 
                 // Draw distance from entry
                 String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition()) + suffix;
                 int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, screenX);
 
-                FontHelper.draw(mc, guiGraphicsExtractor, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), getRenderColour());
+                guiGraphicsExtractor.text(mc.font, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), colour);
             }
         }
 
-        protected void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor)
+        protected void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
         {
-            FontHelper.draw(mc, guiGraphicsExtractor, THINGY, screenX, compass.util.getYRowOnCompass(screenYRow), getRenderColour(), false);
+            guiGraphicsExtractor.verticalLine(screenX, compass.util.getYRowOnCompass(screenYRow) - 2, compass.util.getYRowOnCompass(screenYRow + 0.5), colour);
+            //guiGraphicsExtractor.text(mc.font, LUBBER, screenX, compass.util.getYRowOnCompass(screenYRow), colour, false);
         }
     }
-
-    public final static String THINGY = "|";
 
     protected Vec3 position; // Position of the entry in-game.
     private final String level; // What dimension the entry was made in.
     private final String entryId; // Unique entry ID. Not used for anything at the moment.
 
-    protected final Minecraft mc;
+    protected final Minecraft mc = Minecraft.getInstance();
     protected static final Compass compass = Compass.getInstance();
     protected EntryRenderer renderer;
 
@@ -269,20 +267,13 @@ public class DefaultEntry implements TickableAndExpirable
     public boolean isOnLeftEdge = false;
     public boolean isOnRightEdge = false;
 
-
-    public DefaultEntry(Vec3 position, String level, String marker)
-    {
-        this(position, level, marker, ColorHelper.OBJECTIVE_MARKER_COLOUR);
-    }
-
     public DefaultEntry(Vec3 position, String level, String marker, int colour)
     {
         this.renderer = new EntryRenderer();
-        this.mc = Minecraft.getInstance();
         this.level = level;
         this.position = position;
 
-        if (this instanceof Singleton)
+        if (this.isSingleton())
         {
             // Non-singleton ID is made up of the entries class, then xyz position, then dimension.
             this.entryId = this.getClass().getSimpleName();
@@ -347,6 +338,11 @@ public class DefaultEntry implements TickableAndExpirable
         return false;
     }
 
+    public boolean isSingleton()
+    {
+        return false;
+    }
+
     public boolean shouldShowDistance()
     {
         return true;
@@ -384,10 +380,5 @@ public class DefaultEntry implements TickableAndExpirable
     public String toString()
     {
         return getMarker();
-    }
-
-    public static DefaultEntry of(Vec3 position, String level, String marker)
-    {
-        return new DefaultEntry(position, level, marker);
     }
 }

@@ -39,6 +39,12 @@ public class ClientKeybinds
             CATEGORY
     );
 
+    public static final KeyMapping EDIT = new KeyMapping(
+            "br.keybind.edit_pin",
+            InputConstants.KEY_B,
+            CATEGORY
+    );
+
     public static final KeyMapping SNAP_TO_NEAREST = new KeyMapping(
             "br.keybind.snap_nearest",
             InputConstants.KEYCODE_UP,

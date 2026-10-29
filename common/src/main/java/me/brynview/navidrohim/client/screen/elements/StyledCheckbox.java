@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.client.screen.elements;
 
+import me.brynview.navidrohim.client.screen.elements.abs.AbstractJMWSButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -9,7 +10,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jspecify.annotations.NonNull;
 
-public class BRCheckbox extends AbstractJMWSButton {
+public class StyledCheckbox extends AbstractJMWSButton
+{
 
     public boolean isChecked = false;
     protected OnCheckboxPress onPress;
@@ -18,7 +20,7 @@ public class BRCheckbox extends AbstractJMWSButton {
 
     private static final MutableComponent CHECKMARK = Component.literal("✔");
 
-    protected BRCheckbox(int x, int y, int width, int height, Component message, OnCheckboxPress onPress, Button.CreateNarration createNarration, Tooltip checkedTooltip, Tooltip uncheckedTooltip) {
+    protected StyledCheckbox(int x, int y, int width, int height, Component message, OnCheckboxPress onPress, Button.CreateNarration createNarration, Tooltip checkedTooltip, Tooltip uncheckedTooltip) {
         super(x, y, width, height, message, (_) -> {}, createNarration);
         this.onPress = onPress;
         this.checkedTooltip = checkedTooltip;
@@ -35,6 +37,12 @@ public class BRCheckbox extends AbstractJMWSButton {
     {
         isChecked = false;
         this.setTooltip(this.uncheckedTooltip);
+    }
+
+    public void setChecked(boolean checked)
+    {
+        this.isChecked = checked;
+        this.setTooltip(isChecked ? this.checkedTooltip : this.uncheckedTooltip);
     }
 
     @Override
@@ -63,8 +71,8 @@ public class BRCheckbox extends AbstractJMWSButton {
         guiGraphicsExtractor.text(Minecraft.getInstance().font, this.getMessage(), this.getX() + this.width + 3, this.getY() + 2, 0xFFFFFFFF);
     }
 
-    public static BRCheckbox buildCheckbox(Component label, OnCheckboxPress onPress, Tooltip checkedTooltip, Tooltip uncheckedTooltip, boolean defaultState) {
-        BRCheckbox box = new BRCheckbox(0, 0, 15, 15, label, onPress, Button.DEFAULT_NARRATION, checkedTooltip, uncheckedTooltip);
+    public static StyledCheckbox buildCheckbox(Component label, OnCheckboxPress onPress, Tooltip checkedTooltip, Tooltip uncheckedTooltip, boolean defaultState) {
+        StyledCheckbox box = new StyledCheckbox(0, 0, 15, 15, label, onPress, Button.DEFAULT_NARRATION, checkedTooltip, uncheckedTooltip);
 
         if (defaultState)
         {
@@ -79,6 +87,6 @@ public class BRCheckbox extends AbstractJMWSButton {
 
     public interface OnCheckboxPress
     {
-        void onPress(BRCheckbox checkboxPressed);
+        void onPress(StyledCheckbox checkboxPressed);
     }
 }

@@ -1,13 +1,12 @@
-package me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup;
+package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.GuiPipeline;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.pipeline.RenderPipelines;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.component.DataComponents;
@@ -30,7 +29,7 @@ without having to hold the map out.
  */
 public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
 {
-    private static final String MARKER = "⛺";
+    private static final String MARKER = "POI";
     private final TextureAtlas atlas;
 
     public MapEntryGroup(ResourceKey<Level> level)
@@ -47,17 +46,17 @@ public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
         private final class MapEntryRenderer extends EntryRenderer
         {
             @Override
-            protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
+            protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
             {
                 TextureAtlasSprite sprite = atlas.getSprite(decoId);
                 guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, sprite, screenX - 4, compass.util.getYRowOnCompass(screenYRow) - 1, 8, 8);
             }
 
             @Override
-            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
+            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
             {
-                drawMarker(guiGraphicsExtractor);
-                drawDistanceAndDebug(guiGraphicsExtractor);
+                drawMarker(guiGraphicsExtractor, 0);
+                drawDistanceAndDebug(guiGraphicsExtractor, colour);
             }
 
             @Override
@@ -71,7 +70,7 @@ public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
 
         public MapEntry(Vec3 position, Identifier mapDeco)
         {
-            super(position, Level.OVERWORLD.identifier().toString(), MARKER);
+            super(position, Level.OVERWORLD.identifier().toString(), MARKER, ColorHelper.WHITE);
             this.decoId = mapDeco;
             this.renderer = new MapEntryRenderer();
         }

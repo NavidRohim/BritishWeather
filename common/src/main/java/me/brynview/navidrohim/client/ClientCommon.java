@@ -2,10 +2,7 @@ package me.brynview.navidrohim.client;
 
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
-import me.brynview.navidrohim.client.screen.PinCreationScreen;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientHandshakePacketListenerImpl;
+import me.brynview.navidrohim.client.hud.compass.EntryManager;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;

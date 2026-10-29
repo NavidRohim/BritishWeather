@@ -1,8 +1,6 @@
-package me.brynview.navidrohim.client.hud.compass.entry.builtin;
+package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.time.RealTime;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultTimedEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.Singleton;
+import me.brynview.navidrohim.client.hud.compass.entry.time.GameTime;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Vec3i;
@@ -16,9 +14,8 @@ import java.util.concurrent.TimeUnit;
 Entry that will be added upon user death. This is a timed entry and lasts for 30 minutes IRL.
 Time offline will count towards the timer.
  */
-public final class DeathEntry extends DefaultTimedEntry implements Singleton
+public final class DeathPin extends TimedPin
 {
-    private static final int RED = ColorHelper.rgb(255, 0, 0, 255);
     private static final String SKULL = "☠";
 
     private boolean hasArrived = false; // If the user has arrived at the deathpoint.
@@ -27,25 +24,33 @@ public final class DeathEntry extends DefaultTimedEntry implements Singleton
     /*
     Normal constructor
      */
-    public DeathEntry(Vec3 position, String level)
+    public DeathPin(Vec3 position, String level)
     {
-        super(position, level, SKULL, new RealTime(TimeUnit.MINUTES, 30), RED);
+        super(position, level, SKULL, new GameTime(TimeUnit.MINUTES, 30), true, ColorHelper.RED, true, false);
         this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
     }
 
     /*
     Constructor if being deserialized from NBT.
      */
-    public DeathEntry(String marker, int ignored, Vec3 pos, String level, FriendlyByteBuf friendlyByteBuf)
+    public DeathPin(String ignoredMarker, int ignored, Vec3 pos, String level, FriendlyByteBuf friendlyByteBuf)
     {
-        RealTime realTime = RealTime.decode(friendlyByteBuf); // Decode the RealTime instance.
-        super(pos, level, marker, realTime, RED);
+        super(SKULL, ColorHelper.RED, pos, level, friendlyByteBuf);
         this.deathpoint = new Vec3i((int) pos.x, (int) pos.y, (int) pos.z);
+    }
+
+    @Override
+    public void serialise(FriendlyByteBuf friendlyByteBuf)
+    {
+        this.timeMethod.encode(friendlyByteBuf);
     }
 
     @Override
     public void tick(@NotNull LocalPlayer player)
     {
+        super.tick(player);
+        this.timeMethod.tick();
+
         Vec3 playerPos = player.position();
 
         // Checking if the player is dead is important.
@@ -60,7 +65,7 @@ public final class DeathEntry extends DefaultTimedEntry implements Singleton
     public boolean hasExpired()
     {
         // entry will expire if player arrives at their deathpoint.
-        return super.hasExpired() || hasArrived;
+        return this.timeMethod.isExpired() || hasArrived;
     }
 
     @Override
@@ -71,8 +76,14 @@ public final class DeathEntry extends DefaultTimedEntry implements Singleton
     }
 
     @Override
+    public boolean isSingleton()
+    {
+        return true;
+    }
+
+    @Override
     public int getHighlightColor()
     {
-        return RED;
+        return ColorHelper.RED;
     }
 }

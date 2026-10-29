@@ -1,7 +1,7 @@
-package me.brynview.navidrohim.client.hud.compass.entry.iapi;
+package me.brynview.navidrohim.client.hud.compass.entry;
 
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.time.GameTime;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.time.RealTime;
+import me.brynview.navidrohim.client.hud.compass.entry.time.GameTime;
+import me.brynview.navidrohim.client.hud.compass.entry.time.RealTime;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -16,7 +16,7 @@ TimeMethod basically counts time for a TimedEntry and tells it when to expire.
 The entry doesn't just count itself as some entries might count time past while offline (RealTime class) or only count time past in-game (GameTime).
 To simplify this, the TimeMethod interface was made if in the future I add other ways of counting. Which sounds kinda stupid.
  */
-public interface TimeMethod
+public interface TimeKeeper
 {
     default void tick() {}
 
@@ -42,10 +42,10 @@ public interface TimeMethod
         GAMETIME("game time", GameTime::new, GameTime::decode);
 
         private final String displayString;
-        private final BiFunction<TimeUnit, Integer, TimeMethod> supplier;
-        private final Function<FriendlyByteBuf, TimeMethod> bufferDecoder;
+        private final BiFunction<TimeUnit, Integer, TimeKeeper> supplier;
+        private final Function<FriendlyByteBuf, TimeKeeper> bufferDecoder;
 
-        TimeMethods(String displayName, BiFunction<TimeUnit, Integer, TimeMethod> timeMethodSupplier, Function<FriendlyByteBuf, TimeMethod> fromBuffer)
+        TimeMethods(String displayName, BiFunction<TimeUnit, Integer, TimeKeeper> timeMethodSupplier, Function<FriendlyByteBuf, TimeKeeper> fromBuffer)
         {
             this.displayString = displayName;
             this.supplier = timeMethodSupplier;
@@ -57,19 +57,26 @@ public interface TimeMethod
             return displayString;
         }
 
-        public TimeMethod createTimeMethod(TimeUnit timeUnit, int time)
+        public TimeKeeper createTimeMethod(TimeUnit timeUnit, int time)
         {
             return supplier.apply(timeUnit, time);
         }
 
-        public TimeMethod getFromBuffer(FriendlyByteBuf buffer)
+        public TimeKeeper getFromBuffer(FriendlyByteBuf buffer)
         {
             return bufferDecoder.apply(buffer);
         }
 
-        public @Nullable Tooltip getDescription()
+        public Tooltip getDescription()
         {
             return Tooltip.create(Component.translatable("br.compass.time_methods.%s.tooltip".formatted(this.name().toLowerCase())));
+        }
+
+        public static TimeKeeper getTimeKeeperFromBuffer(FriendlyByteBuf buffer)
+        {
+            String savedTimeMethod = buffer.readUtf();
+            TimeKeeper.TimeMethods tm = TimeKeeper.TimeMethods.valueOf(savedTimeMethod);
+            return tm.getFromBuffer(buffer);
         }
     }
 }

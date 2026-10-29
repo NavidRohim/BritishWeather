@@ -4,12 +4,11 @@ import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.ClientKeybinds;
-import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
-import me.brynview.navidrohim.client.screen.PinCreationScreen;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.screen.PinManageScreen;
 import me.brynview.navidrohim.util.ColorHelper;
-import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.KeyMapping;
@@ -103,9 +102,9 @@ public class Compass
 
         // Y funcs
 
-        public int getYRowOnCompass(int row)
+        public int getYRowOnCompass(double row)
         {
-            return y + (mc.font.lineHeight * row);
+            return (int) (y + (mc.font.lineHeight * row));
         }
 
         public int getYOnRowCentered(int row, int height)
@@ -121,7 +120,6 @@ public class Compass
     }
 
     // Text used for compass decorations
-    private static final String COMPASS_HEADING = "|";
     private static final String ENTITY_LABEL = "⏺";
 
     private static final int ZOOM_ALERT_DURATION = 40;
@@ -165,7 +163,7 @@ public class Compass
     public int entriesOnLeftEdge = 0;
     public int entriesOnRightEdge = 0;
 
-    private final TreeMap<Float, DefaultEntry> entriesSortedDistanceMap = new TreeMap<>(Comparator.reverseOrder());
+    private final TreeMap<Float, DefaultEntry> renderMap = new TreeMap<>(Comparator.reverseOrder());
     private @Nullable DefaultEntry highlightedEntry;
 
     private int zoomAlertTick = 0;
@@ -177,7 +175,6 @@ public class Compass
     private void calculate(int scaledWidth, int y, float partialTicks, @NotNull LocalPlayer player)
     {
         this.partialTicks = partialTicks;
-
         this.centerX = scaledWidth / 2;
 
         this.leftX = centerX - compassScaledWidthHalf;
@@ -200,19 +197,20 @@ public class Compass
         this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * zoomAmount * 2, compassScaledWidthHalf);
     }
 
-    public void render(GuiGraphicsExtractor guiGraphics, int scaledWidth, float partialTicks, int y, boolean isDummy)
+    public void render(GuiGraphicsExtractor guiGraphics, int scaledWidth, int y, boolean isDummy)
     {
-        highlightedEntry = null;
         final LocalPlayer player = mc.player;
         Screen currentScreen = mc.gui.screen();
 
-        if ((currentScreen instanceof PinCreationScreen) && !isDummy || player == null)
+        if ((currentScreen instanceof PinManageScreen) && !isDummy || player == null)
         {
             return;
         }
 
+        highlightedEntry = null;
+
         // Calculate compass dimensions
-        calculate(scaledWidth, y, partialTicks, player);
+        calculate(scaledWidth, y, guiGraphics.partialTicks(), player);
 
         // Compass background
         drawBackground(guiGraphics, mc);
@@ -243,7 +241,7 @@ public class Compass
             if (BritishWeather.getConfig().shouldRenderHeading())
             {
                 String friendlyDeg = util.getActualDegreesFromYaw(); // Number from 0 to 360
-                FontHelper.draw(mc, guiGraphics, friendlyDeg, util.centerStringAroundX(friendlyDeg, this.centerX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false);
+                guiGraphics.text(mc.font, friendlyDeg, util.centerStringAroundX(friendlyDeg, this.centerX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false);
             }
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
@@ -282,14 +280,14 @@ public class Compass
         }
 
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
-        FontHelper.draw(mc, guiGraphicsExtractor, ">", leftX - 3, decoY, ColorHelper.COMPASS_BG_COLOR, true);
-        FontHelper.draw(mc, guiGraphicsExtractor, "<", rightX, decoY, ColorHelper.COMPASS_BG_COLOR, true);
+        guiGraphicsExtractor.text(mc.font, ">", leftX - 3, decoY, ColorHelper.COMPASS_BG_COLOR, true);
+        guiGraphicsExtractor.text(mc.font, "<", rightX, decoY, ColorHelper.COMPASS_BG_COLOR, true);
     }
 
     private void drawZoomLevelEffects(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
     {
         String amount = String.valueOf(zoomAmount);
-        FontHelper.draw(mc, guiGraphicsExtractor, amount, leftContentX - mc.font.width(amount), util.getYRowOnCompass(0), colour, true);
+        guiGraphicsExtractor.text(mc.font, amount, leftContentX - mc.font.width(amount), util.getYRowOnCompass(0), colour, true);
 
         int right = centerX + highlightArea;
         if (right < rightX)
@@ -305,6 +303,11 @@ public class Compass
         GeneralUtils.getEntitiesInView(player, LivingEntity.class).forEach(entity -> {
             // Angle from us to the entity
             int xForEntity = util.getXFromPosition(entity.position(), true);
+            if (xForEntity == Integer.MAX_VALUE)
+            {
+                return;
+            }
+
             // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
             int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
             // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
@@ -312,8 +315,7 @@ public class Compass
             int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
 
             // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
-            FontHelper.draw(mc, guiGraphics, ENTITY_LABEL, xForEntity, y, livingEntity, false);
-
+            guiGraphics.text(mc.font, ENTITY_LABEL, xForEntity, y, livingEntity, false);
         });
     }
 
@@ -322,8 +324,12 @@ public class Compass
      */
     private void drawCardinal(GuiGraphicsExtractor guiGraphics, float angle, String text)
     {
-        int dx = util.getAngleX(angle) - 3;
-        FontHelper.draw(mc, guiGraphics, text, dx, y, ColorHelper.WHITE, true);
+        int dx = util.getAngleX(angle);
+
+        if (dx != Integer.MAX_VALUE)
+        {
+            guiGraphics.text(mc.font, text, dx - 3, y, ColorHelper.WHITE, true);
+        }
     }
 
     /*
@@ -331,7 +337,7 @@ public class Compass
      */
     private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player)
     {
-        this.entriesSortedDistanceMap.clear();
+        this.renderMap.clear();
 
         entriesOnLeftEdge = 0;
         entriesOnRightEdge = 0;
@@ -361,10 +367,10 @@ public class Compass
         {
             entry.getRenderer().calculateState(this);
             float key = Math.abs(entry.getRenderer().getDistanceFromHeading());
-            this.entriesSortedDistanceMap.put(key, entry);
+            this.renderMap.put(key, entry);
         }
 
-        for (@NotNull Iterator<Map.Entry<Float, DefaultEntry>> it = this.entriesSortedDistanceMap.entrySet().iterator(); it.hasNext(); )
+        for (@NotNull Iterator<Map.Entry<Float, DefaultEntry>> it = this.renderMap.entrySet().iterator(); it.hasNext(); )
         {
             Map.Entry<Float, DefaultEntry> entry = it.next();
             DefaultEntry value = entry.getValue();
@@ -411,7 +417,7 @@ public class Compass
             }
             else if (ClientKeybinds.CREATE.isDown())
             {
-                mc.setScreenAndShow(new PinCreationScreen(mc, mc.player));
+                mc.setScreenAndShow(new PinManageScreen(mc.player, null));
             }
             else if (highlightedEntry != null)
             {
@@ -424,6 +430,12 @@ public class Compass
                 {
                     Vec3 pos = this.highlightedEntry.getPosition();
                     mc.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
+                } else if (ClientKeybinds.EDIT.isDown()) {
+                    if (highlightedEntry instanceof PinEntry pin)
+                    {
+                        mc.setScreenAndShow(new PinManageScreen(mc.player, pin));
+                    }
+                    currentHeldKey = ClientKeybinds.EDIT;
                 } else {
                     currentHeldKey = null;
                 }
@@ -443,7 +455,7 @@ public class Compass
 
     private @Nullable DefaultEntry getClosestEntry()
     {
-        Map.Entry<Float, DefaultEntry> lowerEntry = entriesSortedDistanceMap.lowerEntry(4f);
+        Map.Entry<Float, DefaultEntry> lowerEntry = renderMap.lowerEntry(4f);
         if (lowerEntry == null)
         {
             return null;

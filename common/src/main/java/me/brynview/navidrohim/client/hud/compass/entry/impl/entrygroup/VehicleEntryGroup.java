@@ -1,10 +1,9 @@
-package me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup;
+package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
 import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.entrygroup.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
 import me.brynview.navidrohim.util.ColorHelper;
-import me.brynview.navidrohim.util.FontHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -48,25 +47,25 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
         public final class VehicleRenderer extends EntryRenderer
         {
             @Override
-            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
+            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, int renderColour)
             {
-                drawMarker(guiGraphicsExtractor);
-                drawSpeed(guiGraphicsExtractor);
+                drawMarker(guiGraphicsExtractor, renderColour);
+                drawSpeed(guiGraphicsExtractor, renderColour);
             }
 
             @Override
-            protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor)
+            protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
             {
                 TextureAtlasSprite vehicleSprite = atlas.getSprite(texture);
                 guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, vehicleSprite, screenX - 5, compass.util.getYOnRowCentered(screenYRow, SPRITE_SIZE), SPRITE_SIZE, SPRITE_SIZE);
             }
 
-            private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor)
+            private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
             {
                 String displayableSpeed = getDisplayableSpeed(vehicle, false);
                 if (!displayableSpeed.equals("0m/s"))
                 {
-                    FontHelper.draw(mc, guiGraphicsExtractor, displayableSpeed, compass.util.centerStringAroundX(displayableSpeed, screenX), compass.util.getYRowOnCompass(screenYRow + 1), getRenderColour());
+                    guiGraphicsExtractor.text(mc.font, displayableSpeed, compass.util.centerStringAroundX(displayableSpeed, screenX), compass.util.getYRowOnCompass(screenYRow + 1), colour);
                 }
             }
         }
@@ -124,7 +123,7 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
         if (currentlyRiddenVehicle != null)
         {
             String rawSpeedString = "Speed: " + getDisplayableSpeed(currentlyRiddenVehicle, !(currentlyRiddenVehicle instanceof AbstractHorse));
-            FontHelper.draw(compass.mc, guiGraphicsExtractor, rawSpeedString, compass.rightContentX, compass.util.getYRowOnCompass(0), ColorHelper.WHITE);
+            guiGraphicsExtractor.text(compass.mc.font, rawSpeedString, compass.rightContentX, compass.util.getYRowOnCompass(0), ColorHelper.WHITE);
 
             if (currentlyRiddenVehicle instanceof AbstractBoat boat)
             {
@@ -134,7 +133,7 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
                     displayDepth = "Depth: " + depth + "m";
                 }
 
-                FontHelper.draw(compass.mc, guiGraphicsExtractor, displayDepth, compass.rightContentX, compass.util.getYRowOnCompass(1), ColorHelper.WHITE);
+                guiGraphicsExtractor.text(compass.mc.font, displayDepth, compass.rightContentX, compass.util.getYRowOnCompass(1), ColorHelper.WHITE);
                 pos = boat.blockPosition();
             }
         }

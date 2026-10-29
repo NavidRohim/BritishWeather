@@ -4,9 +4,6 @@ import journeymap.api.v2.client.IClientAPI;
 import journeymap.api.v2.client.IClientPlugin;
 import journeymap.api.v2.common.JourneyMapPlugin;
 import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.entrygroup.JMWaypointGroup;
-
-import java.util.List;
 
 @JourneyMapPlugin(apiVersion = "2.0.0")
 public class JourneyMapFabric implements IClientPlugin

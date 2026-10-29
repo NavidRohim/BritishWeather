@@ -1,11 +1,11 @@
-package me.brynview.navidrohim.client.hud.compass.entry.builtin.time;
+package me.brynview.navidrohim.client.hud.compass.entry.time;
 
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
+import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.concurrent.TimeUnit;
 
-public class RealTime implements TimeMethod
+public class RealTime implements TimeKeeper
 {
     private final long endTime;
 
@@ -41,7 +41,7 @@ public class RealTime implements TimeMethod
     @Override
     public TimeMethods getKey()
     {
-        return TimeMethod.TimeMethods.REALTIME;
+        return TimeKeeper.TimeMethods.REALTIME;
     }
 
     public static RealTime decode(FriendlyByteBuf friendlyByteBuf)

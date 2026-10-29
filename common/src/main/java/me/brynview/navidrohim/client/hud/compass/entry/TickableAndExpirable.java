@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.client.hud.compass.entry.iapi;
+package me.brynview.navidrohim.client.hud.compass.entry;
 
 import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +20,7 @@ public interface TickableAndExpirable
     {
         return false;
     }
+
     default boolean isBuiltIn()
     {
         return false;

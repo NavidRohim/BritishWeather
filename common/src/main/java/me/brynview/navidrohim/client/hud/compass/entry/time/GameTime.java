@@ -1,11 +1,11 @@
-package me.brynview.navidrohim.client.hud.compass.entry.builtin.time;
+package me.brynview.navidrohim.client.hud.compass.entry.time;
 
-import me.brynview.navidrohim.client.hud.compass.entry.iapi.TimeMethod;
+import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.concurrent.TimeUnit;
 
-public class GameTime implements TimeMethod
+public class GameTime implements TimeKeeper
 {
     // GameTime uses ticks instead of nanos like RealTime.
     public int currentTick;
@@ -56,7 +56,7 @@ public class GameTime implements TimeMethod
     @Override
     public TimeMethods getKey()
     {
-        return TimeMethod.TimeMethods.GAMETIME;
+        return TimeKeeper.TimeMethods.GAMETIME;
     }
 
     public static GameTime decode(FriendlyByteBuf friendlyByteBuf)

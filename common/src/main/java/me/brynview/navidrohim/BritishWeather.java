@@ -1,9 +1,9 @@
 package me.brynview.navidrohim;
 
-import me.brynview.navidrohim.client.hud.compass.entry.EntryManager;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.DeathEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.DefaultPinEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.builtin.TimedPinEntry;
+import me.brynview.navidrohim.client.hud.compass.EntryManager;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.DeathPin;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.TimedPin;
 import me.brynview.navidrohim.server.config.CommonConfig;
 import me.brynview.navidrohim.server.weather.ServerWeatherManager;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
@@ -27,9 +27,9 @@ public class BritishWeather
         CONFIG = config;
         WEATHER_MANAGER = new ServerWeatherManager(weatherRefreshCallback);
 
-        EntryManager.registerPersistentConstructor(DefaultPinEntry.class, DefaultPinEntry::new);
-        EntryManager.registerPersistentConstructor(TimedPinEntry.class, TimedPinEntry::new);
-        EntryManager.registerPersistentConstructor(DeathEntry.class, DeathEntry::new);
+        EntryManager.registerPersistentConstructor(PinEntry.class, PinEntry::new);
+        EntryManager.registerPersistentConstructor(TimedPin.class, TimedPin::new);
+        EntryManager.registerPersistentConstructor(DeathPin.class, DeathPin::new);
     }
 
     // Config getter

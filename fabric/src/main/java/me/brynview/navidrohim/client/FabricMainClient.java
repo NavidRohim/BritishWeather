@@ -9,7 +9,6 @@ import me.brynview.navidrohim.common.WeatherUpdatePacket;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
-import net.fabricmc.fabric.api.client.networking.v1.ClientLoginConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
@@ -21,8 +20,6 @@ import net.minecraft.resources.Identifier;
 
 public class FabricMainClient implements ClientModInitializer
 {
-    private float tickCount = 0;
-
     @Override
     public void onInitializeClient()
     {
@@ -52,8 +49,6 @@ public class FabricMainClient implements ClientModInitializer
     {
         return (gpu) ->
         {
-            tickCount += gpu.partialTicks();
-
             if (!BritishWeather.getConfig().shouldRenderCompass())
             {
                 return;
@@ -61,7 +56,7 @@ public class FabricMainClient implements ClientModInitializer
 
             Minecraft mc = Minecraft.getInstance();
             int scaledWidth = mc.getWindow().getGuiScaledWidth();
-            Compass.getInstance().render(gpu, scaledWidth, tickCount, BritishWeather.getConfig().getCompassY(), false);
+            Compass.getInstance().render(gpu, scaledWidth, BritishWeather.getConfig().getCompassY(), false);
         };
     }
     private void initKeybinds()
@@ -73,6 +68,7 @@ public class FabricMainClient implements ClientModInitializer
 
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.DELETION);
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.CREATE);
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.EDIT);
 
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.SNAP_TO_NEAREST);
     }

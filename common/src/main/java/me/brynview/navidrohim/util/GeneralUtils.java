@@ -20,9 +20,9 @@ import java.util.stream.Stream;
 public class GeneralUtils
 {
     // Math constants used for rendering
-    public static final double EXPAND_INFLATE_WITH_FOV_CONST = 0.119; // value at lowest fov (30): 3.477 blocks value at highest (110): 13.07
-    public static final int DETECTION_DISTANCE = 40; // How far to check in front of the player for entities
-    public static final int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
+    public static final int DETECTION_DISTANCE = 30; // How far to check in front of the player for entities
+    private static final int MAX_ALLOWED_ENTITIES_ON_COMPASS = 10; // Max entities allowed on compass
+    private static final double EXPAND_INFLATE_WITH_FOV_CONST = 0.110; // value at lowest fov (30): 3.477 blocks value at highest (110): 13.07
 
     public static String getDimensionFromPlayer(@NotNull LocalPlayer player)
     {
@@ -42,7 +42,7 @@ public class GeneralUtils
                 .inflate(EXPAND_INFLATE_WITH_FOV_CONST * fov); // inflate so entities don't get cut off from compass
 
         // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
-        return mc.level.getEntitiesOfClass(entityClass, inFrontOfPlayer, (en) -> (en != player.asLivingEntity() && !en.getBoundingBox().intersects(normalBB)))
+        return mc.level.getEntitiesOfClass(entityClass, inFrontOfPlayer, (en) -> en != player)
                 .stream()
                 .limit(MAX_ALLOWED_ENTITIES_ON_COMPASS);
     }
