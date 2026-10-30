@@ -2,6 +2,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -45,6 +46,11 @@ public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
     {
         private final class MapEntryRenderer extends EntryRenderer
         {
+            public MapEntryRenderer(DefaultEntry owner)
+            {
+                super(owner);
+            }
+
             @Override
             protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
             {
@@ -72,7 +78,7 @@ public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
         {
             super(position, Level.OVERWORLD.identifier().toString(), MARKER, ColorHelper.WHITE);
             this.decoId = mapDeco;
-            this.renderer = new MapEntryRenderer();
+            this.renderer = new MapEntryRenderer(this);
         }
 
         @Override

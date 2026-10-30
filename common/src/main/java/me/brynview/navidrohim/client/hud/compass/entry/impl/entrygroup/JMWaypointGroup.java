@@ -4,6 +4,7 @@ import journeymap.api.v2.client.IClientAPI;
 import journeymap.api.v2.common.waypoint.Waypoint;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.GuiPipeline;
@@ -22,6 +23,11 @@ public class JMWaypointGroup extends DefaultEntryGroup<JMWaypointGroup.WaypointE
 
         public final class WaypointEntryRenderer extends EntryRenderer
         {
+            public WaypointEntryRenderer(DefaultEntry owner)
+            {
+                super(owner);
+            }
+
             @Override
             protected void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
             {
@@ -41,7 +47,7 @@ public class JMWaypointGroup extends DefaultEntryGroup<JMWaypointGroup.WaypointE
         {
             super(new Vec3(waypoint.getX(), waypoint.getY(), waypoint.getZ()), level, waypoint.getName(), waypoint.getColor());
             this.waypoint = waypoint;
-            this.renderer = new WaypointEntryRenderer();
+            this.renderer = new WaypointEntryRenderer(this);
         }
 
         @Override

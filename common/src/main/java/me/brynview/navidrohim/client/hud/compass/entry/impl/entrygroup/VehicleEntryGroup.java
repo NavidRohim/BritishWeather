@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.Minecraft;
@@ -46,6 +47,11 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
     {
         public final class VehicleRenderer extends EntryRenderer
         {
+            public VehicleRenderer(DefaultEntry owner)
+            {
+                super(owner);
+            }
+
             @Override
             public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, int renderColour)
             {
@@ -78,7 +84,7 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
             this.vehicle = entity;
             super(entity.position(), entity.level().dimension().identifier().toString(), "?", ColorHelper.WHITE);
             this.texture = texture.withPrefix("item/");
-            this.renderer = new VehicleRenderer();
+            this.renderer = new VehicleRenderer(this);
         }
 
         @Override

@@ -1,10 +1,13 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.CharEntryRenderer;
 import me.brynview.navidrohim.client.hud.compass.entry.time.GameTime;
 import me.brynview.navidrohim.util.ColorHelper;
+import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.Vec3i;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +20,6 @@ Time offline will count towards the timer.
 public final class DeathPin extends TimedPin
 {
     private static final String SKULL = "☠";
-
     private boolean hasArrived = false; // If the user has arrived at the deathpoint.
     private final Vec3i deathpoint;
 
@@ -28,6 +30,8 @@ public final class DeathPin extends TimedPin
     {
         super(position, level, SKULL, new GameTime(TimeUnit.MINUTES, 30), true, ColorHelper.RED, true, false);
         this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
+        this.renderer = new CharEntryRenderer(this);
+
     }
 
     /*
@@ -37,12 +41,7 @@ public final class DeathPin extends TimedPin
     {
         super(SKULL, ColorHelper.RED, pos, level, friendlyByteBuf);
         this.deathpoint = new Vec3i((int) pos.x, (int) pos.y, (int) pos.z);
-    }
-
-    @Override
-    public void serialise(FriendlyByteBuf friendlyByteBuf)
-    {
-        this.timeMethod.encode(friendlyByteBuf);
+        this.renderer = new CharEntryRenderer(this);
     }
 
     @Override
@@ -85,5 +84,11 @@ public final class DeathPin extends TimedPin
     public int getHighlightColor()
     {
         return ColorHelper.RED;
+    }
+
+    @Override
+    public boolean canBeEdited()
+    {
+        return false;
     }
 }

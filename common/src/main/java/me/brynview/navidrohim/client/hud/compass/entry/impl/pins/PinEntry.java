@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
@@ -25,7 +26,18 @@ public class PinEntry extends DefaultEntry
         this.isPersistent = friendlyByteBuf.readBoolean();
         this.shouldShowDistance = friendlyByteBuf.readBoolean();
         this.shouldDisappearWhenNotInView = friendlyByteBuf.readBoolean();
+
+        Constants.LOG.info(String.valueOf(isPersistent));
+        Constants.LOG.info(String.valueOf(shouldShowDistance));
+        Constants.LOG.info(String.valueOf(shouldDisappearWhenNotInView));
+
     }
+
+    public boolean canBeEdited()
+    {
+        return true;
+    }
+
     @Override
     public boolean isPersistent()
     {

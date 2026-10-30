@@ -7,6 +7,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.layouts.LayoutElement;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
@@ -52,5 +54,8 @@ public class GeneralUtils
         renderer.fill(element.getX(), element.getY(), element.getX() + element.getWidth(), element.getY() + element.getHeight(), colour);
     }
 
-
+    public static FormattedCharSequence getFormattedChar(char c)
+    {
+        return (out) -> out.accept(1, Style.EMPTY, c);
+    }
 }

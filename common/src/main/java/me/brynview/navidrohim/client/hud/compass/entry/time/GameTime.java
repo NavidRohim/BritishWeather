@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.concurrent.TimeUnit;
 
-public class GameTime implements TimeKeeper
+public class GameTime extends TimeKeeper
 {
     // GameTime uses ticks instead of nanos like RealTime.
     public int currentTick;
@@ -48,7 +48,7 @@ public class GameTime implements TimeKeeper
     @Override
     public void encode(FriendlyByteBuf friendlyByteBuf)
     {
-        friendlyByteBuf.writeUtf(getKey().name());
+        super.encode(friendlyByteBuf);
         friendlyByteBuf.writeInt(endTick);
         friendlyByteBuf.writeInt(currentTick);
     }

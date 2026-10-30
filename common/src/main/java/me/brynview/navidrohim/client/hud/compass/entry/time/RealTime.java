@@ -5,7 +5,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.concurrent.TimeUnit;
 
-public class RealTime implements TimeKeeper
+public class RealTime extends TimeKeeper
 {
     private final long endTime;
 
@@ -34,7 +34,7 @@ public class RealTime implements TimeKeeper
     @Override
     public void encode(FriendlyByteBuf friendlyByteBuf)
     {
-        friendlyByteBuf.writeUtf(getKey().name());
+        super.encode(friendlyByteBuf);
         friendlyByteBuf.writeLong(endTime);
     }
 

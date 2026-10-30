@@ -7,6 +7,7 @@ import me.brynview.navidrohim.client.ClientKeybinds;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.client.screen.PinManageScreen;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
@@ -16,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
@@ -120,11 +122,8 @@ public class Compass
     }
 
     // Text used for compass decorations
-    private static final String ENTITY_LABEL = "⏺";
-
     private static final int ZOOM_ALERT_DURATION = 40;
     public static final int ENTRIES_ALLOWED_ON_SIDE = 7;
-
     public static final int HIGHLIGHT_BOUNDS = 7;
 
     private static Compass INSTANCE;
@@ -159,7 +158,6 @@ public class Compass
     public Minecraft mc;
     public RenderUtils util;
     private KeyMapping currentHeldKey = null;
-
     public int entriesOnLeftEdge = 0;
     public int entriesOnRightEdge = 0;
 
@@ -171,6 +169,15 @@ public class Compass
     private float zoomAmountSmooth = 1;
 
     private int highlightArea = 0;
+
+    private static final FormattedCharSequence LEFT = GeneralUtils.getFormattedChar('>');
+    private static final FormattedCharSequence RIGHT = GeneralUtils.getFormattedChar('<');
+    private static final FormattedCharSequence ENTITY = GeneralUtils.getFormattedChar('⏺');
+
+    private static final FormattedCharSequence NORTH = GeneralUtils.getFormattedChar('N');
+    private static final FormattedCharSequence SOUTH = GeneralUtils.getFormattedChar('S');
+    private static final FormattedCharSequence EAST = GeneralUtils.getFormattedChar('E');
+    private static final FormattedCharSequence WEST = GeneralUtils.getFormattedChar('W');
 
     private void calculate(int scaledWidth, int y, float partialTicks, @NotNull LocalPlayer player)
     {
@@ -232,10 +239,10 @@ public class Compass
             }
 
             // Render N/E/S/W
-            drawCardinal(guiGraphics, 0,  "S");
-            drawCardinal(guiGraphics, 90,  "W");
-            drawCardinal(guiGraphics, 180,   "N");
-            drawCardinal(guiGraphics, 270,   "E");
+            drawCardinal(guiGraphics, 0,   SOUTH);
+            drawCardinal(guiGraphics, 90,  WEST);
+            drawCardinal(guiGraphics, 180, NORTH);
+            drawCardinal(guiGraphics, 270, EAST);
 
             // Render current heading in degrees if config allows
             if (BritishWeather.getConfig().shouldRenderHeading())
@@ -280,8 +287,8 @@ public class Compass
         }
 
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
-        guiGraphicsExtractor.text(mc.font, ">", leftX - 3, decoY, ColorHelper.COMPASS_BG_COLOR, true);
-        guiGraphicsExtractor.text(mc.font, "<", rightX, decoY, ColorHelper.COMPASS_BG_COLOR, true);
+        guiGraphicsExtractor.text(mc.font, LEFT, leftX - 3, decoY, ColorHelper.COMPASS_BG_COLOR, true);
+        guiGraphicsExtractor.text(mc.font, RIGHT, rightX, decoY, ColorHelper.COMPASS_BG_COLOR, true);
     }
 
     private void drawZoomLevelEffects(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
@@ -315,20 +322,20 @@ public class Compass
             int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
 
             // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
-            guiGraphics.text(mc.font, ENTITY_LABEL, xForEntity, y, livingEntity, false);
+            guiGraphics.text(mc.font, ENTITY, xForEntity, y, livingEntity, false);
         });
     }
 
     /*
     Draw a cardinal direction label at specified angle
      */
-    private void drawCardinal(GuiGraphicsExtractor guiGraphics, float angle, String text)
+    private void drawCardinal(GuiGraphicsExtractor guiGraphics, float angle, FormattedCharSequence label)
     {
         int dx = util.getAngleX(angle);
 
         if (dx != Integer.MAX_VALUE)
         {
-            guiGraphics.text(mc.font, text, dx - 3, y, ColorHelper.WHITE, true);
+            guiGraphics.text(mc.font, label, dx - 3, y, ColorHelper.WHITE, true);
         }
     }
 
@@ -375,10 +382,10 @@ public class Compass
             Map.Entry<Float, DefaultEntry> entry = it.next();
             DefaultEntry value = entry.getValue();
 
-            if (!it.hasNext() && value.getRenderState() == DefaultEntry.EntryRenderer.RenderState.HIGHLIGHT)
+            if (!it.hasNext() && value.getRenderState() == EntryRenderer.RenderState.HIGHLIGHT)
             {
                 highlightedEntry = value;
-                highlightedEntry.getRenderer().setRenderState(DefaultEntry.EntryRenderer.RenderState.FOCUSED);
+                highlightedEntry.getRenderer().setRenderState(EntryRenderer.RenderState.FOCUSED);
             }
 
             value.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, false);
@@ -431,7 +438,7 @@ public class Compass
                     Vec3 pos = this.highlightedEntry.getPosition();
                     mc.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
                 } else if (ClientKeybinds.EDIT.isDown()) {
-                    if (highlightedEntry instanceof PinEntry pin)
+                    if (highlightedEntry instanceof PinEntry pin && pin.canBeEdited())
                     {
                         mc.setScreenAndShow(new PinManageScreen(mc.player, pin));
                     }
