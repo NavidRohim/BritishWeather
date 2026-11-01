@@ -1,17 +1,17 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.renderers;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.FormattedCharSequence;
 
-public class CharEntryRenderer extends EntryRenderer
+public class CharEntryRenderer extends EntryRenderer<AbstractEntry>
 {
     private final FormattedCharSequence charSeq;
     private final int charWidth;
 
-    public CharEntryRenderer(DefaultEntry owner)
+    public CharEntryRenderer(AbstractEntry owner)
     {
         super(owner);
         char charToRender = owner.getMarker().charAt(0);

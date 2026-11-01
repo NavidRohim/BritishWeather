@@ -4,45 +4,42 @@ import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.TickableAndExpirable;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 
 /*
  * DefaultEntry should be extended but is not abstract as it does have functionality by itself.
  * An "entry" in HudCompass context is something that can be rendered on the compass. Perhaps a pin, objective or waypoint.
  */
-public abstract class DefaultEntry implements TickableAndExpirable
+public abstract class AbstractEntry implements TickableAndExpirable
 {
-
+    protected String marker; // What text will be rendered on the compass.
     protected Vec3 position; // Position of the entry in-game.
-    private final String level; // What dimension the entry was made in.
-    private final String entryId; // Unique entry ID. Not used for anything at the moment.
+    protected final String level; // What dimension the entry was made in.
+    protected final String entryId; // Unique entry ID. Not used for anything at the moment.
 
     protected static final Compass compass = Compass.getInstance();
-    protected EntryRenderer renderer;
+    protected EntryRenderer<?> renderer;
 
-    private String marker; // What text will be rendered on the compass.
-
-    public int highlightBgColour;
     protected int highlightColor;
+    public int highlightBgColour;
     public int defaultColour;
 
     public boolean isOnLeftEdge = false;
     public boolean isOnRightEdge = false;
 
-    public DefaultEntry(Vec3 position, String level, String marker, int colour)
+    public AbstractEntry(Vec3 position, String level, String marker, int colour)
     {
-        this.renderer = new EntryRenderer(this);
+        //this.renderer = new EntryRenderer(this);
         this.level = level;
         this.position = position;
 
         if (this.isSingleton())
         {
             // Non-singleton ID is made up of the entries class, then xyz position, then dimension.
-            this.entryId = this.getClass().getSimpleName();
+            this.entryId = "%s.".formatted(getType());
         } else
         {
-            this.entryId = "%s.%s.%s.%s".formatted((int) this.getPosition().x, (int) this.getPosition().y, (int) this.getPosition().z, level);
+            this.entryId = "%s.%s.%s.%s.%s".formatted(getType(), (int) this.getPosition().x, (int) this.getPosition().y, (int) this.getPosition().z, level);
             // If singleton, it is just the class name so it can be overridden.
         }
 
@@ -75,7 +72,7 @@ public abstract class DefaultEntry implements TickableAndExpirable
         return true;
     }
 
-    public EntryRenderer getRenderer()
+    public EntryRenderer<?> getRenderer()
     {
         return renderer;
     }
@@ -88,7 +85,7 @@ public abstract class DefaultEntry implements TickableAndExpirable
     public void setHighlightColor(int highlightColor)
     {
         this.highlightColor = highlightColor;
-        this.highlightBgColour = getRenderer().getBackgroundColour(highlightColor);
+        this.highlightBgColour = ColorHelper.getBackgroundColour(highlightColor);
         this.defaultColour = ColorHelper.shiftColourToOpacity(highlightColor, 124);
     }
 
@@ -96,10 +93,6 @@ public abstract class DefaultEntry implements TickableAndExpirable
     If the entry is persistent through game sessions.
     If true, the entry will be stored in an NBT file in the root .minecraft directory, and the filename will be the world folder name.
      */
-    public boolean isPersistent()
-    {
-        return false;
-    }
 
     public boolean isSingleton()
     {
@@ -124,19 +117,6 @@ public abstract class DefaultEntry implements TickableAndExpirable
     public final String getId()
     {
         return this.entryId;
-    }
-
-    /*
-        This method exists so other custom data can be persistent when saved to NBT file.
-        Anything can be written here.
-         */
-    public void serialise(FriendlyByteBuf friendlyByteBuf)
-    {
-    }
-
-    public String getDebugString()
-    {
-        return "P=%s".formatted(this.isPersistent());
     }
 
     @Override

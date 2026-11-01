@@ -3,6 +3,9 @@ package me.brynview.navidrohim.client;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.DeathPin;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.TimedPin;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
@@ -21,7 +24,9 @@ public class ClientCommon
         WEATHER_MANAGER = new ClientWeatherManager();
         compass = Compass.init();
 
-
+        EntryManager.addPinCodec("pin", PinEntry.CODEC);
+        EntryManager.addPinCodec("timed_pin", TimedPin.CODEC);
+        EntryManager.addPinCodec("death_pin", DeathPin.CODEC);
     }
 
     public static ClientWeatherManager getWeatherManager()

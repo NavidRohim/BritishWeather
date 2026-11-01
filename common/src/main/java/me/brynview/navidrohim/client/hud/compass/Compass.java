@@ -5,8 +5,8 @@ import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
 import me.brynview.navidrohim.client.ClientKeybinds;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.client.screen.PinManageScreen;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -161,8 +161,8 @@ public class Compass
     public int entriesOnLeftEdge = 0;
     public int entriesOnRightEdge = 0;
 
-    private final TreeMap<Float, DefaultEntry> renderMap = new TreeMap<>(Comparator.reverseOrder());
-    private @Nullable DefaultEntry highlightedEntry;
+    private final TreeMap<Float, AbstractEntry> renderMap = new TreeMap<>(Comparator.reverseOrder());
+    private @Nullable AbstractEntry highlightedEntry;
 
     private int zoomAlertTick = 0;
     private int zoomAmount = 1;
@@ -350,10 +350,10 @@ public class Compass
         entriesOnRightEdge = 0;
 
         // Draw entries inside of entry groups.
-        Set<DefaultEntryGroup<DefaultEntry>> groupsToCheck = new HashSet<>(Set.copyOf(EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension())));
+        Set<AbstractEntryGroup<AbstractEntry>> groupsToCheck = new HashSet<>(Set.copyOf(EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension())));
         groupsToCheck.addAll(EntryManager.ProviderRegistry.getEntryGroupsInAll());
 
-        for (DefaultEntryGroup<DefaultEntry> group : groupsToCheck)
+        for (AbstractEntryGroup<AbstractEntry> group : groupsToCheck)
         {
             if (group.isBuiltIn() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
             {
@@ -370,17 +370,17 @@ public class Compass
         }
 
         // Draw normal entries.
-        for (DefaultEntry entry : EntryManager.ProviderRegistry.getEntriesInDimension(player.level().dimension()))
+        for (AbstractEntry entry : EntryManager.ProviderRegistry.getEntriesInDimension(player.level().dimension()))
         {
             entry.getRenderer().calculateState(this);
             float key = Math.abs(entry.getRenderer().getDistanceFromHeading());
             this.renderMap.put(key, entry);
         }
 
-        for (@NotNull Iterator<Map.Entry<Float, DefaultEntry>> it = this.renderMap.entrySet().iterator(); it.hasNext(); )
+        for (@NotNull Iterator<Map.Entry<Float, AbstractEntry>> it = this.renderMap.entrySet().iterator(); it.hasNext(); )
         {
-            Map.Entry<Float, DefaultEntry> entry = it.next();
-            DefaultEntry value = entry.getValue();
+            Map.Entry<Float, AbstractEntry> entry = it.next();
+            AbstractEntry value = entry.getValue();
 
             if (!it.hasNext() && value.getRenderState() == EntryRenderer.RenderState.HIGHLIGHT)
             {
@@ -452,7 +452,7 @@ public class Compass
 
     private void snap()
     {
-        @Nullable DefaultEntry closest = getClosestEntry();
+        @Nullable AbstractEntry closest = getClosestEntry();
         if (closest != null)
         {
             double angleFromEntry = MathHelper.angleFromPos(closest.getPosition(), mc.player.position());
@@ -460,9 +460,9 @@ public class Compass
         }
     }
 
-    private @Nullable DefaultEntry getClosestEntry()
+    private @Nullable AbstractEntry getClosestEntry()
     {
-        Map.Entry<Float, DefaultEntry> lowerEntry = renderMap.lowerEntry(4f);
+        Map.Entry<Float, AbstractEntry> lowerEntry = renderMap.lowerEntry(4f);
         if (lowerEntry == null)
         {
             return null;
@@ -490,12 +490,12 @@ public class Compass
         return INSTANCE;
     }
 
-    public static void addEntry(DefaultEntry provider)
+    public static void addEntry(AbstractEntry provider)
     {
         EntryManager.ProviderRegistry.addEntry(provider);
     }
 
-    public static Collection<DefaultEntry> getEntries()
+    public static Collection<AbstractEntry> getEntries()
     {
         return EntryManager.ProviderRegistry.getAllEntries();
     }

@@ -1,5 +1,8 @@
-package me.brynview.navidrohim.client.hud.compass.entry.time;
+package me.brynview.navidrohim.client.hud.compass.entry.impl.time;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -8,6 +11,14 @@ import java.util.concurrent.TimeUnit;
 public class GameTime extends TimeKeeper
 {
     // GameTime uses ticks instead of nanos like RealTime.
+
+    public static final MapCodec<GameTime> CODEC = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(
+                    Codec.INT.fieldOf("currentTick").forGetter(GameTime::getCurrentTick),
+                    Codec.INT.fieldOf("endTick").forGetter(GameTime::getEndTick)
+            ).apply(instance, GameTime::new)
+    );
+
     public int currentTick;
     public int endTick;
 
@@ -46,17 +57,19 @@ public class GameTime extends TimeKeeper
     }
 
     @Override
-    public void encode(FriendlyByteBuf friendlyByteBuf)
+    public String getKey()
     {
-        super.encode(friendlyByteBuf);
-        friendlyByteBuf.writeInt(endTick);
-        friendlyByteBuf.writeInt(currentTick);
+        return "gametime";
     }
 
-    @Override
-    public TimeMethods getKey()
+    public int getCurrentTick()
     {
-        return TimeKeeper.TimeMethods.GAMETIME;
+        return currentTick;
+    }
+
+    public int getEndTick()
+    {
+        return endTick;
     }
 
     public static GameTime decode(FriendlyByteBuf friendlyByteBuf)

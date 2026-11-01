@@ -26,6 +26,10 @@ public interface TickableAndExpirable
         return false;
     }
 
-    String getLevel();
+    default String getType()
+    {
+        return "builtin";
+    }
 
+    String getLevel();
 }

@@ -1,16 +1,16 @@
 package me.brynview.navidrohim.client.hud.compass.entry;
 
-import me.brynview.navidrohim.client.hud.compass.entry.time.GameTime;
-import me.brynview.navidrohim.client.hud.compass.entry.time.RealTime;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import me.brynview.navidrohim.client.hud.compass.EntryManager;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.time.GameTime;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.time.RealTime;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.NotImplementedException;
-import org.jspecify.annotations.Nullable;
 
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /*
 TimeMethod basically counts time for a TimedEntry and tells it when to expire.
@@ -19,6 +19,20 @@ To simplify this, the TimeMethod interface was made if in the future I add other
  */
 public abstract class TimeKeeper
 {
+    public static final Codec<TimeKeeper> CODEC = Codec.STRING.dispatch(
+                    "type",
+                    TimeKeeper::getKey,
+                    id -> {
+                        MapCodec<? extends TimeKeeper> codec = EntryManager.TIMEKEEPER_CODECS.get(id);
+                        if (codec == null)
+                        {
+                            throw new RuntimeException("Unknown time keeper: " + id);
+                        }
+
+                        return codec;
+                    }
+            );
+
     public void tick() {}
 
     public boolean isExpired()
@@ -34,30 +48,24 @@ public abstract class TimeKeeper
     /*
     Encode the TimeMethod so it persists. Usually encodes the current time, and what time it will end.
      */
-    public void encode(FriendlyByteBuf friendlyByteBuf)
-    {
-        friendlyByteBuf.writeUtf(getKey().name());
-    }
 
-    protected TimeMethods getKey()
+    public String getKey()
     {
         throw new NotImplementedException();
     }
 
     public enum TimeMethods
     {
-        REALTIME("real time", RealTime::new, RealTime::decode),
-        GAMETIME("game time", GameTime::new, GameTime::decode);
+        GAMETIME("game time", GameTime::new),
+        REALTIME("real time", RealTime::new);
 
         private final String displayString;
         private final BiFunction<TimeUnit, Integer, TimeKeeper> supplier;
-        private final Function<FriendlyByteBuf, TimeKeeper> bufferDecoder;
 
-        TimeMethods(String displayName, BiFunction<TimeUnit, Integer, TimeKeeper> timeMethodSupplier, Function<FriendlyByteBuf, TimeKeeper> fromBuffer)
+        TimeMethods(String displayName, BiFunction<TimeUnit, Integer, TimeKeeper> supplier)
         {
             this.displayString = displayName;
-            this.supplier = timeMethodSupplier;
-            this.bufferDecoder = fromBuffer;
+            this.supplier = supplier;
         }
 
         public String getDisplayName()
@@ -65,26 +73,15 @@ public abstract class TimeKeeper
             return displayString;
         }
 
-        public TimeKeeper createTimeMethod(TimeUnit timeUnit, int time)
-        {
-            return supplier.apply(timeUnit, time);
-        }
-
-        public TimeKeeper getFromBuffer(FriendlyByteBuf buffer)
-        {
-            return bufferDecoder.apply(buffer);
-        }
-
         public Tooltip getDescription()
         {
             return Tooltip.create(Component.translatable("br.compass.time_methods.%s.tooltip".formatted(this.name().toLowerCase())));
         }
 
-        public static TimeKeeper getTimeKeeperFromBuffer(FriendlyByteBuf buffer)
+        public TimeKeeper createTimeMethod(TimeUnit timeUnit, int time)
         {
-            String savedTimeMethod = buffer.readUtf();
-            TimeKeeper.TimeMethods tm = TimeKeeper.TimeMethods.valueOf(savedTimeMethod);
-            return tm.getFromBuffer(buffer);
+            return supplier.apply(timeUnit, time);
         }
+
     }
 }

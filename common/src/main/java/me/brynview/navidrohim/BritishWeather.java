@@ -26,10 +26,6 @@ public class BritishWeather
     {
         CONFIG = config;
         WEATHER_MANAGER = new ServerWeatherManager(weatherRefreshCallback);
-
-        EntryManager.registerPersistentConstructor(PinEntry.class, PinEntry::new);
-        EntryManager.registerPersistentConstructor(TimedPin.class, TimedPin::new);
-        EntryManager.registerPersistentConstructor(DeathPin.class, DeathPin::new);
     }
 
     // Config getter
@@ -60,4 +56,6 @@ public class BritishWeather
 
         WEATHER_MANAGER.tickHailDamage(server, tick);
     }
+
+
 }

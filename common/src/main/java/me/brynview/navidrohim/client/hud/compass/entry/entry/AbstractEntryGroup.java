@@ -17,11 +17,11 @@ An entry group is just a list of entries. Each entry is normal and can be a subc
 But, the entries will only have the end tick and not any other tick in the TickableAndExpirable interface.
 Instead, the EntryGroup will tick which can dictate behaviour for the child entries.
  */
-public abstract class DefaultEntryGroup<T extends DefaultEntry> implements TickableAndExpirable
+public abstract class AbstractEntryGroup<T extends AbstractEntry> implements TickableAndExpirable
 {
     private final String level;
 
-    public DefaultEntryGroup(@Nullable ResourceKey<Level> level)
+    public AbstractEntryGroup(@Nullable ResourceKey<Level> level)
     {
         this.level = level != null ? level.identifier().toString() : "all";
     }

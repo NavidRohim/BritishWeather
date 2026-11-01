@@ -1,5 +1,8 @@
-package me.brynview.navidrohim.client.hud.compass.entry.time;
+package me.brynview.navidrohim.client.hud.compass.entry.impl.time;
 
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
 import net.minecraft.network.FriendlyByteBuf;
 
@@ -7,6 +10,12 @@ import java.util.concurrent.TimeUnit;
 
 public class RealTime extends TimeKeeper
 {
+    public static final MapCodec<RealTime> CODEC = RecordCodecBuilder.mapCodec(instance ->
+            instance.group(
+                    Codec.LONG.fieldOf("endTime").forGetter(RealTime::getEndTime)
+            ).apply(instance, RealTime::new)
+    );
+
     private final long endTime;
 
     public RealTime(TimeUnit unit, int duration)
@@ -31,17 +40,15 @@ public class RealTime extends TimeKeeper
         return TimeUnit.MILLISECONDS.toSeconds(endTime - System.currentTimeMillis());
     }
 
-    @Override
-    public void encode(FriendlyByteBuf friendlyByteBuf)
+    public long getEndTime()
     {
-        super.encode(friendlyByteBuf);
-        friendlyByteBuf.writeLong(endTime);
+        return endTime;
     }
 
     @Override
-    public TimeMethods getKey()
+    public String getKey()
     {
-        return TimeKeeper.TimeMethods.REALTIME;
+        return "realtime";
     }
 
     public static RealTime decode(FriendlyByteBuf friendlyByteBuf)

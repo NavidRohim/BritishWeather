@@ -89,4 +89,10 @@ public class ColorHelper {
         }
         return shiftColourToOpacity(NEUTRAL, opacity);
     }
+
+    public static int getBackgroundColour(int colour)
+    {
+        int invertedRenderColour = colour ^ 0x00FFFFFF;
+        return ARGB.greyscale(invertedRenderColour);
+    }
 }

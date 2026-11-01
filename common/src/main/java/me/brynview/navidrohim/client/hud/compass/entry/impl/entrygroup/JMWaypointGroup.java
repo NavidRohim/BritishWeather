@@ -2,8 +2,8 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
 import journeymap.api.v2.client.IClientAPI;
 import journeymap.api.v2.common.waypoint.Waypoint;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -15,15 +15,15 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JMWaypointGroup extends DefaultEntryGroup<JMWaypointGroup.WaypointEntry>
+public class JMWaypointGroup extends AbstractEntryGroup<JMWaypointGroup.WaypointEntry>
 {
-    public static final class WaypointEntry extends DefaultEntry
+    public static final class WaypointEntry extends AbstractEntry
     {
         private final Waypoint waypoint;
 
         public final class WaypointEntryRenderer extends EntryRenderer
         {
-            public WaypointEntryRenderer(DefaultEntry owner)
+            public WaypointEntryRenderer(AbstractEntry owner)
             {
                 super(owner);
             }

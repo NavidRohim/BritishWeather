@@ -1,8 +1,8 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
 import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
@@ -28,7 +28,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.VehicleEntry>
+public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.VehicleEntry>
 {
     private static final int SPRITE_SIZE = 10;
 
@@ -43,11 +43,11 @@ public class VehicleEntryGroup extends DefaultEntryGroup<VehicleEntryGroup.Vehic
         this.atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.ITEMS);
     }
 
-    public final class VehicleEntry extends DefaultEntry
+    public final class VehicleEntry extends AbstractEntry
     {
         public final class VehicleRenderer extends EntryRenderer
         {
-            public VehicleRenderer(DefaultEntry owner)
+            public VehicleRenderer(AbstractEntry owner)
             {
                 super(owner);
             }

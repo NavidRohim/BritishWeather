@@ -2,12 +2,11 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.renderers;
 
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.hud.compass.Compass;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +15,7 @@ import org.jspecify.annotations.NonNull;
 import static me.brynview.navidrohim.client.hud.compass.Compass.ENTRIES_ALLOWED_ON_SIDE;
 
 // Might ditch
-public class EntryRenderer
+public class EntryRenderer<T extends AbstractEntry>
 {
     private final static int MINIMUM_MARKER_LENGTH = 4;
 
@@ -33,11 +32,11 @@ public class EntryRenderer
     private float distanceFromHeading;
 
     protected RenderState renderState;
-    protected final DefaultEntry owner;
+    protected final T owner;
     protected final Compass compass;
     protected final Minecraft mc;
 
-    public EntryRenderer(DefaultEntry owner)
+    public EntryRenderer(T owner)
     {
         this.owner = owner;
         this.mc = Minecraft.getInstance();
@@ -85,12 +84,6 @@ public class EntryRenderer
         return getRenderState() == RenderState.FOCUSED || owner.isBuiltIn() ? owner.getHighlightColor() : owner.defaultColour;
     }
 
-    public int getBackgroundColour(int colour)
-    {
-        int invertedRenderColour = colour ^ 0x00FFFFFF;
-        return ARGB.greyscale(invertedRenderColour);
-    }
-
     public RenderState getRenderState()
     {
         return renderState;
@@ -132,7 +125,7 @@ public class EntryRenderer
         drawRawEntry(guiGraphicsExtractor, getRenderColour());
     }
 
-    protected static @NonNull String getDisplayableMarker(DefaultEntry entryRenderable, boolean smart, int compassX)
+    protected static @NonNull String getDisplayableMarker(AbstractEntry entryRenderable, boolean smart, int compassX)
     {
         // Draw entry marker
         Compass compass = Compass.getInstance();
@@ -188,17 +181,20 @@ public class EntryRenderer
         int renderX = compass.util.centerWidthAroundX(markerWidth, screenX);
         int renderY = compass.util.getYRowOnCompass(screenYRow - 1) - 1;
 
-        boolean shadow = true;
-        if (renderState == RenderState.FOCUSED && BritishWeather.getConfig().shouldShowPinBackground())
-        {
-            shadow = false;
-            guiGraphicsExtractor.fill(renderX - 2, renderY - 2, renderX + markerWidth + 2, renderY + mc.font.lineHeight, owner.highlightBgColour);
-            guiGraphicsExtractor.outline(renderX - 3, renderY - 3, markerWidth + 5, mc.font.lineHeight + 4, colour);
-        }
-
-        guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, colour, shadow);
+        boolean shouldDrawShadow = drawBackground(guiGraphicsExtractor, colour, renderX, renderY, markerWidth);
+        guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, colour, shouldDrawShadow);
     }
 
+    protected boolean drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)
+    {
+        if (renderState == RenderState.FOCUSED && BritishWeather.getConfig().shouldShowPinBackground())
+        {
+            guiGraphicsExtractor.fill(x - 2, y - 2, x + markerWidth + 2, y + mc.font.lineHeight, owner.highlightBgColour);
+            guiGraphicsExtractor.outline(x - 3, y - 3, markerWidth + 5, mc.font.lineHeight + 4, colour);
+            return false;
+        }
+        return true;
+    }
     protected void drawDistanceAndDebug(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
     {
         // If in view, render the distance from entry and if the player should go up or down to reach it
@@ -222,14 +218,6 @@ public class EntryRenderer
                 {
                     suffix += " -";
                 }
-            }
-
-            // Show time remaining on timed entry if debug is enabled. I used this during persistence testing
-            String debugString = owner.getDebugString();
-            if (BritishWeather.getConfig().debug() && debugString != null)
-            {
-                guiGraphicsExtractor.text(mc.font, debugString, compass.util.centerStringAroundX(debugString, screenX), compass.util.getYRowOnCompass(screenYRow + 2), colour);
-                guiGraphicsExtractor.verticalLine(compass.util.centerWidthAroundX(2, screenX), compass.util.getYRowOnCompass(-1), compass.util.getYRowOnCompass(screenYRow + 3), colour);
             }
 
             // Draw distance from entry

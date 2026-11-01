@@ -1,36 +1,52 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 
-import me.brynview.navidrohim.Constants;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
-import net.minecraft.network.FriendlyByteBuf;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.PinRenderer;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.Vec3;
 
-public class PinEntry extends DefaultEntry
+public class PinEntry extends AbstractEntry
 {
-    protected boolean isPersistent;
+    public static final Codec<PinEntry> CODEC = RecordCodecBuilder.create(instance ->
+            instance.group(
+                    Codec.STRING.fieldOf("marker").forGetter(PinEntry::getMarker),
+                    Codec.STRING.fieldOf("level").forGetter(PinEntry::getLevel),
+                    Vec3.CODEC.fieldOf("position").forGetter(PinEntry::getPosition),
+                    Codec.INT.fieldOf("colour").forGetter(PinEntry::getHighlightColor),
+                    Codec.BOOL.fieldOf("persistent").forGetter(PinEntry::isPersistent),
+                    Codec.BOOL.fieldOf("showDistance").forGetter(PinEntry::shouldShowDistance),
+                    Codec.BOOL.fieldOf("disappearWhenOutOfBounds").forGetter(PinEntry::shouldDisappearWhenNotInView),
+                    Codec.BOOL.optionalFieldOf("showBackground", true).forGetter(PinEntry::shouldShowBackground)
+            ).apply(instance, PinEntry::new)
+    );
+
+    protected boolean persistent;
+
     protected boolean shouldShowDistance;
     protected boolean shouldDisappearWhenNotInView;
+    protected boolean shouldShowBackground;
 
-    public PinEntry(Vec3 position, String level, String marker, int colour, boolean isPersistent, boolean shouldShowDistance, boolean shouldDisappearWhenNotInView)
+    protected EntrySettings settings;
+
+    public PinEntry(String marker, String level, Vec3 position, Integer colour, Boolean persistent, Boolean showDistance, Boolean disappearWhenOutOfBounds, Boolean showBackground)
     {
         super(position, level, marker, colour);
-        this.isPersistent = isPersistent;
-        this.shouldShowDistance = shouldShowDistance;
-        this.shouldDisappearWhenNotInView = shouldDisappearWhenNotInView;
+        this.renderer = new PinRenderer(this);
+
+        this.persistent = persistent;
+        this.shouldShowDistance = showDistance;
+        this.shouldDisappearWhenNotInView = disappearWhenOutOfBounds;
+        this.shouldShowBackground = showBackground;
     }
 
-    public PinEntry(String marker, int colour, Vec3 pos, String level, FriendlyByteBuf friendlyByteBuf)
+    public EntrySettings getSettings()
     {
-        super(pos, level, marker, colour);
-
-        this.isPersistent = friendlyByteBuf.readBoolean();
-        this.shouldShowDistance = friendlyByteBuf.readBoolean();
-        this.shouldDisappearWhenNotInView = friendlyByteBuf.readBoolean();
-
-        Constants.LOG.info(String.valueOf(isPersistent));
-        Constants.LOG.info(String.valueOf(shouldShowDistance));
-        Constants.LOG.info(String.valueOf(shouldDisappearWhenNotInView));
-
+        return settings;
     }
 
     public boolean canBeEdited()
@@ -38,15 +54,9 @@ public class PinEntry extends DefaultEntry
         return true;
     }
 
-    @Override
     public boolean isPersistent()
     {
-        return isPersistent;
-    }
-
-    public void setPersistent(boolean persistent)
-    {
-        isPersistent = persistent;
+        return persistent;
     }
 
     @Override
@@ -66,16 +76,26 @@ public class PinEntry extends DefaultEntry
         return shouldDisappearWhenNotInView;
     }
 
-    public void setShouldDisappearWhenNotInView(boolean shouldDisappearWhenNotInView)
+    public void setShouldDisappearWhenNotInView(boolean shouldDisappearWhenNotInView) {this.shouldDisappearWhenNotInView = shouldDisappearWhenNotInView;}
+
+    public boolean shouldShowBackground()
     {
-        this.shouldDisappearWhenNotInView = shouldDisappearWhenNotInView;
+        return shouldShowBackground;
+    }
+
+    public void setShouldShowBackground(boolean value)
+    {
+        this.shouldShowBackground = value;
     }
 
     @Override
-    public void serialise(FriendlyByteBuf friendlyByteBuf)
+    public String getType()
     {
-        friendlyByteBuf.writeBoolean(isPersistent);
-        friendlyByteBuf.writeBoolean(shouldShowDistance);
-        friendlyByteBuf.writeBoolean(shouldDisappearWhenNotInView);
+        return "pin";
+    }
+
+    public Tag encode()
+    {
+        return CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
     }
 }

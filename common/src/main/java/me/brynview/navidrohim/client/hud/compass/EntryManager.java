@@ -1,23 +1,26 @@
 package me.brynview.navidrohim.client.hud.compass;
 
 import com.google.common.collect.Sets;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.JMWaypointGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.MapEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.VehicleEntryGroup;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.time.GameTime;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.time.RealTime;
 import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.*;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,8 +33,12 @@ Manages persistent entries and the constructors that deserialises them.
 public class EntryManager
 {
 
-    // All constructors
-    private static final Map<String, PersistentEntryConstructor> CONSTRUCTORS = new HashMap<>();
+    public static final Map<String, MapCodec<? extends TimeKeeper>> TIMEKEEPER_CODECS = Map.of(
+            "gametime", GameTime.CODEC,
+            "realtime", RealTime.CODEC
+    );
+    public static final Map<String, Codec<? extends PinEntry>> PIN_CONSTRUCTORS = new HashMap<>();
+
     private static final String PATH = "data/%s/".formatted(Constants.MOD_ID);
 
     /*
@@ -75,45 +82,16 @@ public class EntryManager
                 return;
             }
 
-            // set consists of keys which are the identifiers for each entry in the set.
-            // Values are the `FriendlyByteBuf`s which holds the data of each entry.
-            // Each entry has an entry in the map.
             for (Map.Entry<String, Tag> stringTagEntry : nbtR.entrySet())
             {
-                if (stringTagEntry.getValue().asCompound().isPresent())
+                String codecName = stringTagEntry.getKey().split("\\.")[0];
+                @Nullable Codec<? extends PinEntry> codecForPin = EntryManager.PIN_CONSTRUCTORS.get(codecName);
+
+                if (codecForPin != null)
                 {
-                    CompoundTag compoundTagByteBuffers = stringTagEntry.getValue().asCompound().get();
-                    Optional<byte[]> customDataByteBuf = compoundTagByteBuffers.get("custom").asByteArray();
-                    Optional<byte[]> nativeByteBuf = compoundTagByteBuffers.get("native").asByteArray();
-
-                    if (nativeByteBuf.isEmpty() || customDataByteBuf.isEmpty())
-                    {
-                        Constants.LOG.error("Could not deserialize entry: {} one of the required buffers is missing.", stringTagEntry);
-                        continue;
-                    }
-
-                    ByteBuf byteBuf = Unpooled.copiedBuffer(nativeByteBuf.get()); // Normal netty ByteBuf
-                    FriendlyByteBuf friendlyByteBuf = new FriendlyByteBuf(byteBuf); // Get FriendlyByteBuf as it plays better with MC. Can write strings and vectors
-
-                    ByteBuf byteBufCustom = Unpooled.copiedBuffer(customDataByteBuf.get()); // Normal netty ByteBuf
-                    FriendlyByteBuf customFriendlyByteBuf = new FriendlyByteBuf(byteBufCustom); // Get FriendlyByteBuf as it plays better with MC. Can write strings and vectors
-
-                    // Read values for reconstructing.
-                    String marker = friendlyByteBuf.readUtf();
-                    int colour = friendlyByteBuf.readInt();
-                    String type = friendlyByteBuf.readUtf(); // Type of entry. This is the name of the entry class. Used as a key to find the correct constructor
-                    Vec3 pos = new Vec3(friendlyByteBuf.readVector3f());
-                    String level = friendlyByteBuf.readUtf(); // What dimension this entry belongs to (was made in)
-
-                    if (CONSTRUCTORS.containsKey(type)) // Check if the entry has a valid deserializer constructor
-                    {
-                        Compass.addEntry(CONSTRUCTORS.get(type).constructEntryWithExtraData(marker, colour, pos, level, customFriendlyByteBuf));
-                    } else {
-                        Constants.LOG.error("Marker present in persistence cache does not have a registered constructor! This is perhaps due to a version mismatch. {}", type);
-                    }
+                    Compass.addEntry(codecForPin.parse(NbtOps.INSTANCE, stringTagEntry.getValue()).getOrThrow());
                 }
             }
-
 
         } catch (NullPointerException exc)
         {
@@ -130,42 +108,16 @@ public class EntryManager
     public static void save()
     {
         // Current entries
-        Collection<DefaultEntry> defaultEntries = Compass.getEntries();
 
+        Collection<AbstractEntry> defaultEntries = Compass.getEntries();
         CompoundTag master = new CompoundTag();
 
-        for (DefaultEntry entry : defaultEntries)
+        for (AbstractEntry entry : defaultEntries)
         {
-            if (!entry.isPersistent()) // Persistence check
+            if (entry instanceof PinEntry pin && pin.isPersistent())
             {
-                continue;
+                master.put(pin.getId(), pin.encode());
             }
-
-            if (!CONSTRUCTORS.containsKey(entry.getClass().getSimpleName())) // Check if entry has deserialization constructor
-            {
-                Constants.LOG.error("Entry marked as persistent does not have a registered constructor! Ignoring, but please take a look at class {}", entry.getClass());
-                continue;
-            }
-            CompoundTag entryTag = new CompoundTag();
-
-            FriendlyByteBuf buffer = new FriendlyByteBuf(Unpooled.buffer());
-
-            // Write metadata used to reconstruct
-            buffer.writeUtf(entry.getMarker());
-            buffer.writeInt(entry.getHighlightColor());
-            buffer.writeUtf(entry.getClass().getSimpleName());
-            buffer.writeVector3f(entry.getPosition().toVector3f());
-            buffer.writeUtf(entry.getLevel());
-
-            FriendlyByteBuf customDataBuffer = new FriendlyByteBuf(Unpooled.buffer());
-
-            // Call the entries serialise method so the entry can encode anything else it wants
-            entry.serialise(customDataBuffer);
-
-            entryTag.putByteArray("native", buffer.array());
-            entryTag.putByteArray("custom", customDataBuffer.array());
-
-            master.put(entry.getId(), entryTag);
         }
 
         try
@@ -179,11 +131,6 @@ public class EntryManager
         }
     }
 
-    public static void registerPersistentConstructor(Class<?> classy, PersistentEntryConstructor constructor)
-    {
-        CONSTRUCTORS.put(classy.getSimpleName(), constructor);
-    }
-
     /*
     Holds all entries and group entries made.
      */
@@ -191,11 +138,11 @@ public class EntryManager
     {
 
         // Internal map of all entries and group entries. This is messy and should be changed somehow, but I don't know to what.
-        private static final HashMap<String, DefaultEntry> PROVIDERS = new HashMap<>();
-        private static final HashMap<String, HashMap<String, DefaultEntry>> PROVIDERS_DIMENSION_SORTED = new HashMap<>();
+        private static final HashMap<String, AbstractEntry> PROVIDERS = new HashMap<>();
+        private static final HashMap<String, HashMap<String, AbstractEntry>> PROVIDERS_DIMENSION_SORTED = new HashMap<>();
 
-        private static final Set<DefaultEntryGroup<?>> PROVIDER_GROUPS = Sets.newHashSet(); // Only one type of group entry can appear at once
-        private static final HashMap<String, Set<DefaultEntryGroup<DefaultEntry>>> PROVIDER_GROUPS_DIMENSION_SORTED = new HashMap<>();
+        private static final Set<AbstractEntryGroup<?>> PROVIDER_GROUPS = Sets.newHashSet(); // Only one type of group entry can appear at once
+        private static final HashMap<String, Set<AbstractEntryGroup<AbstractEntry>>> PROVIDER_GROUPS_DIMENSION_SORTED = new HashMap<>();
 
         static
         {
@@ -214,39 +161,39 @@ public class EntryManager
         public static void tick(@NotNull LocalPlayer player)
         {
             // check providers
-            PROVIDERS.values().removeIf(DefaultEntry::hasExpired);
-            PROVIDERS_DIMENSION_SORTED.forEach((_, innerMap) -> innerMap.values().removeIf(DefaultEntry::hasExpired));
+            PROVIDERS.values().removeIf(AbstractEntry::hasExpired);
+            PROVIDERS_DIMENSION_SORTED.forEach((_, innerMap) -> innerMap.values().removeIf(AbstractEntry::hasExpired));
 
             PROVIDERS.values().forEach((p) -> p.tick(player));
 
             // check provider groups
-            PROVIDER_GROUPS.removeIf(DefaultEntryGroup::hasExpired);
-            PROVIDER_GROUPS_DIMENSION_SORTED.forEach((_, innerSet) -> innerSet.removeIf(DefaultEntryGroup::hasExpired));
+            PROVIDER_GROUPS.removeIf(AbstractEntryGroup::hasExpired);
+            PROVIDER_GROUPS_DIMENSION_SORTED.forEach((_, innerSet) -> innerSet.removeIf(AbstractEntryGroup::hasExpired));
 
             PROVIDER_GROUPS.forEach((pg) -> pg.tick(player));
         }
 
-        public static Collection<DefaultEntry> getAllEntries()
+        public static Collection<AbstractEntry> getAllEntries()
         {
             return PROVIDERS.values();
         }
 
-        public static Collection<DefaultEntry> getEntriesInDimension(ResourceKey<Level> key)
+        public static Collection<AbstractEntry> getEntriesInDimension(ResourceKey<Level> key)
         {
             return PROVIDERS_DIMENSION_SORTED.computeIfAbsent(key.identifier().toString(), _ -> new HashMap<>()).values();
         }
 
-        public static Set<DefaultEntryGroup<DefaultEntry>> getEntryGroupsInDimension(ResourceKey<Level> key)
+        public static Set<AbstractEntryGroup<AbstractEntry>> getEntryGroupsInDimension(ResourceKey<Level> key)
         {
             return PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent(key.identifier().toString(), _ -> new HashSet<>());
         }
 
-        public static Set<DefaultEntryGroup<DefaultEntry>> getEntryGroupsInAll()
+        public static Set<AbstractEntryGroup<AbstractEntry>> getEntryGroupsInAll()
         {
             return PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent("all",  _ -> new HashSet<>());
         }
 
-        public static void addEntry(DefaultEntry entry)
+        public static void addEntry(AbstractEntry entry)
         {
             String id = entry.getId(); // Check if the entry is a singleton and will not just override an existing singleton.
             if (entry.isSingleton())
@@ -263,7 +210,7 @@ public class EntryManager
             }
         }
 
-        public static void removeEntry(DefaultEntry highlightedEntry)
+        public static void removeEntry(AbstractEntry highlightedEntry)
         {
             PROVIDERS.remove(highlightedEntry.getId());
             PROVIDERS_DIMENSION_SORTED.get(highlightedEntry.getLevel()).remove(highlightedEntry.getId());
@@ -272,7 +219,7 @@ public class EntryManager
         /*
         Adds an entry group
          */
-        public static void addEntryGroup(DefaultEntryGroup group)
+        public static void addEntryGroup(AbstractEntryGroup group)
         {
             PROVIDER_GROUPS.add(group);
             PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent(group.getLevel(), _ -> new HashSet<>()).add(group);
@@ -298,14 +245,8 @@ public class EntryManager
         }
     }
 
-    /*
-        Callback interface for when a persistent entry is reconstructed from NBT file.
-         */
-    public static interface PersistentEntryConstructor
+    public static void addPinCodec(String key, Codec<? extends PinEntry> codec)
     {
-        /*
-        This should be used in lambda, and return an instance of whatever entry is persistent. See BritishWeather class for more info.
-         */
-        DefaultEntry constructEntryWithExtraData(String marker, int colour, Vec3 pos, String level, FriendlyByteBuf extraData);
+        PIN_CONSTRUCTORS.put(key, codec);
     }
 }

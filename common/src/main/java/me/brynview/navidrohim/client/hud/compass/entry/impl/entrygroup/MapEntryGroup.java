@@ -1,7 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntry;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.DefaultEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.Minecraft;
@@ -28,7 +28,7 @@ Entry group for each map in a players inventory.
 For each explorer / abandoned camp map, an entry will be added to the compass so the player can go there
 without having to hold the map out.
  */
-public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
+public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
 {
     private static final String MARKER = "POI";
     private final TextureAtlas atlas;
@@ -42,11 +42,11 @@ public class MapEntryGroup extends DefaultEntryGroup<MapEntryGroup.MapEntry>
         this.atlas = Minecraft.getInstance().getAtlasManager().getAtlasOrThrow(AtlasIds.MAP_DECORATIONS);
     }
 
-    public final class MapEntry extends DefaultEntry
+    public final class MapEntry extends AbstractEntry
     {
         private final class MapEntryRenderer extends EntryRenderer
         {
-            public MapEntryRenderer(DefaultEntry owner)
+            public MapEntryRenderer(AbstractEntry owner)
             {
                 super(owner);
             }
