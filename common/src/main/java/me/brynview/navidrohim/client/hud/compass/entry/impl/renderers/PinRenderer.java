@@ -15,8 +15,8 @@ public class PinRenderer extends EntryRenderer<PinEntry>
     {
         if (owner.getSettings().shouldShowBackground())
         {
-            return super.drawBackground(guiGraphicsExtractor, colour, x, y, markerWidth);
+            super.drawBackground(guiGraphicsExtractor, colour, x, y, markerWidth);
         }
-        return true;
+        return this.owner.getSettings().shouldShowShadow();
     }
 }

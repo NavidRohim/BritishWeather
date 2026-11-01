@@ -2,6 +2,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.Minecraft;
@@ -44,9 +45,9 @@ public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
 
     public final class MapEntry extends AbstractEntry
     {
-        private final class MapEntryRenderer extends EntryRenderer<AbstractEntry>
+        private final class MapEntryRenderer extends EntryRenderer<MapEntry>
         {
-            public MapEntryRenderer(AbstractEntry owner)
+            public MapEntryRenderer(MapEntry owner)
             {
                 super(owner);
             }
@@ -62,7 +63,7 @@ public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
             public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
             {
                 drawMarker(guiGraphicsExtractor, 0);
-                drawDistanceAndDebug(guiGraphicsExtractor, colour);
+                drawDistance(guiGraphicsExtractor, colour);
             }
 
             @Override
@@ -73,10 +74,15 @@ public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
         }
 
         private final Identifier decoId;
+        private final static EntrySettings settings = new EntrySettings()
+                .setShowBackground(false)
+                .setShowDistance(true)
+                .setShadow(true)
+                .setPersistent(false);
 
         public MapEntry(Vec3 position, Identifier mapDeco)
         {
-            super(position, Level.OVERWORLD.identifier().toString(), MARKER, ColorHelper.WHITE);
+            super(position, Level.OVERWORLD.identifier().toString(), MARKER, ColorHelper.WHITE, settings);
             this.decoId = mapDeco;
             this.renderer = new MapEntryRenderer(this);
         }

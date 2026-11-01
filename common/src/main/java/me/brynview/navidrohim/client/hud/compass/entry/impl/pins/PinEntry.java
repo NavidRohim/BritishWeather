@@ -23,24 +23,16 @@ public class PinEntry extends AbstractEntry
             ).apply(instance, PinEntry::new)
     );
 
-    protected EntrySettings settings;
-
     public PinEntry(String marker, String level, Vec3 position, Integer colour, EntrySettings settings)
     {
-        super(position, level, marker, colour);
+        super(position, level, marker, colour, settings);
         this.renderer = new PinRenderer(this);
-        this.settings = settings;
     }
 
     @Override
     public String getType()
     {
         return PIN_ID;
-    }
-
-    public EntrySettings getSettings()
-    {
-        return settings;
     }
 
     public Tag encode()

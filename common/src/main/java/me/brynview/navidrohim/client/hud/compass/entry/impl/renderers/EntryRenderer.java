@@ -48,7 +48,7 @@ public class EntryRenderer<T extends AbstractEntry>
         RenderState state = RenderState.NORMAL;
 
         float angle = (float) MathHelper.angleFromPos(owner.getPosition(), mc.player.position());
-        screenX = compass.util.getAngleX(angle, owner.shouldDisappearWhenNotInView());
+        screenX = compass.util.getAngleX(angle, owner.getSettings().shouldDisappearWhenOOB());
         screenYRow = 0;
 
         boolean isHighlightable = compass.util.isXHighlightable(screenX) && !owner.isBuiltIn();
@@ -170,7 +170,7 @@ public class EntryRenderer<T extends AbstractEntry>
         {
             drawDecoration(guiGraphicsExtractor, renderColour);
         }
-        drawDistanceAndDebug(guiGraphicsExtractor, renderColour);
+        drawDistance(guiGraphicsExtractor, renderColour);
     }
 
     protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
@@ -187,7 +187,7 @@ public class EntryRenderer<T extends AbstractEntry>
 
     protected boolean drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)
     {
-        if (renderState == RenderState.FOCUSED && BritishWeather.getConfig().shouldShowPinBackground())
+        if (renderState == RenderState.FOCUSED && BritishWeather.getConfig().shouldShowPinBackground() && owner.getSettings().shouldShowBackground())
         {
             guiGraphicsExtractor.fill(x - 2, y - 2, x + markerWidth + 2, y + mc.font.lineHeight, owner.highlightBgColour);
             guiGraphicsExtractor.outline(x - 3, y - 3, markerWidth + 5, mc.font.lineHeight + 4, colour);
@@ -195,11 +195,12 @@ public class EntryRenderer<T extends AbstractEntry>
         }
         return true;
     }
-    protected void drawDistanceAndDebug(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
+
+    protected void drawDistance(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
     {
         // If in view, render the distance from entry and if the player should go up or down to reach it
         Vec3 playerPos = mc.player.position();
-        if (owner.shouldShowDistance() && (owner.getRenderState() == RenderState.FOCUSED || owner.isBuiltIn()))
+        if (owner.getSettings().shouldShowDistance() && (owner.getRenderState() == RenderState.FOCUSED || owner.isBuiltIn()))
         {
             int distance = MathHelper.getDistance(owner.getPosition(), playerPos);
 
@@ -224,7 +225,7 @@ public class EntryRenderer<T extends AbstractEntry>
             String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition()) + suffix;
             int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, screenX);
 
-            guiGraphicsExtractor.text(mc.font, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), colour);
+            guiGraphicsExtractor.text(mc.font, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), colour, owner.getSettings().shouldShowShadow());
         }
     }
 

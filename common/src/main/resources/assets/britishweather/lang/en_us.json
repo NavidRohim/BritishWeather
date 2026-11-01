@@ -65,6 +65,8 @@
   "br.pin_creation_screen.should_disappear_oob.unselected.tooltip": "Won't disappear when on the end of compass. May cause clutter.",
   "br.pin_creation_screen.show_background.tooltip": "Show background",
   "br.pin_creation_screen.show_background.unselected.tooltip": "No background",
+  "br.pin_creation_screen.show_shadow.tooltip": "Show shadow",
+  "br.pin_creation_screen.show_shadow.unselected.tooltip": "No shadow",
   "br.pin_creation_screen.colour_picker.tooltip": "Pick colour from game window.",
 
   "br.pin_creation_screen.press_any_to_exit": "Press any key to exit colour picker. Click to select colour."

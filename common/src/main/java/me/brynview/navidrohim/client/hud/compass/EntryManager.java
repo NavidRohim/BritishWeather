@@ -109,7 +109,7 @@ public class EntryManager
     {
         // Current entries
 
-        Collection<AbstractEntry> defaultEntries = Compass.getEntries();
+        Collection<? extends AbstractEntry> defaultEntries = Compass.getEntries();
         CompoundTag master = new CompoundTag();
 
         for (AbstractEntry entry : defaultEntries)
@@ -142,7 +142,7 @@ public class EntryManager
         private static final HashMap<String, HashMap<String, AbstractEntry>> PROVIDERS_DIMENSION_SORTED = new HashMap<>();
 
         private static final Set<AbstractEntryGroup<?>> PROVIDER_GROUPS = Sets.newHashSet(); // Only one type of group entry can appear at once
-        private static final HashMap<String, Set<AbstractEntryGroup<AbstractEntry>>> PROVIDER_GROUPS_DIMENSION_SORTED = new HashMap<>();
+        private static final HashMap<String, Set<AbstractEntryGroup<? extends AbstractEntry>>> PROVIDER_GROUPS_DIMENSION_SORTED = new HashMap<>();
 
         static
         {
@@ -173,22 +173,22 @@ public class EntryManager
             PROVIDER_GROUPS.forEach((pg) -> pg.tick(player));
         }
 
-        public static Collection<AbstractEntry> getAllEntries()
+        public static Collection<? extends AbstractEntry> getAllEntries()
         {
             return PROVIDERS.values();
         }
 
-        public static Collection<AbstractEntry> getEntriesInDimension(ResourceKey<Level> key)
+        public static Collection<? extends AbstractEntry> getEntriesInDimension(ResourceKey<Level> key)
         {
             return PROVIDERS_DIMENSION_SORTED.computeIfAbsent(key.identifier().toString(), _ -> new HashMap<>()).values();
         }
 
-        public static Set<AbstractEntryGroup<AbstractEntry>> getEntryGroupsInDimension(ResourceKey<Level> key)
+        public static Set<AbstractEntryGroup<? extends AbstractEntry>> getEntryGroupsInDimension(ResourceKey<Level> key)
         {
             return PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent(key.identifier().toString(), _ -> new HashSet<>());
         }
 
-        public static Set<AbstractEntryGroup<AbstractEntry>> getEntryGroupsInAll()
+        public static Set<AbstractEntryGroup<? extends AbstractEntry>> getEntryGroupsInAll()
         {
             return PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent("all",  _ -> new HashSet<>());
         }

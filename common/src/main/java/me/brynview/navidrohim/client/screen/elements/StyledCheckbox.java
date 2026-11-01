@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jspecify.annotations.NonNull;
@@ -71,8 +72,8 @@ public class StyledCheckbox extends AbstractJMWSButton
         guiGraphicsExtractor.text(Minecraft.getInstance().font, this.getMessage(), this.getX() + this.width + 3, this.getY() + 2, 0xFFFFFFFF);
     }
 
-    public static StyledCheckbox buildCheckbox(Component label, OnCheckboxPress onPress, Tooltip checkedTooltip, Tooltip uncheckedTooltip, boolean defaultState) {
-        StyledCheckbox box = new StyledCheckbox(0, 0, 15, 15, label, onPress, Button.DEFAULT_NARRATION, checkedTooltip, uncheckedTooltip);
+    public static StyledCheckbox buildCheckbox(OnCheckboxPress onPress, Tooltip checkedTooltip, Tooltip uncheckedTooltip, boolean defaultState) {
+        StyledCheckbox box = new StyledCheckbox(0, 0, 15, 15, CommonComponents.EMPTY, onPress, Button.DEFAULT_NARRATION, checkedTooltip, uncheckedTooltip);
 
         if (defaultState)
         {

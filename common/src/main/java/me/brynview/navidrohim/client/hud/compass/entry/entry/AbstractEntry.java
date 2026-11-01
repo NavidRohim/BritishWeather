@@ -2,6 +2,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.entry;
 
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.TickableAndExpirable;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.world.phys.Vec3;
@@ -19,6 +20,7 @@ public abstract class AbstractEntry implements TickableAndExpirable
 
     protected static final Compass compass = Compass.getInstance();
     protected EntryRenderer<?> renderer;
+    protected EntrySettings settings;
 
     protected int highlightColor;
     public int highlightBgColour;
@@ -27,8 +29,9 @@ public abstract class AbstractEntry implements TickableAndExpirable
     public boolean isOnLeftEdge = false;
     public boolean isOnRightEdge = false;
 
-    public AbstractEntry(Vec3 position, String level, String marker, int colour)
+    public AbstractEntry(Vec3 position, String level, String marker, int colour, EntrySettings settings)
     {
+        this.settings = settings;
         this.level = level;
         this.position = position;
 
@@ -88,24 +91,9 @@ public abstract class AbstractEntry implements TickableAndExpirable
         this.defaultColour = ColorHelper.shiftColourToOpacity(highlightColor, 124);
     }
 
-    /*
-    If the entry is persistent through game sessions.
-    If true, the entry will be stored in an NBT file in the root .minecraft directory, and the filename will be the world folder name.
-     */
-
     public boolean isSingleton()
     {
         return false;
-    }
-
-    public boolean shouldShowDistance()
-    {
-        return true;
-    }
-
-    public boolean shouldDisappearWhenNotInView()
-    {
-        return true;
     }
 
     public EntryRenderer.RenderState getRenderState()
@@ -116,6 +104,11 @@ public abstract class AbstractEntry implements TickableAndExpirable
     public final String getId()
     {
         return this.entryId;
+    }
+
+    public EntrySettings getSettings()
+    {
+        return settings;
     }
 
     @Override

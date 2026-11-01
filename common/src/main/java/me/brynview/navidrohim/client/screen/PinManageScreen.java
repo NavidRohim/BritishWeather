@@ -67,16 +67,19 @@ public class PinManageScreen extends Screen
     private static final Tooltip shouldDisappearWhenOOBTooltipUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_disappear_oob.unselected.tooltip"));
     private static final Tooltip showBackgroundSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_background.tooltip"));
     private static final Tooltip showBackgroundUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_background.unselected.tooltip"));
+    private static final Tooltip showShadowSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_shadow.tooltip"));
+    private static final Tooltip showShadowUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_shadow.unselected.tooltip"));
 
     private int highlightedColourOnPicker = 0;
     private int highlightedColourPickerR = 0;
     private int highlightedColourPickerG = 0;
     private int highlightedColourPickerB = 0;
 
-    private boolean persistent = true;
-    private boolean disappearWhenOOB = true;
-    private boolean showDistance = false;
-    private boolean showBackground = true;
+    private boolean persistent = EntrySettings.PERSISTENT_DEFAULT;
+    private boolean disappearWhenOOB = EntrySettings.SHOULD_DISAPPEAR_OOB;
+    private boolean showDistance = EntrySettings.SHOW_DISTANCE_DEFAULT;
+    private boolean showBackground = EntrySettings.SHOW_BACKGROUND_DEFAULT;
+    private boolean showShadow = EntrySettings.SHOW_SHADOWS_DEFAULT;
 
     Component pressAnyToExit = Component.translatable("br.pin_creation_screen.press_any_to_exit");
     GpuBuffer pixelBuffer;
@@ -125,7 +128,7 @@ public class PinManageScreen extends Screen
         LinearLayout masterLayout = LinearLayout.horizontal().spacing(7);
         LinearLayout colourLayout = LinearLayout.vertical().spacing(5);
         GridLayout personalisationLayout = new GridLayout();
-        LinearLayout timeLayout = LinearLayout.vertical().spacing(5);
+        LinearLayout central = LinearLayout.vertical().spacing(5);
 
         this.markerBox = new EditBox(mc.font, Component.empty());
         this.markerBox.setValue("Pin label..");
@@ -152,12 +155,11 @@ public class PinManageScreen extends Screen
                 .withTooltip(TimeKeeper.TimeMethods::getDescription)
                 .create(Component.literal("Method"), (_, newTimeMethod) -> timeMethod = newTimeMethod);
 
-        timeLayout.addChild(this.markerBox);
-
-        StyledCheckbox showBg = StyledCheckbox.buildCheckbox(CommonComponents.EMPTY, (b) -> showBackground = b.isChecked, showBackgroundSelected, showBackgroundUnselected, true);
-        StyledCheckbox isPersistentCheckbox = StyledCheckbox.buildCheckbox(CommonComponents.EMPTY, (b) -> persistent = b.isChecked, selectedPersistent, unselectedPersistent, true);
-        StyledCheckbox shouldShowDistCheckbox = StyledCheckbox.buildCheckbox(CommonComponents.EMPTY, (b) -> showDistance = b.isChecked, shouldShowDistSelected, shouldShowDistUnselected, false);
-        StyledCheckbox shouldDisappearWhenOOB = StyledCheckbox.buildCheckbox(CommonComponents.EMPTY, (b) -> disappearWhenOOB = b.isChecked, shouldDisappearWhenOOBTooltipSelected, shouldDisappearWhenOOBTooltipUnselected, true);
+        StyledCheckbox showBg = StyledCheckbox.buildCheckbox((b) -> showBackground = b.isChecked, showBackgroundSelected, showBackgroundUnselected, EntrySettings.SHOW_BACKGROUND_DEFAULT);
+        StyledCheckbox isPersistentCheckbox = StyledCheckbox.buildCheckbox((b) -> persistent = b.isChecked, selectedPersistent, unselectedPersistent, EntrySettings.PERSISTENT_DEFAULT);
+        StyledCheckbox shouldShowDistCheckbox = StyledCheckbox.buildCheckbox((b) -> showDistance = b.isChecked, shouldShowDistSelected, shouldShowDistUnselected, EntrySettings.SHOW_DISTANCE_DEFAULT);
+        StyledCheckbox shouldDisappearWhenOOB = StyledCheckbox.buildCheckbox((b) -> disappearWhenOOB = b.isChecked, shouldDisappearWhenOOBTooltipSelected, shouldDisappearWhenOOBTooltipUnselected, EntrySettings.SHOULD_DISAPPEAR_OOB);
+        StyledCheckbox shouldShowShadow = StyledCheckbox.buildCheckbox((b) -> showShadow = b.isChecked, showShadowSelected, showShadowUnselected, EntrySettings.SHOW_SHADOWS_DEFAULT);
 
         if (!isEditing) {
             personalisationLayout.addChild(isPersistentCheckbox, 0, 0, d -> d.padding(2));
@@ -165,21 +167,24 @@ public class PinManageScreen extends Screen
         personalisationLayout.addChild(shouldShowDistCheckbox, 1, 0, d -> d.padding(2));
         personalisationLayout.addChild(shouldDisappearWhenOOB, 2, 0, d -> d.padding(2));
         personalisationLayout.addChild(showBg, 3, 0, d -> d.padding(2));
+        personalisationLayout.addChild(shouldShowShadow, 4, 0, d -> d.padding(2));
 
         colourLayout.addChild(this.rBox);
         colourLayout.addChild(this.gBox);
         colourLayout.addChild(this.bBox);
         colourLayout.addChild(colourDropperButton);
 
-        timeLayout.addChild(this.integerEditBox);
-        timeLayout.addChild(timeUnitCycleButton);
-        timeLayout.addChild(timeMethodCycleButton);
-
-        masterLayout.addChild(personalisationLayout);
+        central.addChild(this.markerBox);
         if (!isEditing)
         {
-            masterLayout.addChild(timeLayout);
+            central.addChild(this.integerEditBox);
+            central.addChild(timeUnitCycleButton);
+            central.addChild(timeMethodCycleButton);
         }
+        central.addChild(enterButton);
+
+        masterLayout.addChild(personalisationLayout);
+        masterLayout.addChild(central);
         masterLayout.addChild(colourLayout);
 
         // Position elements within main layout and render
@@ -192,6 +197,13 @@ public class PinManageScreen extends Screen
             shouldDisappearWhenOOB.setChecked(settings.shouldDisappearWhenOOB());
             shouldShowDistCheckbox.setChecked(settings.shouldShowDistance());
             showBg.setChecked(settings.shouldShowBackground());
+            shouldShowShadow.setChecked(settings.shouldShowShadow());
+
+            showShadow = settings.shouldShowShadow();
+            disappearWhenOOB = settings.shouldDisappearWhenOOB();
+            showBackground = settings.shouldShowBackground();
+            persistent = settings.isPersistent();
+            showDistance = settings.shouldShowDistance();
 
             int colour = pin.getHighlightColor();
 
@@ -203,9 +215,6 @@ public class PinManageScreen extends Screen
         masterLayout.arrangeElements();
         FrameLayout.centerInRectangle(masterLayout, 0, height / 4, width, mc.getWindow().getGuiScaledHeight() / 4);
         masterLayout.visitWidgets(this::addRenderableWidget);
-
-        FrameLayout.centerInRectangle(enterButton, 0, height / 2, width, mc.getWindow().getGuiScaledHeight() / 4);
-        this.addRenderableWidget(enterButton);
     }
 
     private void create()
@@ -216,7 +225,8 @@ public class PinManageScreen extends Screen
                 .setDisappearWhenOOB(disappearWhenOOB)
                 .setShowBackground(showBackground)
                 .setShowDistance(showDistance)
-                .setPersistent(persistent);
+                .setPersistent(persistent)
+                .setShadow(showShadow);
 
         if (expiryTime == 0)
         {
@@ -234,7 +244,8 @@ public class PinManageScreen extends Screen
             .setShowBackground(showBackground)
             .setShowDistance(showDistance)
             .setDisappearWhenOOB(disappearWhenOOB)
-            .setPersistent(persistent);
+            .setPersistent(persistent)
+            .setShadow(showShadow);
 
         pin.setMarker(getMarker());
         pin.setHighlightColor(getHighlightColor());
@@ -410,10 +421,10 @@ public class PinManageScreen extends Screen
 
         if (showDistance)
         {
-            guiGraphicsExtractor.text(mc.font, DUMMY_DISTANCE_MARKER, dummyXWidthHalf, compass.util.getYRowOnCompass(1), colour);
+            guiGraphicsExtractor.text(mc.font, DUMMY_DISTANCE_MARKER, dummyXWidthHalf, compass.util.getYRowOnCompass(1), colour, showShadow);
         }
 
-        guiGraphicsExtractor.text(mc.font, marker, textCorner, backgroundY, colour, false);
+        guiGraphicsExtractor.text(mc.font, marker, textCorner, backgroundY, colour, showShadow);
         guiGraphicsExtractor.verticalLine(entryDummyX, compass.util.getYRowOnCompass(0) - 2, compass.util.getYRowOnCompass(0.5), colour);
     }
 

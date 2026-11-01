@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
@@ -76,13 +77,19 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
             }
         }
 
+        private static final EntrySettings settings = new EntrySettings()
+                .setPersistent(false)
+                .setShadow(false)
+                .setShowDistance(false)
+                .setShowBackground(false);
+
         private final VehicleEntity vehicle;
         private final Identifier texture;
 
         public VehicleEntry(VehicleEntity entity, Identifier texture)
         {
             this.vehicle = entity;
-            super(entity.position(), entity.level().dimension().identifier().toString(), "?", ColorHelper.WHITE);
+            super(entity.position(), entity.level().dimension().identifier().toString(), "?", ColorHelper.WHITE, settings);
             this.texture = texture.withPrefix("item/");
             this.renderer = new VehicleRenderer(this);
         }

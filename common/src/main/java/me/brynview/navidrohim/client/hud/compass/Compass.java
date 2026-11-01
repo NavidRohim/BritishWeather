@@ -350,10 +350,10 @@ public class Compass
         entriesOnRightEdge = 0;
 
         // Draw entries inside of entry groups.
-        Set<AbstractEntryGroup<AbstractEntry>> groupsToCheck = new HashSet<>(Set.copyOf(EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension())));
+        Set<AbstractEntryGroup<?>> groupsToCheck = new HashSet<>(Set.copyOf(EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension())));
         groupsToCheck.addAll(EntryManager.ProviderRegistry.getEntryGroupsInAll());
 
-        for (AbstractEntryGroup<AbstractEntry> group : groupsToCheck)
+        for (AbstractEntryGroup<?> group : groupsToCheck)
         {
             if (group.isBuiltIn() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
             {
@@ -495,7 +495,7 @@ public class Compass
         EntryManager.ProviderRegistry.addEntry(provider);
     }
 
-    public static Collection<AbstractEntry> getEntries()
+    public static Collection<? extends AbstractEntry> getEntries()
     {
         return EntryManager.ProviderRegistry.getAllEntries();
     }
