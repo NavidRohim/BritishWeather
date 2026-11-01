@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 
 public class PinEntry extends AbstractEntry
 {
+    public static final String PIN_ID = "pin";
     public static final Codec<PinEntry> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     Codec.STRING.fieldOf("marker").forGetter(PinEntry::getMarker),
@@ -34,7 +35,7 @@ public class PinEntry extends AbstractEntry
     @Override
     public String getType()
     {
-        return "pin";
+        return PIN_ID;
     }
 
     public EntrySettings getSettings()

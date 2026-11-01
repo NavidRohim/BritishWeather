@@ -3,24 +3,14 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
-import java.util.Map;
-
 public class EntrySettings
 {
-    public enum DisplayableSettings
-    {
-        SHOW_BACKGROUND,
-        SHOW_DISTANCE,
-        PERSISTENT,
-        SHOW_WHEN_OOB
-    }
-
     public static final Codec<EntrySettings> CODEC = RecordCodecBuilder.create(entrySettingsInstance ->
             entrySettingsInstance.group(
                     Codec.BOOL.fieldOf("persistent").forGetter(EntrySettings::isPersistent),
-                    Codec.BOOL.fieldOf("showBackground").forGetter(EntrySettings::isShowBackground),
-                    Codec.BOOL.fieldOf("disappearWhenOutOfBounds").forGetter(EntrySettings::isDisappearWhenOOB),
-                    Codec.BOOL.fieldOf("showDistance").forGetter(EntrySettings::isShowDistance)
+                    Codec.BOOL.fieldOf("showBackground").forGetter(EntrySettings::shouldShowBackground),
+                    Codec.BOOL.fieldOf("disappearWhenOutOfBounds").forGetter(EntrySettings::shouldDisappearWhenOOB),
+                    Codec.BOOL.fieldOf("showDistance").forGetter(EntrySettings::shouldShowDistance)
             ).apply(entrySettingsInstance, EntrySettings::new)
     );
 
@@ -51,7 +41,7 @@ public class EntrySettings
         return this;
     }
 
-    public boolean isShowBackground()
+    public boolean shouldShowBackground()
     {
         return showBackground;
     }
@@ -62,7 +52,7 @@ public class EntrySettings
         return this;
     }
 
-    public boolean isDisappearWhenOOB()
+    public boolean shouldDisappearWhenOOB()
     {
         return disappearWhenOOB;
     }
@@ -73,7 +63,7 @@ public class EntrySettings
         return this;
     }
 
-    public boolean isShowDistance()
+    public boolean shouldShowDistance()
     {
         return showDistance;
     }

@@ -17,6 +17,7 @@ Same as PinEntry but timed.
  */
 public class TimedPin extends PinEntry
 {
+    public static final String PIN_ID = "timed_pin";
     public static final Codec<TimedPin> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     Codec.STRING.fieldOf("marker").forGetter(PinEntry::getMarker),
@@ -51,7 +52,7 @@ public class TimedPin extends PinEntry
     @Override
     public String getType()
     {
-        return "timed_pin";
+        return PIN_ID;
     }
 
     @Override

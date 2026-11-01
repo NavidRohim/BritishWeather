@@ -29,7 +29,6 @@ public abstract class AbstractEntry implements TickableAndExpirable
 
     public AbstractEntry(Vec3 position, String level, String marker, int colour)
     {
-        //this.renderer = new EntryRenderer(this);
         this.level = level;
         this.position = position;
 

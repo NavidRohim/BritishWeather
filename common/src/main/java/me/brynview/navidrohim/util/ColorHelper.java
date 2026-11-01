@@ -26,6 +26,7 @@ public class ColorHelper {
     public static final int RED = decode("#FF0000").getRGB();
     public static final int GREEN = decode("#00FF00").getRGB();
     public static final int BLUE = decode("#0000FF").getRGB();
+    public static final int BLACK = decode("#000000").getRGB();
 
     // Colours for entity markers
     public static final int PLAYER = rgb(125, 255, 125, 255);
@@ -92,7 +93,13 @@ public class ColorHelper {
 
     public static int getBackgroundColour(int colour)
     {
-        int invertedRenderColour = colour ^ 0x00FFFFFF;
-        return ARGB.greyscale(invertedRenderColour);
+        int r = ARGB.red(colour);
+        int g = ARGB.green(colour);
+        int b = ARGB.blue(colour);
+
+        // Calculate and return perceived luminance (0.0 to 255.0)
+        double lum = (r * 0.299) + (g * 0.587) + (b * 0.114);
+
+        return lum > 128 ? ColorHelper.BLACK : ColorHelper.WHITE;
     }
 }

@@ -44,7 +44,7 @@ public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
 
     public final class MapEntry extends AbstractEntry
     {
-        private final class MapEntryRenderer extends EntryRenderer
+        private final class MapEntryRenderer extends EntryRenderer<AbstractEntry>
         {
             public MapEntryRenderer(AbstractEntry owner)
             {

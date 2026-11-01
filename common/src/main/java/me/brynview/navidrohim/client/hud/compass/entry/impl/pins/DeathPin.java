@@ -22,6 +22,8 @@ Time offline will count towards the timer.
  */
 public final class DeathPin extends TimedPin
 {
+    public static final String PIN_ID = "death_pin";
+
     public static final Codec<TimedPin> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     Codec.STRING.fieldOf("marker").forGetter(PinEntry::getMarker),
@@ -102,7 +104,7 @@ public final class DeathPin extends TimedPin
     @Override
     public String getType()
     {
-        return "death_pin";
+        return PIN_ID;
     }
 
     @Override

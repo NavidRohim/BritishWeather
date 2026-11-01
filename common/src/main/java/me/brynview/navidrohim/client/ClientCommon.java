@@ -24,9 +24,9 @@ public class ClientCommon
         WEATHER_MANAGER = new ClientWeatherManager();
         compass = Compass.init();
 
-        EntryManager.addPinCodec("pin", PinEntry.CODEC);
-        EntryManager.addPinCodec("timed_pin", TimedPin.CODEC);
-        EntryManager.addPinCodec("death_pin", DeathPin.CODEC);
+        EntryManager.addPinCodec(PinEntry.PIN_ID, PinEntry.CODEC);
+        EntryManager.addPinCodec(TimedPin.PIN_ID, TimedPin.CODEC);
+        EntryManager.addPinCodec(DeathPin.PIN_ID, DeathPin.CODEC);
     }
 
     public static ClientWeatherManager getWeatherManager()
