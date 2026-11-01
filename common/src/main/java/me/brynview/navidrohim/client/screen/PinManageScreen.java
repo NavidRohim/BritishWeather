@@ -9,6 +9,7 @@ import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.device.GpuDevice;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.TimedPin;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
@@ -182,10 +183,12 @@ public class PinManageScreen extends Screen
 
         if (isEditing)
         {
+            EntrySettings settings = pin.getSettings();
+
             markerBox.setValue(pin.getMarker());
-            shouldDisappearWhenOOB.setChecked(pin.shouldDisappearWhenNotInView());
-            shouldShowDistCheckbox.setChecked(pin.shouldShowDistance());
-            showBg.setChecked(pin.shouldShowBackground());
+            shouldDisappearWhenOOB.setChecked(settings.isDisappearWhenOOB());
+            shouldShowDistCheckbox.setChecked(settings.isShowDistance());
+            showBg.setChecked(settings.isShowBackground());
 
             int colour = pin.getHighlightColor();
 
@@ -205,23 +208,31 @@ public class PinManageScreen extends Screen
     private void create()
     {
         int expiryTime = this.integerEditBox.getIntValue();
+
+        EntrySettings settings = new EntrySettings()
+                .setDisappearWhenOOB(disappearWhenOOB)
+                .setShowBackground(showBackground)
+                .setShowDistance(showDistance);
+
         if (expiryTime == 0)
         {
-            Compass.addEntry(new PinEntry(getMarker(), level, pinPosition, getHighlightColor(), persistent, showDistance, disappearWhenOOB, showBackground));
+            Compass.addEntry(new PinEntry(getMarker(), level, pinPosition, getHighlightColor(), settings));
         } else
         {
             TimeKeeper chosenMethod = timeMethod.createTimeMethod(selectedTimeUnit, expiryTime);
-            Compass.addEntry(new TimedPin(getMarker(), level, pinPosition, getHighlightColor(), persistent, showDistance, disappearWhenOOB, showBackground, chosenMethod));
+            Compass.addEntry(new TimedPin(getMarker(), level, pinPosition, getHighlightColor(), settings, chosenMethod));
         }
     }
 
     private void edit()
     {
+        pin.getSettings()
+            .setShowBackground(showBackground)
+            .setShowDistance(showDistance)
+            .setDisappearWhenOOB(disappearWhenOOB);
+
         pin.setMarker(getMarker());
         pin.setHighlightColor(getHighlightColor());
-        pin.setShouldDisappearWhenNotInView(disappearWhenOOB);
-        pin.setShouldShowDistance(showDistance);
-        pin.setShouldShowBackground(showBackground);
     }
 
     private void enterSelection()

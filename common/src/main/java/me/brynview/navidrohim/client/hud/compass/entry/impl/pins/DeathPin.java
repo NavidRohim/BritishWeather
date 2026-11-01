@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.CharEntryRenderer;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.time.GameTime;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -21,16 +22,13 @@ Time offline will count towards the timer.
  */
 public final class DeathPin extends TimedPin
 {
-    public static final Codec<DeathPin> CODEC = RecordCodecBuilder.create(instance ->
+    public static final Codec<TimedPin> CODEC = RecordCodecBuilder.create(instance ->
             instance.group(
                     Codec.STRING.fieldOf("marker").forGetter(PinEntry::getMarker),
                     Codec.STRING.fieldOf("level").forGetter(PinEntry::getLevel),
                     Vec3.CODEC.fieldOf("position").forGetter(PinEntry::getPosition),
                     Codec.INT.fieldOf("colour").forGetter(PinEntry::getHighlightColor),
-                    Codec.BOOL.fieldOf("persistent").forGetter(PinEntry::isPersistent),
-                    Codec.BOOL.fieldOf("showDistance").forGetter(PinEntry::shouldShowDistance),
-                    Codec.BOOL.fieldOf("disappearWhenOutOfBounds").forGetter(PinEntry::shouldDisappearWhenNotInView),
-                    Codec.BOOL.optionalFieldOf("showBackground", true).forGetter(PinEntry::shouldShowBackground),
+                    EntrySettings.CODEC.fieldOf("settings").forGetter(PinEntry::getSettings),
                     TimeKeeper.CODEC.fieldOf("timeKeeper").forGetter(TimedPin::getTimeMethod)
             ).apply(instance, DeathPin::new)
     );
@@ -44,14 +42,14 @@ public final class DeathPin extends TimedPin
      */
     public DeathPin(Vec3 position, String level)
     {
-        super(SKULL, level, position, ColorHelper.RED, true, true, true, true, new GameTime(TimeUnit.MINUTES, 30));
+        super(SKULL, level, position, ColorHelper.RED, EntrySettings.defaults().setShowDistance(true), new GameTime(TimeUnit.MINUTES, 30));
         this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
         this.renderer = new CharEntryRenderer(this);
     }
 
-    public DeathPin(String marker, String level, Vec3 position, Integer colour, Boolean persistent, Boolean showDistance, Boolean disappearWhenOutOfBounds, Boolean showBackground, TimeKeeper timeKeeper)
+    public DeathPin(String marker, String level, Vec3 position, Integer colour, EntrySettings settings, TimeKeeper timeKeeper)
     {
-        super(marker, level, position, colour, persistent, showDistance, disappearWhenOutOfBounds, showBackground, timeKeeper);
+        super(marker, level, position, colour, settings, timeKeeper);
         this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
         this.renderer = new CharEntryRenderer(this);
     }
@@ -81,13 +79,6 @@ public final class DeathPin extends TimedPin
     {
         // entry will expire if player arrives at their deathpoint.
         return this.timeMethod.isExpired() || hasArrived;
-    }
-
-    @Override
-    public boolean isPersistent()
-    {
-        // Persistent through game sessions
-        return true;
     }
 
     @Override

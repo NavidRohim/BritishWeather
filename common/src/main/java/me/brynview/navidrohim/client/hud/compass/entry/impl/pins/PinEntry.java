@@ -18,74 +18,17 @@ public class PinEntry extends AbstractEntry
                     Codec.STRING.fieldOf("level").forGetter(PinEntry::getLevel),
                     Vec3.CODEC.fieldOf("position").forGetter(PinEntry::getPosition),
                     Codec.INT.fieldOf("colour").forGetter(PinEntry::getHighlightColor),
-                    Codec.BOOL.fieldOf("persistent").forGetter(PinEntry::isPersistent),
-                    Codec.BOOL.fieldOf("showDistance").forGetter(PinEntry::shouldShowDistance),
-                    Codec.BOOL.fieldOf("disappearWhenOutOfBounds").forGetter(PinEntry::shouldDisappearWhenNotInView),
-                    Codec.BOOL.optionalFieldOf("showBackground", true).forGetter(PinEntry::shouldShowBackground)
+                    EntrySettings.CODEC.fieldOf("settings").forGetter(PinEntry::getSettings)
             ).apply(instance, PinEntry::new)
     );
 
-    protected boolean persistent;
-
-    protected boolean shouldShowDistance;
-    protected boolean shouldDisappearWhenNotInView;
-    protected boolean shouldShowBackground;
-
     protected EntrySettings settings;
 
-    public PinEntry(String marker, String level, Vec3 position, Integer colour, Boolean persistent, Boolean showDistance, Boolean disappearWhenOutOfBounds, Boolean showBackground)
+    public PinEntry(String marker, String level, Vec3 position, Integer colour, EntrySettings settings)
     {
         super(position, level, marker, colour);
         this.renderer = new PinRenderer(this);
-
-        this.persistent = persistent;
-        this.shouldShowDistance = showDistance;
-        this.shouldDisappearWhenNotInView = disappearWhenOutOfBounds;
-        this.shouldShowBackground = showBackground;
-    }
-
-    public EntrySettings getSettings()
-    {
-        return settings;
-    }
-
-    public boolean canBeEdited()
-    {
-        return true;
-    }
-
-    public boolean isPersistent()
-    {
-        return persistent;
-    }
-
-    @Override
-    public boolean shouldShowDistance()
-    {
-        return shouldShowDistance;
-    }
-
-    public void setShouldShowDistance(boolean shouldShowDistance)
-    {
-        this.shouldShowDistance = shouldShowDistance;
-    }
-
-    @Override
-    public boolean shouldDisappearWhenNotInView()
-    {
-        return shouldDisappearWhenNotInView;
-    }
-
-    public void setShouldDisappearWhenNotInView(boolean shouldDisappearWhenNotInView) {this.shouldDisappearWhenNotInView = shouldDisappearWhenNotInView;}
-
-    public boolean shouldShowBackground()
-    {
-        return shouldShowBackground;
-    }
-
-    public void setShouldShowBackground(boolean value)
-    {
-        this.shouldShowBackground = value;
+        this.settings = settings;
     }
 
     @Override
@@ -94,8 +37,18 @@ public class PinEntry extends AbstractEntry
         return "pin";
     }
 
+    public EntrySettings getSettings()
+    {
+        return settings;
+    }
+
     public Tag encode()
     {
         return CODEC.encodeStart(NbtOps.INSTANCE, this).getOrThrow();
+    }
+
+    public boolean canBeEdited()
+    {
+        return true;
     }
 }

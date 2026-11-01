@@ -3,8 +3,18 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 
+import java.util.Map;
+
 public class EntrySettings
 {
+    public enum DisplayableSettings
+    {
+        SHOW_BACKGROUND,
+        SHOW_DISTANCE,
+        PERSISTENT,
+        SHOW_WHEN_OOB
+    }
+
     public static final Codec<EntrySettings> CODEC = RecordCodecBuilder.create(entrySettingsInstance ->
             entrySettingsInstance.group(
                     Codec.BOOL.fieldOf("persistent").forGetter(EntrySettings::isPersistent),
@@ -22,6 +32,9 @@ public class EntrySettings
         this.showDistance = showDistance;
     }
 
+    public EntrySettings()
+    {}
+
     private boolean isPersistent = true;
     private boolean showBackground = true;
     private boolean disappearWhenOOB = true;
@@ -32,9 +45,10 @@ public class EntrySettings
         return isPersistent;
     }
 
-    public void setPersistent(boolean persistent)
+    public EntrySettings setPersistent(boolean persistent)
     {
         isPersistent = persistent;
+        return this;
     }
 
     public boolean isShowBackground()
@@ -42,9 +56,10 @@ public class EntrySettings
         return showBackground;
     }
 
-    public void setShowBackground(boolean showBackground)
+    public EntrySettings setShowBackground(boolean showBackground)
     {
         this.showBackground = showBackground;
+        return this;
     }
 
     public boolean isDisappearWhenOOB()
@@ -52,9 +67,10 @@ public class EntrySettings
         return disappearWhenOOB;
     }
 
-    public void setDisappearWhenOOB(boolean disappearWhenOOB)
+    public EntrySettings setDisappearWhenOOB(boolean disappearWhenOOB)
     {
         this.disappearWhenOOB = disappearWhenOOB;
+        return this;
     }
 
     public boolean isShowDistance()
@@ -62,13 +78,16 @@ public class EntrySettings
         return showDistance;
     }
 
-    public void setShowDistance(boolean showDistance)
+    public EntrySettings setShowDistance(boolean showDistance)
     {
         this.showDistance = showDistance;
+        return this;
     }
 
     public static EntrySettings defaults()
     {
         return new EntrySettings(true, true, true, false);
     }
+
+
 }

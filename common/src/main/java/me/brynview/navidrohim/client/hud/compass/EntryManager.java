@@ -114,7 +114,7 @@ public class EntryManager
 
         for (AbstractEntry entry : defaultEntries)
         {
-            if (entry instanceof PinEntry pin && pin.isPersistent())
+            if (entry instanceof PinEntry pin && pin.getSettings().isPersistent())
             {
                 master.put(pin.getId(), pin.encode());
             }

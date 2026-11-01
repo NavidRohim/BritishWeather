@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
@@ -22,19 +23,16 @@ public class TimedPin extends PinEntry
                     Codec.STRING.fieldOf("level").forGetter(PinEntry::getLevel),
                     Vec3.CODEC.fieldOf("position").forGetter(PinEntry::getPosition),
                     Codec.INT.fieldOf("colour").forGetter(PinEntry::getHighlightColor),
-                    Codec.BOOL.fieldOf("persistent").forGetter(PinEntry::isPersistent),
-                    Codec.BOOL.fieldOf("showDistance").forGetter(PinEntry::shouldShowDistance),
-                    Codec.BOOL.fieldOf("disappearWhenOutOfBounds").forGetter(PinEntry::shouldDisappearWhenNotInView),
-                    Codec.BOOL.optionalFieldOf("showBackground", true).forGetter(PinEntry::shouldShowBackground),
+                    EntrySettings.CODEC.fieldOf("settings").forGetter(PinEntry::getSettings),
                     TimeKeeper.CODEC.fieldOf("timeKeeper").forGetter(TimedPin::getTimeMethod)
             ).apply(instance, TimedPin::new)
     );
 
     protected @NotNull TimeKeeper timeMethod;
 
-    public TimedPin(String marker, String level, Vec3 position, Integer colour, Boolean persistent, Boolean showDistance, Boolean disappearWhenOutOfBounds, Boolean showBackground, @NonNull TimeKeeper timeKeeper)
+    public TimedPin(String marker, String level, Vec3 position, Integer colour, EntrySettings settings, @NonNull TimeKeeper timeKeeper)
     {
-        super(marker, level, position, colour, persistent, showDistance, disappearWhenOutOfBounds, showBackground);
+        super(marker, level, position, colour, settings);
         this.timeMethod = timeKeeper;
     }
 
