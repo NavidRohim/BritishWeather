@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
@@ -116,7 +117,7 @@ public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
                             .getDecorations()
                             .forEach(d ->
                                     {
-                                        if (saved.type().is(d.getSpriteLocation()))
+                                        if (saved.type().value().equals(saved.type().value()) || saved.type().is(d.getSpriteLocation()))
                                         {
                                             this.addEntry(new MapEntry(pos, d.getSpriteLocation()));
                                         }
