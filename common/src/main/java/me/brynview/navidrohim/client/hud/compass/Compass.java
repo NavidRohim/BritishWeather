@@ -339,6 +339,21 @@ public class Compass
         }
     }
 
+    private void tickAndRenderGroup(GuiGraphicsExtractor guiGraphicsExtractor, AbstractEntryGroup<? extends AbstractEntry> group, LocalPlayer player)
+    {
+        if (group.isBuiltIn() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
+        {
+            return;
+        }
+
+        if (shouldStartTick)
+        {
+            group.startTick(player);
+        }
+
+        group.renderExtra(guiGraphicsExtractor, this);
+        group.getEntries().forEach(groupEntry -> groupEntry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, true));
+    }
     /*
     Draw all entries and entry groups
      */
@@ -350,23 +365,17 @@ public class Compass
         entriesOnRightEdge = 0;
 
         // Draw entries inside of entry groups.
-        Set<AbstractEntryGroup<?>> groupsToCheck = new HashSet<>(Set.copyOf(EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension())));
-        groupsToCheck.addAll(EntryManager.ProviderRegistry.getEntryGroupsInAll());
+        Set<AbstractEntryGroup<?>> groupsToCheck = EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension());
+        Set<AbstractEntryGroup<?>> generalGroups = EntryManager.ProviderRegistry.getEntryGroupsInAll();
+
+        for (AbstractEntryGroup<?> generalGroup : generalGroups)
+        {
+            tickAndRenderGroup(guiGraphicsExtractor, generalGroup, player);
+        }
 
         for (AbstractEntryGroup<?> group : groupsToCheck)
         {
-            if (group.isBuiltIn() && !BritishWeather.getConfig().shouldShowBuiltinObjectives())
-            {
-                continue;
-            }
-
-            if (shouldStartTick)
-            {
-                group.startTick(player);
-            }
-
-            group.renderExtra(guiGraphicsExtractor, this);
-            group.getEntries().forEach(groupEntry -> groupEntry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, true));
+            tickAndRenderGroup(guiGraphicsExtractor, group, player);
         }
 
         // Draw normal entries.

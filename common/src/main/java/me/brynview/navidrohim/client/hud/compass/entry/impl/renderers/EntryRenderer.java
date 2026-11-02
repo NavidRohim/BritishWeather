@@ -102,14 +102,14 @@ public class EntryRenderer<T extends AbstractEntry>
     public void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, boolean calculate)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
-        if (!owner.shouldRender() || getRenderState() == RenderState.NONE)
-        {
-            return;
-        }
-
         if (calculate)
         {
             calculateState(compass);
+        }
+
+        if (!owner.shouldRender() || getRenderState() == RenderState.NONE)
+        {
+            return;
         }
 
         if (shouldStartTick)
