@@ -11,12 +11,11 @@ public class PinRenderer extends EntryRenderer<PinEntry>
     }
 
     @Override
-    protected boolean drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)
+    protected void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)
     {
         if (owner.getSettings().shouldShowBackground())
         {
             super.drawBackground(guiGraphicsExtractor, colour, x, y, markerWidth);
         }
-        return this.owner.getSettings().shouldShowShadow();
     }
 }

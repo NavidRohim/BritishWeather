@@ -11,13 +11,13 @@ public class ClientKeybinds
 
     public static final KeyMapping ZOOM_MODIFIER = new KeyMapping(
             "br.keybind.zoom_modifier",
-            InputConstants.KEY_LSHIFT,
+            InputConstants.KEY_RALT,
             CATEGORY
     );
 
     public static final KeyMapping DEBUG_ON_PRESS = new KeyMapping(
             "br.keybind.debug",
-            InputConstants.KEY_COMMA,
+            InputConstants.KEY_EQUALS,
             CATEGORY
     );
 
@@ -39,6 +39,12 @@ public class ClientKeybinds
             CATEGORY
     );
 
+    public static final KeyMapping FIND = new KeyMapping(
+            "br.keybind.find_pin",
+            InputConstants.KEY_X,
+            CATEGORY
+    );
+
     public static final KeyMapping EDIT = new KeyMapping(
             "br.keybind.edit_pin",
             InputConstants.KEY_B,
@@ -47,7 +53,7 @@ public class ClientKeybinds
 
     public static final KeyMapping SNAP_TO_NEAREST = new KeyMapping(
             "br.keybind.snap_nearest",
-            InputConstants.KEYCODE_UP,
+            InputConstants.KEY_UP,
             CATEGORY
     );
 }

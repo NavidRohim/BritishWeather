@@ -3,12 +3,17 @@ package me.brynview.navidrohim.client;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.JMWaypointGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.MapEntryGroup;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.VehicleEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.DeathPin;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.TimedPin;
+import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 public class ClientCommon
@@ -29,6 +34,17 @@ public class ClientCommon
         EntryManager.addPinCodec(DeathPin.PIN_ID, DeathPin.CODEC);
     }
 
+    public static void initNativeEntryGroups()
+    {
+        EntryManager.addEntryGroup(new MapEntryGroup(Level.OVERWORLD));
+        EntryManager.addEntryGroup(new VehicleEntryGroup(null));
+
+        if (Services.PLATFORM.isModLoaded(Constants.JM_MOD_ID))
+        {
+            EntryManager.addEntryGroup(new JMWaypointGroup(null));
+        }
+    }
+
     public static ClientWeatherManager getWeatherManager()
     {
         return WEATHER_MANAGER;
@@ -45,14 +61,14 @@ public class ClientCommon
     public static void joinServerEvent()
     {
         ClientCommon.WEATHER_MANAGER.reset();
-        EntryManager.ProviderRegistry.clear();
+        EntryManager.clear();
         EntryManager.load();
     }
 
     public static void leaveServerEvent()
     {
         EntryManager.save();
-        EntryManager.ProviderRegistry.clear();
+        EntryManager.clear();
     }
 
 }

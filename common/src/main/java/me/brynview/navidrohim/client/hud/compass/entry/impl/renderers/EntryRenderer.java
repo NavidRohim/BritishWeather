@@ -30,6 +30,7 @@ public class EntryRenderer<T extends AbstractEntry>
     protected int screenX;
     protected int screenYRow;
     private float distanceFromHeading;
+    public float angleFromHeading;
 
     protected RenderState renderState;
     protected final T owner;
@@ -47,15 +48,15 @@ public class EntryRenderer<T extends AbstractEntry>
     {
         RenderState state = RenderState.NORMAL;
 
-        float angle = (float) MathHelper.angleFromPos(owner.getPosition(), mc.player.position());
-        screenX = compass.util.getAngleX(angle, owner.getSettings().shouldDisappearWhenOOB());
+        angleFromHeading = (float) MathHelper.angleFromPos(owner.getPosition(), mc.player.position());
+        screenX = compass.util.getAngleX(angleFromHeading, owner.getSettings().shouldDisappearWhenOOB());
         screenYRow = 0;
 
         boolean isHighlightable = compass.util.isXHighlightable(screenX) && !owner.isBuiltIn();
 
         owner.isOnLeftEdge = screenX == compass.leftX;
         owner.isOnRightEdge = screenX == compass.rightX;
-        distanceFromHeading = Math.abs(Mth.wrapDegrees(compass.yawInt - angle));
+        distanceFromHeading = Math.abs(Mth.wrapDegrees(compass.yawInt - angleFromHeading));
 
         if (isHighlightable)
         {
@@ -181,19 +182,17 @@ public class EntryRenderer<T extends AbstractEntry>
         int renderX = compass.util.centerWidthAroundX(markerWidth, screenX);
         int renderY = compass.util.getYRowOnCompass(screenYRow - 1) - 1;
 
-        boolean shouldDrawShadow = drawBackground(guiGraphicsExtractor, colour, renderX, renderY, markerWidth);
-        guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, colour, shouldDrawShadow);
+        drawBackground(guiGraphicsExtractor, colour, renderX, renderY, markerWidth);
+        guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, colour, owner.getSettings().shouldShowShadow());
     }
 
-    protected boolean drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)
+    protected void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)
     {
         if (renderState == RenderState.FOCUSED && BritishWeather.getConfig().shouldShowPinBackground() && owner.getSettings().shouldShowBackground())
         {
             guiGraphicsExtractor.fill(x - 2, y - 2, x + markerWidth + 2, y + mc.font.lineHeight, owner.highlightBgColour);
             guiGraphicsExtractor.outline(x - 3, y - 3, markerWidth + 5, mc.font.lineHeight + 4, colour);
-            return false;
         }
-        return true;
     }
 
     protected void drawDistance(GuiGraphicsExtractor guiGraphicsExtractor, int colour)

@@ -33,7 +33,7 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
 {
     private static final int SPRITE_SIZE = 10;
 
-    private TextureAtlas atlas;
+    private final @NotNull TextureAtlas atlas;
     private String displayDepth = "";
     private BlockPos pos = BlockPos.ZERO;
     private @Nullable Entity currentlyRiddenVehicle = null;
@@ -46,9 +46,9 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
 
     public final class VehicleEntry extends AbstractEntry
     {
-        public final class VehicleRenderer extends EntryRenderer
+        public final class VehicleRenderer extends EntryRenderer<VehicleEntry>
         {
-            public VehicleRenderer(AbstractEntry owner)
+            public VehicleRenderer(VehicleEntry owner)
             {
                 super(owner);
             }

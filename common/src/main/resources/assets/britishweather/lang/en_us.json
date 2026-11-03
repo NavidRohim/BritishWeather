@@ -54,6 +54,8 @@
   "br.keybind.create_pin": "Create pin (use with SCP)",
   "br.keybind.zoom_modifier": "Zoom modifier (scroll)",
   "br.keybind.snap_nearest": "Snap to nearest pin",
+  "br.keybind.find_pin": "Search for pin (use with SCP)",
+  "br.keybind.edit_pin": "Edit pin (use with SCP while looking at pin)",
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
   "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline.",

@@ -9,6 +9,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.client.screen.PinManageScreen;
+import me.brynview.navidrohim.client.screen.SearchPin;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
@@ -223,13 +224,13 @@ public class Compass
         drawBackground(guiGraphics, mc);
 
         // Check if the entry HUD key is pressed.
-        boolean shouldShowNormalHud = !ClientKeybinds.ENTRY_HUD_KEY.isDown() && !isDummy;
+        boolean shouldShowNormalHud = !(ClientKeybinds.ENTRY_HUD_KEY.isDown() || mc.gui.screen() instanceof SearchPin) && !isDummy;
         if (shouldShowNormalHud)
         {
             // Will be true on the first render pass after entry HUD disappears.
             if (!shouldStartTick)
             {
-                EntryManager.ProviderRegistry.stopTickAll(player);
+                EntryManager.stopTickAll(player);
             }
 
             // Draw all living entities
@@ -365,8 +366,8 @@ public class Compass
         entriesOnRightEdge = 0;
 
         // Draw entries inside of entry groups.
-        Set<AbstractEntryGroup<?>> groupsToCheck = EntryManager.ProviderRegistry.getEntryGroupsInDimension(player.level().dimension());
-        Set<AbstractEntryGroup<?>> generalGroups = EntryManager.ProviderRegistry.getEntryGroupsInAll();
+        Set<AbstractEntryGroup<?>> groupsToCheck = EntryManager.getEntryGroupsInDimension(player.level().dimension());
+        Set<AbstractEntryGroup<?>> generalGroups = EntryManager.getEntryGroupsInAll();
 
         for (AbstractEntryGroup<?> generalGroup : generalGroups)
         {
@@ -379,7 +380,7 @@ public class Compass
         }
 
         // Draw normal entries.
-        for (AbstractEntry entry : EntryManager.ProviderRegistry.getEntriesInDimension(player.level().dimension()))
+        for (AbstractEntry entry : EntryManager.getEntriesInDimension(player.level().dimension()))
         {
             entry.getRenderer().calculateState(this);
             float key = Math.abs(entry.getRenderer().getDistanceFromHeading());
@@ -434,12 +435,14 @@ public class Compass
             else if (ClientKeybinds.CREATE.isDown())
             {
                 mc.setScreenAndShow(new PinManageScreen(mc.player, null));
-            }
-            else if (highlightedEntry != null)
+            } else if (ClientKeybinds.FIND.isDown())
+            {
+                mc.setScreenAndShow(new SearchPin());
+            } else if (highlightedEntry != null)
             {
                 if (ClientKeybinds.DELETION.isDown())
                 {
-                    EntryManager.ProviderRegistry.removeEntry(this.highlightedEntry);
+                    EntryManager.removeEntry(this.highlightedEntry);
                     this.highlightedEntry = null;
                     currentHeldKey = ClientKeybinds.DELETION;
                 } else if (ClientKeybinds.DEBUG_ON_PRESS.isDown())
@@ -464,8 +467,7 @@ public class Compass
         @Nullable AbstractEntry closest = getClosestEntry();
         if (closest != null)
         {
-            double angleFromEntry = MathHelper.angleFromPos(closest.getPosition(), mc.player.position());
-            mc.player.setYRot((float) angleFromEntry);
+            mc.player.setYRot(closest.getRenderer().angleFromHeading);
         }
     }
 
@@ -501,19 +503,19 @@ public class Compass
 
     public static void addEntry(AbstractEntry provider)
     {
-        EntryManager.ProviderRegistry.addEntry(provider);
+        EntryManager.addEntry(provider);
     }
 
     public static Collection<? extends AbstractEntry> getEntries()
     {
-        return EntryManager.ProviderRegistry.getAllEntries();
+        return EntryManager.getAllEntries();
     }
 
     public static void tick(@NotNull LocalPlayer player)
     {
         Compass compass = getInstance();
 
-        EntryManager.ProviderRegistry.tick(player);
+        EntryManager.tick(player);
         compass.tick();
     }
 }

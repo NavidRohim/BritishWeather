@@ -7,6 +7,7 @@ import me.brynview.navidrohim.client.particle.HailParticle;
 import me.brynview.navidrohim.client.particle.ModParticles;
 import me.brynview.navidrohim.common.WeatherUpdatePacket;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -29,7 +30,6 @@ public class FabricMainClient implements ClientModInitializer
         // Reset weather manager upon joining server
         ClientPlayConnectionEvents.DISCONNECT.register((_, _) -> ClientCommon.leaveServerEvent());
         ClientPlayConnectionEvents.JOIN.register((_, _, _) -> ClientCommon.joinServerEvent());
-
         // Client packet registry
         ClientPlayNetworking.registerGlobalReceiver(WeatherUpdatePacket.TYPE, ((payload, _) ->
                 ClientCommon.getWeatherManager().setWeather(payload.condition())));
@@ -40,10 +40,12 @@ public class FabricMainClient implements ClientModInitializer
             LocalPlayer player = Minecraft.getInstance().player;
             ClientCommon.tickClient(player);
         });
+        ClientLifecycleEvents.CLIENT_STARTED.register((_) -> ClientCommon.initNativeEntryGroups());
 
         initKeybinds();
         ClientCommon.init();
     }
+
 
     private HudElement compassHudLayer()
     {
@@ -69,6 +71,7 @@ public class FabricMainClient implements ClientModInitializer
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.DELETION);
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.CREATE);
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.EDIT);
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.FIND);
 
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.SNAP_TO_NEAREST);
     }
