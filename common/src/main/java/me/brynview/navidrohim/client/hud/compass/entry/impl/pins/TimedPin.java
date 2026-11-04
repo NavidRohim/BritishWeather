@@ -25,7 +25,7 @@ public class TimedPin extends PinEntry
                     Vec3.CODEC.fieldOf("position").forGetter(PinEntry::getPosition),
                     Codec.INT.fieldOf("colour").forGetter(PinEntry::getHighlightColor),
                     EntrySettings.CODEC.fieldOf("settings").forGetter(PinEntry::getSettings),
-                    TrackedJourney.CODEC.optionalFieldOf("tracked", TrackedJourney.empty()).forGetter(PinEntry::getJourney),
+                    TrackedJourney.CODEC.optionalFieldOf("tracked", TrackedJourney.none()).forGetter(PinEntry::getJourney),
                     TimeKeeper.CODEC.fieldOf("timeKeeper").forGetter(TimedPin::getTimeMethod)
             ).apply(instance, TimedPin::new)
     );

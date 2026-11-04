@@ -233,11 +233,11 @@ public class PinManageScreen extends Screen
 
         if (expiryTime == 0)
         {
-            Compass.addEntry(new PinEntry(getMarker(), level, pinPosition, getHighlightColor(), settings, TrackedJourney.empty()));
+            Compass.addEntry(new PinEntry(getMarker(), level, pinPosition, getHighlightColor(), settings, TrackedJourney.empty())); // no
         } else
         {
             TimeKeeper chosenMethod = timeMethod.createTimeMethod(selectedTimeUnit, expiryTime);
-            Compass.addEntry(new TimedPin(getMarker(), level, pinPosition, getHighlightColor(), settings, TrackedJourney.empty(), chosenMethod));
+            Compass.addEntry(new TimedPin(getMarker(), level, pinPosition, getHighlightColor(), settings, TrackedJourney.empty(), chosenMethod)); // no
         }
     }
 

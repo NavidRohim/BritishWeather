@@ -76,4 +76,9 @@ public class TrackedJourney
     {
         return new TrackedJourney(false, Vec3.ZERO, Vec3.ZERO);
     }
+
+    public static TrackedJourney none()
+    {
+        return new TrackedJourney(true, null, null);
+    }
 }

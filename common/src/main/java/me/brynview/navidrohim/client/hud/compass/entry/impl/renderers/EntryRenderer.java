@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.renderers;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -215,7 +216,7 @@ public class EntryRenderer<T extends AbstractEntry>
 
     public void drawProgress(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow, int progress)
     {
-        String displayable = progress + progress >= 100 ? "% (reached)" : "%";
+        String displayable = progress + (progress >= 100 ? "% (reached)" : "%");
         guiGraphicsExtractor.text(mc.font, displayable, x, compass.util.getYRowOnCompass(yRow), renderColourForState);
     }
 

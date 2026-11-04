@@ -32,7 +32,7 @@ public final class DeathPin extends TimedPin
                     Vec3.CODEC.fieldOf("position").forGetter(PinEntry::getPosition),
                     Codec.INT.fieldOf("colour").forGetter(PinEntry::getHighlightColor),
                     EntrySettings.CODEC.fieldOf("settings").forGetter(PinEntry::getSettings),
-                    TrackedJourney.CODEC.optionalFieldOf("tracked", TrackedJourney.empty()).forGetter(PinEntry::getJourney),
+                    TrackedJourney.CODEC.optionalFieldOf("tracked", TrackedJourney.none()).forGetter(PinEntry::getJourney),
                     TimeKeeper.CODEC.fieldOf("timeKeeper").forGetter(TimedPin::getTimeMethod)
             ).apply(instance, DeathPin::new)
     );
@@ -46,7 +46,7 @@ public final class DeathPin extends TimedPin
      */
     public DeathPin(Vec3 position, String level)
     {
-        super(SKULL, level, position, ColorHelper.RED, EntrySettings.defaults().setShowDistance(true), TrackedJourney.empty(), new GameTime(TimeUnit.MINUTES, 30));
+        super(SKULL, level, position, ColorHelper.RED, EntrySettings.defaults().setShowDistance(true), TrackedJourney.empty(), new GameTime(TimeUnit.MINUTES, 30)); // no
         this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
         this.renderer = new CharEntryRenderer(this);
     }

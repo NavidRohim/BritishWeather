@@ -569,7 +569,7 @@ public class Compass
 
     public static void cleanupAndReset()
     {
-        EntryManager.save();
+        //EntryManager.save();
         EntryManager.clear();
 
         Compass compass = getInstance();
