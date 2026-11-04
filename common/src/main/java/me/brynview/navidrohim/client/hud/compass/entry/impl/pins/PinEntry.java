@@ -59,7 +59,6 @@ public class PinEntry extends AbstractEntry
     @Override
     public boolean isTracked()
     {
-        Constants.LOG.info(this.trackedJourney.toString());
         return this.trackedJourney.tracked;
     }
 
@@ -69,8 +68,6 @@ public class PinEntry extends AbstractEntry
         this.trackedJourney.tracked = true;
         this.trackedJourney.setStartPosition(position);
         this.trackedJourney.setEndPosition(this.getPosition());
-
-        Constants.LOG.info(this.getMarker());
     }
 
     @Override
