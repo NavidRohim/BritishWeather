@@ -72,6 +72,7 @@ public class FabricMainClient implements ClientModInitializer
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.CREATE);
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.EDIT);
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.FIND);
+        KeyMappingHelper.registerKeyMapping(ClientKeybinds.TRACK);
 
         KeyMappingHelper.registerKeyMapping(ClientKeybinds.SNAP_TO_NEAREST);
     }

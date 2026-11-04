@@ -51,6 +51,12 @@ public class ClientKeybinds
             CATEGORY
     );
 
+    public static final KeyMapping TRACK = new KeyMapping(
+            "br.keybind.track_pin",
+            InputConstants.KEY_MINUS,
+            CATEGORY
+    );
+
     public static final KeyMapping SNAP_TO_NEAREST = new KeyMapping(
             "br.keybind.snap_nearest",
             InputConstants.KEY_UP,

@@ -11,6 +11,7 @@ import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.TimedPin;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
@@ -60,6 +61,9 @@ public class PinManageScreen extends Screen
     private static final String DUMMY_DISTANCE_MARKER = "0m -";
     private static final int DUMMY_MARKER_WIDTH_HALF = 11;
 
+    private static final Component pressAnyToExit = Component.translatable("br.pin_creation_screen.press_any_to_exit");
+    private static final Component title = Component.literal("Pin manager");
+
     private static final Tooltip colourDropperTooltip = Tooltip.create(Component.translatable("br.pin_creation_screen.colour_picker.tooltip"));
     private static final Tooltip shouldShowDistSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_show_dist.selected.tooltip"));
     private static final Tooltip shouldShowDistUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_show_dist.unselected.tooltip"));
@@ -81,7 +85,6 @@ public class PinManageScreen extends Screen
     private boolean showBackground = EntrySettings.SHOW_BACKGROUND_DEFAULT;
     private boolean showShadow = EntrySettings.SHOW_SHADOWS_DEFAULT;
 
-    Component pressAnyToExit = Component.translatable("br.pin_creation_screen.press_any_to_exit");
     GpuBuffer pixelBuffer;
     RenderTarget mainRenderTarget;
     CommandEncoder encoder;
@@ -104,7 +107,7 @@ public class PinManageScreen extends Screen
 
     public PinManageScreen(@NotNull LocalPlayer player, @Nullable PinEntry editablePin)
     {
-        super(Component.empty());
+        super(title);
         this.pinPosition = player.position();
         this.level = GeneralUtils.getDimensionFromPlayer(player);
         this.pin = editablePin;
@@ -230,11 +233,11 @@ public class PinManageScreen extends Screen
 
         if (expiryTime == 0)
         {
-            Compass.addEntry(new PinEntry(getMarker(), level, pinPosition, getHighlightColor(), settings));
+            Compass.addEntry(new PinEntry(getMarker(), level, pinPosition, getHighlightColor(), settings, TrackedJourney.empty()));
         } else
         {
             TimeKeeper chosenMethod = timeMethod.createTimeMethod(selectedTimeUnit, expiryTime);
-            Compass.addEntry(new TimedPin(getMarker(), level, pinPosition, getHighlightColor(), settings, chosenMethod));
+            Compass.addEntry(new TimedPin(getMarker(), level, pinPosition, getHighlightColor(), settings, TrackedJourney.empty(), chosenMethod));
         }
     }
 

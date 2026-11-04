@@ -4,8 +4,8 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
-import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.PinRenderer;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.Vec3;
@@ -19,14 +19,18 @@ public class PinEntry extends AbstractEntry
                     Codec.STRING.fieldOf("level").forGetter(PinEntry::getLevel),
                     Vec3.CODEC.fieldOf("position").forGetter(PinEntry::getPosition),
                     Codec.INT.fieldOf("colour").forGetter(PinEntry::getHighlightColor),
-                    EntrySettings.CODEC.fieldOf("settings").forGetter(PinEntry::getSettings)
+                    EntrySettings.CODEC.fieldOf("settings").forGetter(PinEntry::getSettings),
+                    TrackedJourney.CODEC.optionalFieldOf("tracked", TrackedJourney.empty()).forGetter(PinEntry::getJourney)
             ).apply(instance, PinEntry::new)
     );
 
-    public PinEntry(String marker, String level, Vec3 position, Integer colour, EntrySettings settings)
+    public TrackedJourney trackedJourney;
+
+    public PinEntry(String marker, String level, Vec3 position, Integer colour, EntrySettings settings, TrackedJourney tracked)
     {
         super(position, level, marker, colour, settings);
-        this.renderer = new PinRenderer(this);
+        this.trackedJourney = tracked;
+        this.renderer = new EntryRenderer<>(this);
     }
 
     @Override
@@ -43,5 +47,31 @@ public class PinEntry extends AbstractEntry
     public boolean canBeEdited()
     {
         return true;
+    }
+
+    @Override
+    public boolean isTracked()
+    {
+        return this.trackedJourney.tracked;
+    }
+
+    @Override
+    public void track(Vec3 position)
+    {
+        this.trackedJourney.tracked = true;
+        this.trackedJourney.setStartPosition(position);
+        this.trackedJourney.setEndPosition(this.getPosition());
+
+    }
+
+    @Override
+    public void untrack()
+    {
+        this.trackedJourney.reset();
+    }
+
+    public TrackedJourney getJourney()
+    {
+        return trackedJourney;
     }
 }

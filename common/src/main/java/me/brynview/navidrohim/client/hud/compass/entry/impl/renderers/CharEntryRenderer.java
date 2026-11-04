@@ -20,19 +20,19 @@ public class CharEntryRenderer extends EntryRenderer<AbstractEntry>
     }
 
     @Override
-    protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
+    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow)
     {
-        int renderX = compass.util.centerWidthAroundX(charWidth, screenX);
-        int renderY = compass.util.getYRowOnCompass(screenYRow - 1) - 1;
+        int renderX = compass.util.centerWidthAroundX(charWidth, x);
+        int renderY = compass.util.getYRowOnCompass(yRow) - 1;
 
         boolean shadow = true;
-        if (renderState == RenderState.FOCUSED && BritishWeather.getConfig().shouldShowPinBackground())
+        if (shouldTakePriority() && BritishWeather.getConfig().shouldShowPinBackground())
         {
             shadow = false;
             guiGraphicsExtractor.fill(renderX - 2, renderY - 2, renderX + charWidth + 2, renderY + mc.font.lineHeight, owner.highlightBgColour);
-            guiGraphicsExtractor.outline(renderX - 3, renderY - 3, charWidth + 5, mc.font.lineHeight + 4, colour);
+            guiGraphicsExtractor.outline(renderX - 3, renderY - 3, charWidth + 5, mc.font.lineHeight + 4, renderColourForState);
         }
 
-        guiGraphicsExtractor.text(mc.font, charSeq, renderX, renderY, colour, shadow);
+        guiGraphicsExtractor.text(mc.font, charSeq, renderX, renderY, renderColourForState, shadow);
     }
 }

@@ -54,17 +54,17 @@ public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
             }
 
             @Override
-            protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
+            public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow)
             {
                 TextureAtlasSprite sprite = atlas.getSprite(decoId);
-                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, sprite, screenX - 4, compass.util.getYRowOnCompass(screenYRow) - 1, 8, 8);
+                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, sprite, x - 4, compass.util.getYRowOnCompass(yRow) - 1, 8, 8);
             }
 
             @Override
-            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
+            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
             {
-                drawMarker(guiGraphicsExtractor, 0);
-                drawDistance(guiGraphicsExtractor, colour);
+                drawMarker(guiGraphicsExtractor, screenX, screenYRow);
+                drawDistance(guiGraphicsExtractor);
             }
 
             @Override

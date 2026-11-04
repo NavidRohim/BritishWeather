@@ -124,8 +124,7 @@ public class Compass
 
     // Text used for compass decorations
     private static final int ZOOM_ALERT_DURATION = 40;
-    public static final int ENTRIES_ALLOWED_ON_SIDE = 7;
-    public static final int HIGHLIGHT_BOUNDS = 7;
+    private static final int HIGHLIGHT_BOUNDS = 7;
 
     private static Compass INSTANCE;
 
@@ -163,6 +162,8 @@ public class Compass
     public int entriesOnRightEdge = 0;
 
     private final TreeMap<Float, AbstractEntry> renderMap = new TreeMap<>(Comparator.reverseOrder());
+
+    private @Nullable PinEntry trackedPin;
     private @Nullable AbstractEntry highlightedEntry;
 
     private int zoomAlertTick = 0;
@@ -224,7 +225,7 @@ public class Compass
         drawBackground(guiGraphics, mc);
 
         // Check if the entry HUD key is pressed.
-        boolean shouldShowNormalHud = !(ClientKeybinds.ENTRY_HUD_KEY.isDown() || mc.gui.screen() instanceof SearchPin) && !isDummy;
+        boolean shouldShowNormalHud = !(ClientKeybinds.ENTRY_HUD_KEY.isDown() || currentScreen instanceof SearchPin) && !isDummy;
         if (shouldShowNormalHud)
         {
             // Will be true on the first render pass after entry HUD disappears.
@@ -246,29 +247,42 @@ public class Compass
             drawCardinal(guiGraphics, 270, EAST);
 
             // Render current heading in degrees if config allows
-            if (BritishWeather.getConfig().shouldRenderHeading())
-            {
-                String friendlyDeg = util.getActualDegreesFromYaw(); // Number from 0 to 360
-                guiGraphics.text(mc.font, friendlyDeg, util.centerStringAroundX(friendlyDeg, this.centerX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false);
-            }
+            drawHeading(guiGraphics);
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
+            if (trackedPin != null)
+            {
+                int progressPercentage = trackedPin.getJourney().getProgressFromStart(player.position());
+
+                trackedPin.getRenderer().drawMarker(guiGraphics, rightContentX, -1, false);
+                trackedPin.getRenderer().drawProgress(guiGraphics, rightContentX, 1, progressPercentage);
+
+                if (progressPercentage > 100)
+                {
+                    trackedPin.untrack();
+                    this.trackedPin = null;
+                }
+            }
+
             shouldStartTick = true;
         } else
         {
             // Draw entry groups and entries.
             drawZoomLevelEffects(guiGraphics, ColorHelper.WHITE);
-            if (!isDummy)
-            {
-                drawEntries(guiGraphics, player);
-            }
-
+            drawEntries(guiGraphics, player);
             shouldStartTick = false;
         }
 
-        // Draw compass heading. 2 is the width of COMPASS_HEADING
-        //FontHelper.draw(mc, guiGraphics, COMPASS_HEADING, this.centerX - 2, this.y, ColorHelper.CENTER_COLOR, false);
         guiGraphics.verticalLine(centerX, y - 1, y + 7, ColorHelper.CENTER_COLOR);
+    }
+
+    private void drawHeading(GuiGraphicsExtractor guiGraphics)
+    {
+        if (BritishWeather.getConfig().shouldRenderHeading())
+        {
+            String friendlyDeg = util.getActualDegreesFromYaw(); // Number from 0 to 360
+            guiGraphics.text(mc.font, friendlyDeg, util.centerStringAroundX(friendlyDeg, this.centerX), util.getYRowOnCompass(1), ColorHelper.CENTER_COLOR, false);
+        }
     }
 
     private void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc)
@@ -383,7 +397,7 @@ public class Compass
         for (AbstractEntry entry : EntryManager.getEntriesInDimension(player.level().dimension()))
         {
             entry.getRenderer().calculateState(this);
-            float key = Math.abs(entry.getRenderer().getDistanceFromHeading());
+            float key = Math.abs(entry.getRenderer().distanceFromHeading);
             this.renderMap.put(key, entry);
         }
 
@@ -438,6 +452,20 @@ public class Compass
             } else if (ClientKeybinds.FIND.isDown())
             {
                 mc.setScreenAndShow(new SearchPin());
+            } else if ( ClientKeybinds.TRACK.isDown() ) {
+                if (highlightedEntry instanceof PinEntry pin)
+                {
+                    if (pin.isTracked())
+                    {
+                        setTrackedPin(null);
+                    } else {
+                        setTrackedPin(pin);
+                    }
+                } else {
+                    setTrackedPin(null);
+                }
+
+                currentHeldKey = ClientKeybinds.TRACK;
             } else if (highlightedEntry != null)
             {
                 if (ClientKeybinds.DELETION.isDown())
@@ -455,9 +483,12 @@ public class Compass
                         mc.setScreenAndShow(new PinManageScreen(mc.player, pin));
                     }
                     currentHeldKey = ClientKeybinds.EDIT;
+
                 } else {
                     currentHeldKey = null;
                 }
+            } else {
+                currentHeldKey = null;
             }
         }
     }
@@ -471,6 +502,21 @@ public class Compass
         }
     }
 
+    public void setTrackedPin(@Nullable PinEntry pin)
+    {
+        if (trackedPin != null)
+        {
+            trackedPin.untrack();
+        }
+
+        this.trackedPin = pin;
+
+        if (trackedPin != null && !pin.isTracked())
+        {
+            pin.track(mc.player.position());
+        }
+    }
+
     private @Nullable AbstractEntry getClosestEntry()
     {
         Map.Entry<Float, AbstractEntry> lowerEntry = renderMap.lowerEntry(4f);
@@ -481,6 +527,13 @@ public class Compass
 
         return lowerEntry.getValue();
     }
+
+    public @Nullable PinEntry getTrackedPin()
+    {
+        return trackedPin;
+    }
+
+
 
     // Static methods
 
@@ -506,16 +559,29 @@ public class Compass
         EntryManager.addEntry(provider);
     }
 
-    public static Collection<? extends AbstractEntry> getEntries()
-    {
-        return EntryManager.getAllEntries();
-    }
-
     public static void tick(@NotNull LocalPlayer player)
     {
         Compass compass = getInstance();
 
         EntryManager.tick(player);
         compass.tick();
+    }
+
+    public static void cleanupAndReset()
+    {
+        EntryManager.save();
+        EntryManager.clear();
+
+        Compass compass = getInstance();
+
+        compass.highlightedEntry = null;
+        compass.trackedPin = null;
+        compass.currentHeldKey = null;
+    }
+
+    public static void prepareAndLoad()
+    {
+        EntryManager.clear();
+        EntryManager.load();
     }
 }

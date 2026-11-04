@@ -40,7 +40,6 @@
   "br.config.category.compass.shouldShowPinBackground": "Should show pin background",
   "br.config.category.compass.shouldShowPinBackground.description": "Shows a background behind the pin name. This can improve readability but may not look as nice.",
 
-  "br.config.no_config": "YACL is not installed!",
   "death.attack.hail_damage": "%1$s was made into holey cheese by hail. Perhaps wear a helmet?",
 
   "br.command.brweather.message": "Weather is currently %s in %s",
@@ -55,7 +54,8 @@
   "br.keybind.zoom_modifier": "Zoom modifier (scroll)",
   "br.keybind.snap_nearest": "Snap to nearest pin",
   "br.keybind.find_pin": "Search for pin (use with SCP)",
-  "br.keybind.edit_pin": "Edit pin (use with SCP while looking at pin)",
+  "br.keybind.edit_pin": "Edit pin (use with SCP)",
+  "br.keybind.track_pin": "Track pin (use with SCP)",
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
   "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline.",
@@ -70,7 +70,9 @@
   "br.pin_creation_screen.show_shadow.tooltip": "Show shadow",
   "br.pin_creation_screen.show_shadow.unselected.tooltip": "No shadow",
   "br.pin_creation_screen.colour_picker.tooltip": "Pick colour from game window.",
+  "br.pin_creation_screen.press_any_to_exit": "Press any key to exit colour picker. Click to select colour.",
 
-  "br.pin_creation_screen.press_any_to_exit": "Press any key to exit colour picker. Click to select colour."
+  "br.no_config_screen.no_config": "YACL is not installed!",
 
+  "br.search_screen.pin_search.narration": "Pin search box"
 }

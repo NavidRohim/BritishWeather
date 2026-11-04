@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.CharEntryRenderer;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.time.GameTime;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -31,6 +32,7 @@ public final class DeathPin extends TimedPin
                     Vec3.CODEC.fieldOf("position").forGetter(PinEntry::getPosition),
                     Codec.INT.fieldOf("colour").forGetter(PinEntry::getHighlightColor),
                     EntrySettings.CODEC.fieldOf("settings").forGetter(PinEntry::getSettings),
+                    TrackedJourney.CODEC.optionalFieldOf("tracked", TrackedJourney.empty()).forGetter(PinEntry::getJourney),
                     TimeKeeper.CODEC.fieldOf("timeKeeper").forGetter(TimedPin::getTimeMethod)
             ).apply(instance, DeathPin::new)
     );
@@ -44,14 +46,14 @@ public final class DeathPin extends TimedPin
      */
     public DeathPin(Vec3 position, String level)
     {
-        super(SKULL, level, position, ColorHelper.RED, EntrySettings.defaults().setShowDistance(true), new GameTime(TimeUnit.MINUTES, 30));
+        super(SKULL, level, position, ColorHelper.RED, EntrySettings.defaults().setShowDistance(true), TrackedJourney.empty(), new GameTime(TimeUnit.MINUTES, 30));
         this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
         this.renderer = new CharEntryRenderer(this);
     }
 
-    public DeathPin(String marker, String level, Vec3 position, Integer colour, EntrySettings settings, TimeKeeper timeKeeper)
+    public DeathPin(String marker, String level, Vec3 position, Integer colour, EntrySettings settings, TrackedJourney trackedJourney, TimeKeeper timeKeeper)
     {
-        super(marker, level, position, colour, settings, timeKeeper);
+        super(marker, level, position, colour, settings, trackedJourney, timeKeeper);
         this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
         this.renderer = new CharEntryRenderer(this);
     }

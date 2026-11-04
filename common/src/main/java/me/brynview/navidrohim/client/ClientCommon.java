@@ -61,14 +61,12 @@ public class ClientCommon
     public static void joinServerEvent()
     {
         ClientCommon.WEATHER_MANAGER.reset();
-        EntryManager.clear();
-        EntryManager.load();
+        Compass.prepareAndLoad();
     }
 
     public static void leaveServerEvent()
     {
-        EntryManager.save();
-        EntryManager.clear();
+        Compass.cleanupAndReset();
     }
 
 }

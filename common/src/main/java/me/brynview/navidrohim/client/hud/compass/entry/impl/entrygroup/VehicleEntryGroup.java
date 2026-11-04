@@ -54,25 +54,25 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
             }
 
             @Override
-            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, int renderColour)
+            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
             {
-                drawMarker(guiGraphicsExtractor, renderColour);
-                drawSpeed(guiGraphicsExtractor, renderColour);
+                drawMarker(guiGraphicsExtractor, screenX, screenYRow);
+                drawSpeed(guiGraphicsExtractor);
             }
 
             @Override
-            protected void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
+            public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow)
             {
                 TextureAtlasSprite vehicleSprite = atlas.getSprite(texture);
-                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, vehicleSprite, screenX - 5, compass.util.getYOnRowCentered(screenYRow, SPRITE_SIZE), SPRITE_SIZE, SPRITE_SIZE);
+                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, vehicleSprite, x - 5, compass.util.getYOnRowCentered(yRow, SPRITE_SIZE), SPRITE_SIZE, SPRITE_SIZE);
             }
 
-            private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
+            private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor)
             {
                 String displayableSpeed = getDisplayableSpeed(vehicle, false);
                 if (!displayableSpeed.equals("0m/s"))
                 {
-                    guiGraphicsExtractor.text(mc.font, displayableSpeed, compass.util.centerStringAroundX(displayableSpeed, screenX), compass.util.getYRowOnCompass(screenYRow + 1), colour);
+                    guiGraphicsExtractor.text(mc.font, displayableSpeed, compass.util.centerStringAroundX(displayableSpeed, screenX), compass.util.getYRowOnCompass(screenYRow + 1), renderColourForState);
                 }
             }
         }

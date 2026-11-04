@@ -30,7 +30,7 @@ public class JMWaypointGroup extends AbstractEntryGroup<JMWaypointGroup.Waypoint
             }
 
             @Override
-            protected void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor, int colour)
+            public void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor)
             {
                 guiGraphicsExtractor.blit(
                         GuiPipeline.OPAQUE_TEXTURED_BACKGROUND,

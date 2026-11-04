@@ -6,6 +6,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.NotImplementedException;
 
 /*
  * DefaultEntry should be extended but is not abstract as it does have functionality by itself.
@@ -114,6 +115,21 @@ public abstract class AbstractEntry implements TickableAndExpirable
     @Override
     public String toString()
     {
-        return getMarker();
+        return getId();
+    }
+
+    public boolean isTracked()
+    {
+        return false;
+    }
+
+    public void track(Vec3 position)
+    {
+        throw new NotImplementedException();
+    }
+
+    public void untrack()
+    {
+        throw new NotImplementedException();
     }
 }

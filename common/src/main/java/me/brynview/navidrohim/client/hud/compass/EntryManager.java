@@ -88,6 +88,8 @@ public class EntryManager
                 return;
             }
 
+            String trackedPinId = nbtR.getStringOr("tracked", "none");
+
             for (Map.Entry<String, Tag> stringTagEntry : nbtR.entrySet())
             {
                 String codecName = stringTagEntry.getKey().split("\\.")[0];
@@ -95,9 +97,17 @@ public class EntryManager
 
                 if (codecForPin != null)
                 {
-                    Compass.addEntry(codecForPin.parse(NbtOps.INSTANCE, stringTagEntry.getValue()).getOrThrow());
+                    PinEntry decodecPin = codecForPin.parse(NbtOps.INSTANCE, stringTagEntry.getValue()).getOrThrow();
+                    Compass.addEntry(decodecPin);
+
+                    if (trackedPinId.equals(decodecPin.getId()) && decodecPin.isTracked())
+                    {
+                        Compass.getInstance().setTrackedPin(decodecPin);
+                    }
                 }
             }
+
+
 
         } catch (NullPointerException exc)
         {
@@ -115,8 +125,17 @@ public class EntryManager
     {
         // Current entries
 
-        Collection<? extends AbstractEntry> defaultEntries = Compass.getEntries();
+        Collection<? extends AbstractEntry> defaultEntries = EntryManager.getAllEntries();
+
         CompoundTag master = new CompoundTag();
+        Compass compass = Compass.getInstance();
+
+        if (compass.getTrackedPin() != null)
+        {
+            master.putString("tracked", compass.getTrackedPin().getId());
+        } else {
+            master.putString("tracked", "none");
+        }
 
         for (AbstractEntry entry : defaultEntries)
         {

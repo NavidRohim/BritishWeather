@@ -9,15 +9,14 @@ import org.jspecify.annotations.NonNull;
 
 public class NoConfigScreen extends Screen
 {
-
-    private Component errorComponent;
-    private Screen parentScreen;
+    private static final Component title = Component.literal("No config");
+    private static final Component errorComponent = Component.translatable("br.no_config_screen.no_config");
+    private final Screen parentScreen;
 
     protected NoConfigScreen(Minecraft minecraft, Font font, Screen parent)
     {
-        super(minecraft, font, Component.empty());
+        super(minecraft, font, title);
         this.parentScreen = parent;
-        this.errorComponent = Component.translatable("br.config.no_config");
     }
 
     @Override
