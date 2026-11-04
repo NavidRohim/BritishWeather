@@ -5,6 +5,7 @@ import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.ColorHelper;
+import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -122,7 +123,7 @@ public class EntryRenderer<T extends AbstractEntry>
             calculateState(compass);
         }
 
-        if (!owner.shouldRender() || getRenderState() == RenderState.NONE)
+        if (!owner.shouldRender() || getRenderState() == RenderState.NONE || compass.util.isXOutOfBounds(screenX))
         {
             return;
         }
@@ -130,11 +131,6 @@ public class EntryRenderer<T extends AbstractEntry>
         if (shouldStartTick)
         {
             owner.startTick(player);
-        }
-
-        if (compass.util.isXOutOfBounds(screenX))
-        {
-            return;
         }
 
         drawRawEntry(guiGraphicsExtractor);
@@ -217,7 +213,7 @@ public class EntryRenderer<T extends AbstractEntry>
     public void drawProgress(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow, int progress)
     {
         String displayable = progress + (progress >= 100 ? "% (reached)" : "%");
-        guiGraphicsExtractor.text(mc.font, displayable, x, compass.util.getYRowOnCompass(yRow), renderColourForState);
+        guiGraphicsExtractor.text(mc.font, displayable, x + 5, compass.util.getYRowOnCompass(yRow), renderColourForState);
     }
 
     public void drawDistance(GuiGraphicsExtractor guiGraphicsExtractor)

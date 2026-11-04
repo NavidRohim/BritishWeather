@@ -181,6 +181,7 @@ public class Compass
     private static final FormattedCharSequence EAST = GeneralUtils.getFormattedChar('E');
     private static final FormattedCharSequence WEST = GeneralUtils.getFormattedChar('W');
 
+    // TODO: Make this return a render context object. Which will be these member variables plus the methods in RenderUtils. New instance created every render tick
     private void calculate(int scaledWidth, int y, float partialTicks, @NotNull LocalPlayer player)
     {
         this.partialTicks = partialTicks;
@@ -250,7 +251,7 @@ public class Compass
             drawHeading(guiGraphics);
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
-            if (trackedPin != null)
+            if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
             {
                 int progressPercentage = trackedPin.getJourney().getProgressFromStart(player.position());
 
@@ -269,7 +270,10 @@ public class Compass
         {
             // Draw entry groups and entries.
             drawZoomLevelEffects(guiGraphics, ColorHelper.WHITE);
-            drawEntries(guiGraphics, player);
+            if (!isDummy)
+            {
+                drawEntries(guiGraphics, player);
+            }
             shouldStartTick = false;
         }
 
