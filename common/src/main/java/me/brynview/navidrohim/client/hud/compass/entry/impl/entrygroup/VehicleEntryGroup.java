@@ -54,25 +54,25 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
             }
 
             @Override
-            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
+            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
             {
-                drawMarker(guiGraphicsExtractor, screenX, screenYRow);
-                drawSpeed(guiGraphicsExtractor);
+                drawMarker(guiGraphicsExtractor, context, screenX, screenYRow);
+                drawSpeed(guiGraphicsExtractor, context);
             }
 
             @Override
-            public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow)
+            public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, int yRow)
             {
                 TextureAtlasSprite vehicleSprite = atlas.getSprite(texture);
-                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, vehicleSprite, x - 5, compass.util.getYOnRowCentered(yRow, SPRITE_SIZE), SPRITE_SIZE, SPRITE_SIZE);
+                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, vehicleSprite, x - 5, context.getYOnRowCentered(yRow, SPRITE_SIZE), SPRITE_SIZE, SPRITE_SIZE);
             }
 
-            private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor)
+            private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)
             {
                 String displayableSpeed = getDisplayableSpeed(vehicle, false);
                 if (!displayableSpeed.equals("0m/s"))
                 {
-                    guiGraphicsExtractor.text(mc.font, displayableSpeed, compass.util.centerStringAroundX(displayableSpeed, screenX), compass.util.getYRowOnCompass(screenYRow + 1), renderColourForState);
+                    guiGraphicsExtractor.text(mc.font, displayableSpeed, compassRenderContext.centerStringAroundX(displayableSpeed, screenX), compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColourForState);
                 }
             }
         }
@@ -131,12 +131,12 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
     }
 
     @Override
-    public void renderExtra(GuiGraphicsExtractor guiGraphicsExtractor, Compass compass)
+    public void renderExtra(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
     {
         if (currentlyRiddenVehicle != null)
         {
             String rawSpeedString = "Speed: " + getDisplayableSpeed(currentlyRiddenVehicle, !(currentlyRiddenVehicle instanceof AbstractHorse));
-            guiGraphicsExtractor.text(compass.mc.font, rawSpeedString, compass.rightContentX, compass.util.getYRowOnCompass(0), ColorHelper.WHITE);
+            guiGraphicsExtractor.text(context.font, rawSpeedString, context.rightContentX, context.getYRowOnCompass(0), ColorHelper.WHITE);
 
             if (currentlyRiddenVehicle instanceof AbstractBoat boat)
             {
@@ -146,7 +146,7 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
                     displayDepth = "Depth: " + depth + "m";
                 }
 
-                guiGraphicsExtractor.text(compass.mc.font, displayDepth, compass.rightContentX, compass.util.getYRowOnCompass(1), ColorHelper.WHITE);
+                guiGraphicsExtractor.text(context.font, displayDepth, context.rightContentX, context.getYRowOnCompass(1), ColorHelper.WHITE);
                 pos = boat.blockPosition();
             }
         }

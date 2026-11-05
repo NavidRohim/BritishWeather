@@ -404,7 +404,7 @@ public class PinManageScreen extends Screen
 
         compass.render(guiGraphicsExtractor, scaledWidth, BritishWeather.getConfig().getCompassY(), true);
 
-        int entryDummyX = compass.centerX;
+        int entryDummyX = compass.context.centerX;
         int colour = getHighlightColor();
 
         String marker = getMarker();
@@ -413,7 +413,7 @@ public class PinManageScreen extends Screen
 
         // 11 represents half the text width of the dummy distance marker. Because the distance marker in this case is final (won't change) there is no reason to calculate the width every time.
         int dummyXWidthHalf = entryDummyX - DUMMY_MARKER_WIDTH_HALF;
-        int backgroundY = compass.util.getYRowOnCompass(-1) - 1;
+        int backgroundY = compass.context.getYRowOnCompass(-1) - 1;
 
         if (showBackground)
         {
@@ -424,11 +424,11 @@ public class PinManageScreen extends Screen
 
         if (showDistance)
         {
-            guiGraphicsExtractor.text(mc.font, DUMMY_DISTANCE_MARKER, dummyXWidthHalf, compass.util.getYRowOnCompass(1), colour, showShadow);
+            guiGraphicsExtractor.text(mc.font, DUMMY_DISTANCE_MARKER, dummyXWidthHalf, compass.context.getYRowOnCompass(1), colour, showShadow);
         }
 
         guiGraphicsExtractor.text(mc.font, marker, textCorner, backgroundY, colour, showShadow);
-        guiGraphicsExtractor.verticalLine(entryDummyX, compass.util.getYRowOnCompass(0) - 2, compass.util.getYRowOnCompass(0.5), colour);
+        guiGraphicsExtractor.verticalLine(entryDummyX, compass.context.getYRowOnCompass(0) - 2, compass.context.getYRowOnCompass(0.5), colour);
     }
 
     private final class IntegerEditBox extends AbstractIntegerEditBox

@@ -48,7 +48,7 @@ public abstract class AbstractEntryGroup<T extends AbstractEntry> implements Tic
         entries.clear();
     }
 
-    public void renderExtra(GuiGraphicsExtractor guiGraphicsExtractor, Compass compass) {}
+    public void renderExtra(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context) {}
 
     @Override
     public void endTick(@NotNull LocalPlayer player)

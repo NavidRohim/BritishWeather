@@ -2,6 +2,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
 import journeymap.api.v2.client.IClientAPI;
 import journeymap.api.v2.common.waypoint.Waypoint;
+import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
@@ -30,12 +31,12 @@ public class JMWaypointGroup extends AbstractEntryGroup<JMWaypointGroup.Waypoint
             }
 
             @Override
-            public void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor)
+            public void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)
             {
                 guiGraphicsExtractor.blit(
                         GuiPipeline.OPAQUE_TEXTURED_BACKGROUND,
                         waypoint.getIconIdentifier(),
-                        compass.util.centerWidthAroundX(12, screenX), compass.util.getYRowOnCompass(screenYRow) - 2,
+                        compassRenderContext.centerWidthAroundX(12, screenX), compassRenderContext.getYRowOnCompass(screenYRow) - 2,
                         0, 0,
                         12, 12,
                         12, 12,

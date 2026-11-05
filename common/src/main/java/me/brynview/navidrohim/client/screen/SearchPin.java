@@ -9,7 +9,6 @@ import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
-import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
@@ -21,7 +20,9 @@ public class SearchPin extends Screen
     private static final Component PIN_SEARCH_NARRATION = Component.translatable("br.search_screen.pin_search.narration");
     private static final String UNKNOWN = " ?";
 
+    private EditBox searchBox;
     private @Nullable AbstractEntry entry;
+    private String hint = "";
 
     public SearchPin()
     {
@@ -33,13 +34,14 @@ public class SearchPin extends Screen
     {
         LinearLayout master = LinearLayout.horizontal().spacing(3);
 
-        EditBox pinNameBox = new EditBox(minecraft.font, PIN_SEARCH_NARRATION);
-        pinNameBox.setResponder(str -> this.typedString(str, pinNameBox));
+        searchBox = new EditBox(minecraft.font, PIN_SEARCH_NARRATION);
+
+        searchBox.setResponder(this::typedString);
 
         Button doneButton = Button.builder(Component.literal("E"), (_) -> this.closeWithResult()).bounds(0, 0, 20, 20).build();
 
         master.addChild(doneButton);
-        master.addChild(pinNameBox);
+        master.addChild(searchBox);
 
         master.arrangeElements();
         FrameLayout.centerInRectangle(master, getRectangle());
@@ -57,9 +59,8 @@ public class SearchPin extends Screen
         return super.keyPressed(event);
     }
 
-    private void typedString(String string, EditBox pinNameBox)
+    private void typedString(String string)
     {
-        pinNameBox.setSuggestion(UNKNOWN);
         entry = null;
 
         if (string.isEmpty())
@@ -77,17 +78,15 @@ public class SearchPin extends Screen
             }
         }
 
-        String hint = " " + String.join(", ", entryHashMap.keySet());
-
-        if (hint.length() >= 30)
-        {
-            hint = hint.substring(0, 30);
-        }
-
-        pinNameBox.setSuggestion(hint);
+        hint = String.join(", ", entryHashMap.keySet());
 
         Optional<Map.Entry<String, AbstractEntry>> possibleEntry = entryHashMap.entrySet().stream().findFirst();
-        possibleEntry.ifPresent(stringAbstractEntryEntry -> entry = stringAbstractEntryEntry.getValue());
+        possibleEntry.ifPresent(stringAbstractEntryEntry ->
+        {
+            entry = stringAbstractEntryEntry.getValue();
+            searchBox.setSuggestion(" " + stringAbstractEntryEntry.getKey());
+        });
+
     }
 
     private void closeWithResult()
@@ -102,6 +101,13 @@ public class SearchPin extends Screen
     @Override
     public void extractBackground(@NonNull GuiGraphicsExtractor graphics)
     {
+    }
+
+    @Override
+    public void extractRenderState(@NonNull GuiGraphicsExtractor graphics)
+    {
+        super.extractRenderState(graphics);
+        graphics.centeredText(minecraft.font, hint, searchBox.getX() + searchBox.getWidth() / 2, searchBox.getY() + searchBox.getHeight() + 5, -8355712);
     }
 
     @Override

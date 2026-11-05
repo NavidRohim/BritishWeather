@@ -1,11 +1,9 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.renderers;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.ColorHelper;
-import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -49,20 +47,20 @@ public class EntryRenderer<T extends AbstractEntry>
         this.compass = Compass.getInstance();
     }
 
-    public void calculateState(Compass compass)
+    public void calculateState(Compass compass, Compass.CompassRenderContext context)
     {
         RenderState state = RenderState.NORMAL;
         renderColourForState = owner.defaultColour;
 
         boolean shouldDisappear = owner.getSettings().shouldDisappearWhenOOB() && !owner.isTracked();
 
-        angleFromHeading = (float) MathHelper.angleFromPos(owner.getPosition(), mc.player.position());
-        distanceFromHeading = Math.abs(Mth.wrapDegrees(compass.yawInt - angleFromHeading));
-        screenX = compass.util.getAngleX(angleFromHeading, shouldDisappear);
+        angleFromHeading = (float) MathHelper.angleFromPos(owner.getPosition(), context.player.position());
+        distanceFromHeading = Math.abs(Mth.wrapDegrees(context.yaw - angleFromHeading));
+        screenX = context.getAngleX(angleFromHeading, shouldDisappear);
 
-        boolean isHighlightable = compass.util.isXHighlightable(screenX) && !owner.isBuiltIn();
-        owner.isOnLeftEdge = screenX == compass.leftX;
-        owner.isOnRightEdge = screenX == compass.rightX;
+        boolean isHighlightable = context.isXHighlightable(screenX) && !owner.isBuiltIn();
+        owner.isOnLeftEdge = screenX == compass.context.leftX;
+        owner.isOnRightEdge = screenX == compass.context.rightX;
 
         if (owner.isTracked())
         {
@@ -92,11 +90,6 @@ public class EntryRenderer<T extends AbstractEntry>
         }
     }
 
-    public int getRenderColour()
-    {
-        return renderColourForState;
-    }
-
     public RenderState getRenderState()
     {
         return renderState;
@@ -115,15 +108,16 @@ public class EntryRenderer<T extends AbstractEntry>
     {
         return getRenderState() == RenderState.TRACKED || getRenderState() == RenderState.FOCUSED;
     }
-    public void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, boolean calculate)
+
+    public void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, boolean calculate, Compass.CompassRenderContext context)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
         if (calculate)
         {
-            calculateState(compass);
+            calculateState(compass, context);
         }
 
-        if (!owner.shouldRender() || getRenderState() == RenderState.NONE || compass.util.isXOutOfBounds(screenX))
+        if (!owner.shouldRender() || getRenderState() == RenderState.NONE || context.isXOutOfBounds(screenX))
         {
             return;
         }
@@ -133,13 +127,12 @@ public class EntryRenderer<T extends AbstractEntry>
             owner.startTick(player);
         }
 
-        drawRawEntry(guiGraphicsExtractor);
+        drawRawEntry(guiGraphicsExtractor, context);
     }
 
-    protected @NonNull String getDisplayableMarker(AbstractEntry entryRenderable, boolean smart, int compassX)
+    protected @NonNull String getDisplayableMarker(AbstractEntry entryRenderable, Compass.CompassRenderContext context, boolean smart, int compassX)
     {
         // Draw entry marker
-        Compass compass = Compass.getInstance();
         String displayableMarker;
         String marker = entryRenderable.getMarker();
         int markerLength = marker.length();
@@ -152,14 +145,14 @@ public class EntryRenderer<T extends AbstractEntry>
             displayableMarker = marker.substring(0, MINIMUM_MARKER_LENGTH) + "...";
         } else
         {
-            int compassHalf = compass.compassScaledWidthHalf;
+            int compassHalf = context.compassScaledWidthHalf;
 
             float markerLengthWithoutBeginning = markerLength - MINIMUM_MARKER_LENGTH;
-            int distFromCenter = compassHalf - Math.abs(compass.centerX - compassX);
+            int distFromCenter = compassHalf - Math.abs(context.centerX - compassX);
             float perCharAmt = markerLengthWithoutBeginning / compassHalf;
             int showLen = (int) Math.clamp(Math.min(MINIMUM_MARKER_LENGTH + (perCharAmt * distFromCenter), markerLength), MINIMUM_MARKER_LENGTH, 255);
 
-            if (compassX < compass.centerX) // left side
+            if (compassX < context.centerX) // left side
             {
                 String baseMarker = marker.substring(0, MINIMUM_MARKER_LENGTH);
                 String displayableRest = marker.substring(MINIMUM_MARKER_LENGTH, showLen);
@@ -174,31 +167,31 @@ public class EntryRenderer<T extends AbstractEntry>
         return displayableMarker;
     }
 
-    public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
+    public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
     {
-        drawMarker(guiGraphicsExtractor, screenX, screenYRow - 1);
+        drawMarker(guiGraphicsExtractor, context, screenX, screenYRow - 1);
         if (shouldTakePriority())
         {
-            drawDecoration(guiGraphicsExtractor);
+            drawDecoration(guiGraphicsExtractor, context);
         }
-        drawDistance(guiGraphicsExtractor);
+        drawDistance(guiGraphicsExtractor, context);
     }
 
-    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow, boolean centerAroundX)
+    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow, boolean centerAroundX)
     {
-        String displayableMarker = getDisplayableMarker(owner, owner.getMarker().length() <= 15, screenX);
+        String displayableMarker = getDisplayableMarker(owner, compassRenderContext, owner.getMarker().length() <= 15, screenX);
 
         int markerWidth = mc.font.width(displayableMarker);
-        int renderX = centerAroundX ? compass.util.centerWidthAroundX(markerWidth, x) : x + 5;
-        int renderY = compass.util.getYRowOnCompass(yRow) - 1;
+        int renderX = centerAroundX ? compassRenderContext.centerWidthAroundX(markerWidth, x) : x + 5;
+        int renderY = compassRenderContext.getYRowOnCompass(yRow) - 1;
 
         drawBackground(guiGraphicsExtractor, renderColourForState, renderX, renderY, markerWidth);
         guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, renderColourForState, owner.getSettings().shouldShowShadow());
     }
 
-    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow)
+    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, int yRow)
     {
-        drawMarker(guiGraphicsExtractor, x, yRow, true);
+        drawMarker(guiGraphicsExtractor, context, x, yRow, true);
     }
 
     public void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)
@@ -210,16 +203,16 @@ public class EntryRenderer<T extends AbstractEntry>
         }
     }
 
-    public void drawProgress(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow, int progress)
+    public void drawProgress(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow, int progress)
     {
         String displayable = progress + (progress >= 100 ? "% (reached)" : "%");
-        guiGraphicsExtractor.text(mc.font, displayable, x + 5, compass.util.getYRowOnCompass(yRow), renderColourForState);
+        guiGraphicsExtractor.text(mc.font, displayable, x + 5, compassRenderContext.getYRowOnCompass(yRow), renderColourForState);
     }
 
-    public void drawDistance(GuiGraphicsExtractor guiGraphicsExtractor)
+    public void drawDistance(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)
     {
         // If in view, render the distance from entry and if the player should go up or down to reach it
-        Vec3 playerPos = mc.player.position();
+        Vec3 playerPos = compassRenderContext.player.position();
         if (owner.getSettings().shouldShowDistance() && (shouldTakePriority() || owner.isBuiltIn()))
         {
             int distance = MathHelper.getDistance(owner.getPosition(), playerPos);
@@ -243,14 +236,14 @@ public class EntryRenderer<T extends AbstractEntry>
 
             // Draw distance from entry
             String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition()) + suffix;
-            int xOnCompass = compass.util.centerStringAroundX(distanceFromObjective, screenX);
+            int xOnCompass = compassRenderContext.centerStringAroundX(distanceFromObjective, screenX);
 
-            guiGraphicsExtractor.text(mc.font, distanceFromObjective, xOnCompass, compass.util.getYRowOnCompass(screenYRow + 1), renderColourForState, owner.getSettings().shouldShowShadow());
+            guiGraphicsExtractor.text(mc.font, distanceFromObjective, xOnCompass, compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColourForState, owner.getSettings().shouldShowShadow());
         }
     }
 
-    public void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor)
+    public void drawDecoration(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)
     {
-        guiGraphicsExtractor.verticalLine(screenX, compass.util.getYRowOnCompass(screenYRow) - 2, compass.util.getYRowOnCompass(screenYRow + 0.5), renderColourForState);
+        guiGraphicsExtractor.verticalLine(screenX, compassRenderContext.getYRowOnCompass(screenYRow) - 2, compassRenderContext.getYRowOnCompass(screenYRow + 0.5), renderColourForState);
     }
 }

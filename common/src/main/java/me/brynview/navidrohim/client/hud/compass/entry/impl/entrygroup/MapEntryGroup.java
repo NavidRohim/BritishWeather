@@ -1,6 +1,6 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
-import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
@@ -54,24 +54,19 @@ public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
             }
 
             @Override
-            public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, int x, int yRow)
+            public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, int yRow)
             {
                 TextureAtlasSprite sprite = atlas.getSprite(decoId);
-                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, sprite, x - 4, compass.util.getYRowOnCompass(yRow) - 1, 8, 8);
+                guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, sprite, x - 4, context.getYRowOnCompass(yRow) - 1, 8, 8);
             }
 
             @Override
-            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor)
+            public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
             {
-                drawMarker(guiGraphicsExtractor, screenX, screenYRow);
-                drawDistance(guiGraphicsExtractor);
+                drawMarker(guiGraphicsExtractor, context, screenX, screenYRow);
+                drawDistance(guiGraphicsExtractor, context);
             }
 
-            @Override
-            public int getRenderColour()
-            {
-                return ColorHelper.WHITE;
-            }
         }
 
         private final Identifier decoId;
