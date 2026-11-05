@@ -74,5 +74,8 @@
 
   "br.no_config_screen.no_config": "YACL is not installed!",
 
-  "br.search_screen.pin_search.narration": "Pin search box"
+  "br.search_screen.pin_search.narration": "Pin search box",
+
+  "br.dialogue.marker_reached": "Reached pin",
+  "br.dialogue.tracking_marker": "Tracking \"%s\""
 }

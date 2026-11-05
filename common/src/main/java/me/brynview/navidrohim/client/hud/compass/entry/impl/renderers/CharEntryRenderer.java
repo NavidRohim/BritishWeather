@@ -30,10 +30,10 @@ public class CharEntryRenderer extends EntryRenderer<AbstractEntry>
         if (shouldTakePriority() && BritishWeather.getConfig().shouldShowPinBackground())
         {
             shadow = false;
-            guiGraphicsExtractor.fill(renderX - 2, renderY - 2, renderX + charWidth + 2, renderY + mc.font.lineHeight, owner.highlightBgColour);
-            guiGraphicsExtractor.outline(renderX - 3, renderY - 3, charWidth + 5, mc.font.lineHeight + 4, renderColourForState);
+            guiGraphicsExtractor.fill(renderX - 2, renderY - 2, renderX + charWidth + 2, renderY + mc.font.lineHeight, backgroundColour);
+            guiGraphicsExtractor.outline(renderX - 3, renderY - 3, charWidth + 5, mc.font.lineHeight + 4, renderColour);
         }
 
-        guiGraphicsExtractor.text(mc.font, charSeq, renderX, renderY, renderColourForState, shadow);
+        guiGraphicsExtractor.text(mc.font, charSeq, renderX, renderY, renderColour, shadow);
     }
 }

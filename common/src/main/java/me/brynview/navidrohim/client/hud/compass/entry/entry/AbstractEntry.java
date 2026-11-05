@@ -23,7 +23,7 @@ public abstract class AbstractEntry implements TickableAndExpirable
     protected EntryRenderer<?> renderer;
     protected EntrySettings settings;
 
-    protected int highlightColor;
+    public int highlightColor;
     public int highlightBgColour;
     public int defaultColour;
 

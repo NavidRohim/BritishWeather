@@ -7,6 +7,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
+import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.Vec3;

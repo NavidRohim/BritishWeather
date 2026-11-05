@@ -72,7 +72,7 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
                 String displayableSpeed = getDisplayableSpeed(vehicle, false);
                 if (!displayableSpeed.equals("0m/s"))
                 {
-                    guiGraphicsExtractor.text(mc.font, displayableSpeed, compassRenderContext.centerStringAroundX(displayableSpeed, screenX), compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColourForState);
+                    guiGraphicsExtractor.text(mc.font, displayableSpeed, compassRenderContext.centerStringAroundX(displayableSpeed, screenX), compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColour);
                 }
             }
         }

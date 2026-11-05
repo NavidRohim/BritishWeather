@@ -2,6 +2,9 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.util.MathHelper;
+import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
 
 public class TrackedJourney
@@ -50,19 +53,35 @@ public class TrackedJourney
         this.end = end;
     }
 
-    public int getProgressFromStart(Vec3 position)
-    {
+    public double getJourneyProgress(Vec3 current) {
+        if (MathHelper.getDistance(current, end) == 0)
+        {
+            return 100.0;
+        }
+
         double dx = end.x - start.x;
         double dz = end.z - start.z;
 
-        double totalLengthSquared = dx * dx + dz * dz;
+        double lengthSquared = dx * dx + dz * dz;
 
-        if (totalLengthSquared == 0) {
-            return 0;
+        double px = current.x - start.x;
+        double pz = current.z - start.z;
+
+        double dot = px * dx + pz * dz;
+
+        double progress = dot / lengthSquared;
+
+        if (progress > 1.0) {
+            progress = Math.max(0.0, 2.0 - progress);
+        } else {
+            if  (progress < 0.0)
+            {
+                return -1;
+            }
+            progress = Math.max(0.0, progress);
         }
 
-        double progress = ((position.x - start.x) * dx + (position.z - start.z) * dz) / totalLengthSquared;
-        return (int) Math.clamp(progress * 100.0, 0.0, 101.0);
+        return progress * 100.0;
     }
 
     public void reset()

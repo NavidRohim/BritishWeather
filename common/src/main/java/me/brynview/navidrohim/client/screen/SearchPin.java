@@ -18,7 +18,6 @@ import java.util.*;
 public class SearchPin extends Screen
 {
     private static final Component PIN_SEARCH_NARRATION = Component.translatable("br.search_screen.pin_search.narration");
-    private static final String UNKNOWN = " ?";
 
     private EditBox searchBox;
     private @Nullable AbstractEntry entry;

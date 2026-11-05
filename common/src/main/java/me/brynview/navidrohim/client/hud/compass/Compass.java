@@ -19,6 +19,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -43,8 +44,8 @@ public class Compass
         public final float yaw;
 
         // Compass width scaled with the compass size config value
-        private final int compassScaledWidth;
-        public final int compassScaledWidthHalf;
+        private final int compassWidth;
+        public final int compassWidthHalf;
 
         // x coordinate of the compass. Can change due to scaling
         public final int centerX;
@@ -69,24 +70,24 @@ public class Compass
         {
             this.player = player;
             this.font = compass.mc.font;
-            this.compassScaledWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) width); // All these float are dumb
-            this.compassScaledWidthHalf = compassScaledWidth / 2;
+            this.compassWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) width); // All these float are dumb
+            this.compassWidthHalf = compassWidth / 2;
             this.zoom = zoom;
 
             this.partialTicks = partialTick;
             this.centerX = width / 2;
 
-            this.leftX = centerX - compassScaledWidthHalf;
+            this.leftX = centerX - compassWidthHalf;
             this.leftContentX = leftX - 8;
 
-            this.rightX = centerX + compassScaledWidthHalf;
+            this.rightX = centerX + compassWidthHalf;
             this.rightContentX = rightX + 8;
 
             this.y = y;
             this.contentY = y + Constants.LINE_HEIGHT_HALVED;
 
             this.yaw = player.getYRot(partialTicks);
-            this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * compass.displayZoom * 2, compassScaledWidthHalf);
+            this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * compass.displayZoom * 2, compassWidthHalf);
         }
 
         public String getActualDegreesFromYaw()
@@ -106,7 +107,7 @@ public class Compass
 
         public boolean isXOutOfBounds(int x)
         {
-            return x == Integer.MAX_VALUE || x < centerX - compassScaledWidthHalf || x > centerX + compassScaledWidthHalf;
+            return x == Integer.MAX_VALUE || x < centerX - compassWidthHalf || x > centerX + compassWidthHalf;
         }
 
         public boolean isXHighlightable(int x)
@@ -127,22 +128,22 @@ public class Compass
             // angle: float between 0 and 270
             // aDist example: (yaw = 90, angle = 0) aDist = angle - yaw = -90
             float amountOnCompass = BASE_VISIBLE_AMOUNT / zoom;
-            double aDist = Mth.wrapDegrees(angle - yaw) * (compassScaledWidth / amountOnCompass);
+            double aDist = Mth.wrapDegrees(angle - yaw) * (compassWidth / amountOnCompass);
             double csx = centerX + aDist;
 
             // Make sure text is not rendered past the compass bounds
-            if (Math.abs(aDist) < compassScaledWidthHalf)
+            if (Math.abs(aDist) < compassWidthHalf)
             {
                 return Math.toIntExact(Math.round(csx)); // x will be center of the screen. aDist is the offset where to render text
             }
 
             // If element should stay on right edge of compass
-            if (!shouldDisappearWhenOOB && (aDist >= compassScaledWidthHalf))
+            if (!shouldDisappearWhenOOB && (aDist >= compassWidthHalf))
             {
-                return centerX + compassScaledWidthHalf;
-            } else if (!shouldDisappearWhenOOB && aDist <= -compassScaledWidthHalf) // Same but left edge
+                return centerX + compassWidthHalf;
+            } else if (!shouldDisappearWhenOOB && aDist <= -compassWidthHalf) // Same but left edge
             {
-                return centerX - compassScaledWidthHalf;
+                return centerX - compassWidthHalf;
             }
 
             // Return max int to make sure whatever is going out of bounds fucks right off so we don't see it
@@ -153,6 +154,7 @@ public class Compass
 
         public int getYRowOnCompass(double row)
         {
+            // Could this be cached? And if so, would it be faster?
             return (int) (y + (font.lineHeight * row));
         }
 
@@ -171,6 +173,8 @@ public class Compass
     // Text used for compass decorations
     private static final int ZOOM_ALERT_DURATION = 40;
     private static final int HIGHLIGHT_BOUNDS = 7;
+
+    private static final Component REACHED_MARKER = Component.translatable("br.dialogue.marker_reached");
 
     private static Compass INSTANCE;
 
@@ -246,21 +250,6 @@ public class Compass
             drawHeading(guiGraphics, context);
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
-            if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
-            {
-                int progressPercentage = trackedPin.getJourney().getProgressFromStart(player.position());
-
-                trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, -1, false);
-                trackedPin.getRenderer().drawProgress(guiGraphics, context, context.rightContentX, 1, progressPercentage);
-
-                if (progressPercentage > 100)
-                {
-                    trackedPin.untrack();
-                    this.trackedPin = null;
-                }
-            }
-
-            shouldStartTick = true;
         } else
         {
             // Draw entry groups and entries.
@@ -271,6 +260,31 @@ public class Compass
             }
             shouldStartTick = false;
         }
+
+        if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
+        {
+
+            trackedPin.getRenderer().calculateState(this, context);
+            trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, -1, false);
+
+            int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
+            trackedPin.getRenderer().drawProgress(guiGraphics, context, context.rightContentX, 1, progressPercentage);
+
+            if (shouldShowNormalHud)
+            {
+                guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
+            }
+
+            if (progressPercentage > 100)
+            {
+                trackedPin.untrack();
+                this.trackedPin = null;
+
+                player.sendOverlayMessage(REACHED_MARKER);
+            }
+        }
+
+        shouldStartTick = true;
 
         guiGraphics.verticalLine(context.centerX, y - 1, y + 7, ColorHelper.CENTER_COLOR);
     }
@@ -513,6 +527,7 @@ public class Compass
         if (trackedPin != null && !pin.isTracked())
         {
             pin.track(context.player.position());
+            context.player.sendOverlayMessage(Component.translatable("br.dialogue.tracking_marker", pin.getMarker()));
         }
     }
 
