@@ -33,16 +33,16 @@ public abstract class TimeKeeper
                     }
             );
 
+    public long timeLeft()
+    {
+        return 0L;
+    }
+
     public void tick() {}
 
     public boolean isExpired()
     {
         throw new NotImplementedException();
-    }
-
-    public long timeLeft()
-    {
-        return 0L;
     }
 
     /*

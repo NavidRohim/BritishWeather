@@ -5,15 +5,11 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
-import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.JMWaypointGroup;
-import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.MapEntryGroup;
-import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.VehicleEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.time.GameTime;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.time.RealTime;
-import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.*;
@@ -67,7 +63,7 @@ public class EntryManager
         Path nbtPath;
         if (mc.hasSingleplayerServer())
         {
-            nbtPath = Path.of(PATH + "%s.nbt".formatted(mc.getSingleplayerServer().getWorldData().getLevelName().replace(" ", "")));
+            nbtPath = Path.of(PATH + "%s.nbt".formatted(mc.getSingleplayerServer().getWorldData().getLevelName()));
         } else {
             nbtPath = Path.of(PATH + "%s.nbt".formatted(mc.getCurrentServer().ip));
         }
@@ -78,7 +74,7 @@ public class EntryManager
     /*
     Loads the current worlds / servers entry cache.
      */
-    public static void load()
+    public static void loadPins()
     {
         try
         {
@@ -97,31 +93,33 @@ public class EntryManager
 
                 if (codecForPin != null)
                 {
-                    PinEntry decodecPin = codecForPin.parse(NbtOps.INSTANCE, stringTagEntry.getValue()).getOrThrow();
-                    Compass.addEntry(decodecPin);
+                    PinEntry decodedPin = codecForPin.parse(NbtOps.INSTANCE, stringTagEntry.getValue()).getOrThrow();
+                    Compass.addEntry(decodedPin);
 
-                    if (trackedPinId.equals(decodecPin.getId()) && decodecPin.isTracked())
+                    if (trackedPinId.equals(decodedPin.getId()) && decodedPin.isTracked())
                     {
-                        Compass.getInstance().setTrackedPin(decodecPin);
+                        Compass.getInstance().setTrackedPin(decodedPin);
+                    } else if (!trackedPinId.equals(decodedPin.getId()) && decodedPin.isTracked())
+                    {
+                        // Maybe don't reset but set trackedJourney.tracked to `false` and leave other information
+                        Constants.LOG.warn("Pin \"{}\" is marked as tracked, but NBT `tracked` value is not pointing to this pin. Resetting pin tracking information.", decodedPin.getId());
+                        decodedPin.trackedJourney.reset();
                     }
                 }
             }
-
-
-
-        } catch (NullPointerException exc)
+        } catch (NullPointerException | IllegalStateException exc)
         {
             Constants.LOG.error("Corrupted pin. Error: {}", exc.getMessage());
         } catch (IOException exc)
         {
-            exc.printStackTrace();
+            Constants.LOG.error("Could not read pins for {}. Error: {}", getCurrentPath(), exc.getMessage());
         }
     }
 
     /*
     Saves the current entries (ONLY entries, not group entries) to file NBT for current world / server.
      */
-    public static void save()
+    public static void savePins()
     {
         // Current entries
 
@@ -152,7 +150,7 @@ public class EntryManager
         } catch (IOException e)
         {
             // Bad, again
-            e.printStackTrace();
+            Constants.LOG.info("Could not save pins to persistent storage. Error: {}", e.getMessage());
         }
     }
 
@@ -220,7 +218,7 @@ public class EntryManager
     /*
         Adds an entry group
          */
-    public static void addEntryGroup(AbstractEntryGroup group)
+    public static void addEntryGroup(AbstractEntryGroup<?> group)
     {
         PROVIDER_GROUPS.add(group);
         PROVIDER_GROUPS_DIMENSION_SORTED.computeIfAbsent(group.getLevel(), _ -> new HashSet<>()).add(group);

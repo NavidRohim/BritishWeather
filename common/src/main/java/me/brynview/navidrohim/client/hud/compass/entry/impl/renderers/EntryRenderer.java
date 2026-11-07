@@ -178,6 +178,15 @@ public class EntryRenderer<T extends AbstractEntry>
             drawDecoration(guiGraphicsExtractor, context);
         }
         drawDistance(guiGraphicsExtractor, context);
+        drawDebug(guiGraphicsExtractor, context);
+    }
+
+    private void drawDebug(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
+    {
+        if (BritishWeather.getConfig().debug() && shouldTakePriority())
+        {
+            guiGraphicsExtractor.centeredText(context.font, this.owner.debugString(), screenX, context.getYRowOnCompass(2), renderColour);
+        }
     }
 
     public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow, boolean centerAroundX)

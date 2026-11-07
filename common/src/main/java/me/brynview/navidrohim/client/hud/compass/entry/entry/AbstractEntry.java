@@ -118,6 +118,11 @@ public abstract class AbstractEntry implements TickableAndExpirable
         return getId();
     }
 
+    public String debugString()
+    {
+        return "DEBUG: isTracked=%s, id=%s, isSingleton=%s, isPersistent=%s".formatted(isTracked(), getId(), isSingleton(), getSettings().isPersistent());
+    }
+
     public boolean isTracked()
     {
         return false;

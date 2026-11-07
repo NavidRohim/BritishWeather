@@ -1,6 +1,6 @@
-package me.brynview.navidrohim.client.screen.elements;
+package me.brynview.navidrohim.client.screen.elements.impl;
 
-import me.brynview.navidrohim.client.screen.elements.abs.AbstractJMWSButton;
+import me.brynview.navidrohim.client.screen.elements.AbstractJMWSButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;

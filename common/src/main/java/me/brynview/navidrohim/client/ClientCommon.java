@@ -52,7 +52,7 @@ public class ClientCommon
 
     public static void tickClient(@NotNull LocalPlayer player)
     {
-        Compass.tick(player);
+        Compass.getInstance().tick(player);
     }
 
     /*

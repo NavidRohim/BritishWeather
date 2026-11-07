@@ -1,6 +1,6 @@
-package me.brynview.navidrohim.client.screen.elements;
+package me.brynview.navidrohim.client.screen.elements.impl;
 
-import me.brynview.navidrohim.client.screen.elements.abs.AbstractIntegerEditBox;
+import me.brynview.navidrohim.client.screen.elements.AbstractIntegerEditBox;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;

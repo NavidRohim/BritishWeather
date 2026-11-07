@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
-import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.concurrent.TimeUnit;
 
@@ -70,13 +69,5 @@ public class GameTime extends TimeKeeper
     public int getEndTick()
     {
         return endTick;
-    }
-
-    public static GameTime decode(FriendlyByteBuf friendlyByteBuf)
-    {
-        int endTick = friendlyByteBuf.readInt();
-        int lastTick = friendlyByteBuf.readInt();
-
-        return new GameTime(lastTick, endTick);
     }
 }

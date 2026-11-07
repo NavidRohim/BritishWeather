@@ -51,11 +51,6 @@ public class FabricMainClient implements ClientModInitializer
     {
         return (gpu) ->
         {
-            if (!BritishWeather.getConfig().shouldRenderCompass())
-            {
-                return;
-            }
-
             Minecraft mc = Minecraft.getInstance();
             int scaledWidth = mc.getWindow().getGuiScaledWidth();
             Compass.getInstance().render(gpu, scaledWidth, BritishWeather.getConfig().getCompassY(), false);

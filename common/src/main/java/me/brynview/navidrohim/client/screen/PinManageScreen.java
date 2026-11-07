@@ -15,9 +15,9 @@ import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.TimedPin;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
-import me.brynview.navidrohim.client.screen.elements.StyledCheckbox;
-import me.brynview.navidrohim.client.screen.elements.ColourEditBox;
-import me.brynview.navidrohim.client.screen.elements.abs.AbstractIntegerEditBox;
+import me.brynview.navidrohim.client.screen.elements.impl.StyledCheckbox;
+import me.brynview.navidrohim.client.screen.elements.impl.ColourEditBox;
+import me.brynview.navidrohim.client.screen.elements.AbstractIntegerEditBox;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.Minecraft;
@@ -263,7 +263,7 @@ public class PinManageScreen extends Screen
             edit();
         }
 
-        EntryManager.save();
+        EntryManager.savePins();
         this.onClose();
     }
 

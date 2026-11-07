@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.client.screen.elements.abs;
+package me.brynview.navidrohim.client.screen.elements;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;

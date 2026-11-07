@@ -66,4 +66,10 @@ public class TimedPin extends PinEntry
     {
         return timeMethod;
     }
+
+    @Override
+    public String debugString()
+    {
+        return super.debugString() + " timeMethod=%s, timeLeft=%s".formatted(timeMethod.getKey(), timeMethod.timeLeft());
+    }
 }

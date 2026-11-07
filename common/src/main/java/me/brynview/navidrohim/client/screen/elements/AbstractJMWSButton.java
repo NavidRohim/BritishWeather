@@ -1,4 +1,4 @@
-package me.brynview.navidrohim.client.screen.elements.abs;
+package me.brynview.navidrohim.client.screen.elements;
 
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.util.ColorHelper;

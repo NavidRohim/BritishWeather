@@ -44,7 +44,7 @@ public class GeneralUtils
                 .inflate(EXPAND_INFLATE_WITH_FOV_CONST * fov); // inflate so entities don't get cut off from compass
 
         // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
-        return mc.level.getEntitiesOfClass(entityClass, inFrontOfPlayer, (en) -> en != player && en.getBlockY() != player.getBlockY() )
+        return mc.level.getEntitiesOfClass(entityClass, inFrontOfPlayer, (en) -> en != player && !en.getBoundingBox().intersects(normalBB) )
                 .stream()
                 .limit(MAX_ALLOWED_ENTITIES_ON_COMPASS);
     }

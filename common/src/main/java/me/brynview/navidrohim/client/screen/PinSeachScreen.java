@@ -15,7 +15,7 @@ import org.jspecify.annotations.NonNull;
 
 import java.util.*;
 
-public class SearchPin extends Screen
+public class PinSeachScreen extends Screen
 {
     private static final Component PIN_SEARCH_NARRATION = Component.translatable("br.search_screen.pin_search.narration");
 
@@ -23,7 +23,7 @@ public class SearchPin extends Screen
     private @Nullable AbstractEntry entry;
     private String hint = "";
 
-    public SearchPin()
+    public PinSeachScreen()
     {
         super(Component.literal("Search"));
     }
@@ -34,7 +34,6 @@ public class SearchPin extends Screen
         LinearLayout master = LinearLayout.horizontal().spacing(3);
 
         searchBox = new EditBox(minecraft.font, PIN_SEARCH_NARRATION);
-
         searchBox.setResponder(this::typedString);
 
         Button doneButton = Button.builder(Component.literal("E"), (_) -> this.closeWithResult()).bounds(0, 0, 20, 20).build();

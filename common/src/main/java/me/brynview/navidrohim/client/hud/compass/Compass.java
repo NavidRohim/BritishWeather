@@ -9,7 +9,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.client.screen.PinManageScreen;
-import me.brynview.navidrohim.client.screen.SearchPin;
+import me.brynview.navidrohim.client.screen.PinSeachScreen;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
@@ -211,7 +211,7 @@ public class Compass
         final LocalPlayer player = mc.player;
         Screen currentScreen = mc.gui.screen();
 
-        if ((currentScreen instanceof PinManageScreen) && !isDummy || player == null)
+        if ((currentScreen instanceof PinManageScreen) && !isDummy || player == null || !BritishWeather.getConfig().shouldRenderCompass())
         {
             return;
         }
@@ -225,7 +225,7 @@ public class Compass
         drawBackground(guiGraphics, mc);
 
         // Check if the entry HUD key is pressed.
-        boolean shouldShowNormalHud = !(ClientKeybinds.ENTRY_HUD_KEY.isDown() || currentScreen instanceof SearchPin) && !isDummy;
+        boolean shouldShowNormalHud = !(ClientKeybinds.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
         if (shouldShowNormalHud)
         {
             // Will be true on the first render pass after entry HUD disappears.
@@ -263,24 +263,20 @@ public class Compass
 
         if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
         {
-
-            trackedPin.getRenderer().calculateState(this, context);
-            trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, -1, false);
-
-            int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
-            trackedPin.getRenderer().drawProgress(guiGraphics, context, context.rightContentX, 1, progressPercentage);
-
-            if (shouldShowNormalHud)
+            if (trackedPin.hasExpired())
             {
-                guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
-            }
+                trackedPin = null;
+            } else {
+                trackedPin.getRenderer().calculateState(this, context);
+                trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, -1, false);
 
-            if (progressPercentage > 100)
-            {
-                trackedPin.untrack();
-                this.trackedPin = null;
+                int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
+                trackedPin.getRenderer().drawProgress(guiGraphics, context, context.rightContentX, 1, progressPercentage);
 
-                player.sendOverlayMessage(REACHED_MARKER);
+                if (shouldShowNormalHud)
+                {
+                    guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
+                }
             }
         }
 
@@ -446,8 +442,14 @@ public class Compass
         context.player.playSound(ClientCommon.SCROLL, 0.04f, 1.5f);
     }
 
-    private void tick()
+    public void tick(@NotNull LocalPlayer player)
     {
+        if (!BritishWeather.getConfig().shouldRenderCompass())
+        {
+            return;
+        }
+
+        EntryManager.tick(player);
         zoomAlertTick--;
         boolean isPinHudKeyHeld = ClientKeybinds.ENTRY_HUD_KEY.isDown();
 
@@ -464,7 +466,7 @@ public class Compass
                 mc.setScreenAndShow(new PinManageScreen(context.player, null));
             } else if (ClientKeybinds.FIND.isDown())
             {
-                mc.setScreenAndShow(new SearchPin());
+                mc.setScreenAndShow(new PinSeachScreen());
             } else if ( ClientKeybinds.TRACK.isDown() ) {
                 if (highlightedEntry instanceof PinEntry pin)
                 {
@@ -573,14 +575,6 @@ public class Compass
         EntryManager.addEntry(provider);
     }
 
-    public static void tick(@NotNull LocalPlayer player)
-    {
-        Compass compass = getInstance();
-
-        EntryManager.tick(player);
-        compass.tick();
-    }
-
     public static void cleanupAndReset()
     {
         //EntryManager.save();
@@ -596,6 +590,6 @@ public class Compass
     public static void prepareAndLoad()
     {
         EntryManager.clear();
-        EntryManager.load();
+        EntryManager.loadPins();
     }
 }
