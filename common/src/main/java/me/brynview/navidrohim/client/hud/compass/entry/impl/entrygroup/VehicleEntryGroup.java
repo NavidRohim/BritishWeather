@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
@@ -135,8 +136,9 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
     {
         if (currentlyRiddenVehicle != null)
         {
+
             String rawSpeedString = "Speed: " + getDisplayableSpeed(currentlyRiddenVehicle, !(currentlyRiddenVehicle instanceof AbstractHorse));
-            guiGraphicsExtractor.text(context.font, rawSpeedString, context.rightContentX, context.getYRowOnCompass(0), ColorHelper.WHITE);
+            guiGraphicsExtractor.text(context.font, rawSpeedString, context.rightContentX, context.getYRowOnCompassNextAvailable(1), ColorHelper.WHITE);
 
             if (currentlyRiddenVehicle instanceof AbstractBoat boat)
             {
@@ -146,7 +148,7 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
                     displayDepth = "Depth: " + depth + "m";
                 }
 
-                guiGraphicsExtractor.text(context.font, displayDepth, context.rightContentX, context.getYRowOnCompass(1), ColorHelper.WHITE);
+                guiGraphicsExtractor.text(context.font, displayDepth, context.rightContentX, context.getYRowOnCompassNextAvailable(1), ColorHelper.WHITE);
                 pos = boat.blockPosition();
             }
         }
@@ -196,6 +198,6 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
 
         double speedBlocksPerSecond = speedBlocksPerTick * 20;
         // implement delta tracking
-        return (int) speedBlocksPerSecond + "m/s";
+        return speedBlocksPerSecond <= 100D ? (int) speedBlocksPerSecond + "m/s" : "Slow down mate.";
     }
 }

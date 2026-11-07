@@ -15,6 +15,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.*;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.LevelResource;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,7 @@ public class EntryManager
         Path nbtPath;
         if (mc.hasSingleplayerServer())
         {
-            nbtPath = Path.of(PATH + "%s.nbt".formatted(mc.getSingleplayerServer().getWorldData().getLevelName()));
+            nbtPath = Path.of(mc.getSingleplayerServer().getWorldPath(LevelResource.DATA) + "/%s/pins.nbt".formatted(Constants.MOD_ID));
         } else {
             nbtPath = Path.of(PATH + "%s.nbt".formatted(mc.getCurrentServer().ip));
         }

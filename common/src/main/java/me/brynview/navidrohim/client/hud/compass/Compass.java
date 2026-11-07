@@ -56,6 +56,7 @@ public class Compass
         public final int rightX;
         public final int rightContentX;
 
+        private int availableYRow = -1;
         public final int y;
         public final int contentY;
 
@@ -158,9 +159,23 @@ public class Compass
             return (int) (y + (font.lineHeight * row));
         }
 
+        public int getYRowOnCompassNextAvailable(int inc)
+        {
+            int nextAvailableYRow = getAvailableYRow(inc);
+            return getYRowOnCompass(nextAvailableYRow);
+        }
+
         public int getYOnRowCentered(int row, int height)
         {
             return getYRowOnCompass(row) - (height / 4);
+        }
+
+        public int getAvailableYRow(int incrementBy)
+        {
+            int row = availableYRow;
+            availableYRow += incrementBy;
+
+            return row;
         }
 
         public int getXFromPosition(Vec3 position, boolean disappearWhenOutOfBounds)
@@ -173,8 +188,6 @@ public class Compass
     // Text used for compass decorations
     private static final int ZOOM_ALERT_DURATION = 40;
     private static final int HIGHLIGHT_BOUNDS = 7;
-
-    private static final Component REACHED_MARKER = Component.translatable("br.dialogue.marker_reached");
 
     private static Compass INSTANCE;
 
@@ -225,8 +238,28 @@ public class Compass
         drawBackground(guiGraphics, mc);
 
         // Check if the entry HUD key is pressed.
-        boolean shouldShowNormalHud = !(ClientKeybinds.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
-        if (shouldShowNormalHud)
+        boolean compassView = !(ClientKeybinds.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
+
+        if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
+        {
+            if (trackedPin.hasExpired())
+            {
+                trackedPin = null;
+            } else {
+                trackedPin.getRenderer().calculateState(this, context);
+                trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, context.getAvailableYRow(2), false);
+
+                int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
+                trackedPin.getRenderer().drawProgress(guiGraphics, context, context.rightContentX, context.getAvailableYRow(1), progressPercentage);
+
+                if (compassView)
+                {
+                    guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
+                }
+            }
+        }
+
+        if (compassView)
         {
             // Will be true on the first render pass after entry HUD disappears.
             if (!shouldStartTick)
@@ -250,6 +283,7 @@ public class Compass
             drawHeading(guiGraphics, context);
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
+            shouldStartTick = true;
         } else
         {
             // Draw entry groups and entries.
@@ -260,27 +294,6 @@ public class Compass
             }
             shouldStartTick = false;
         }
-
-        if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
-        {
-            if (trackedPin.hasExpired())
-            {
-                trackedPin = null;
-            } else {
-                trackedPin.getRenderer().calculateState(this, context);
-                trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, -1, false);
-
-                int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
-                trackedPin.getRenderer().drawProgress(guiGraphics, context, context.rightContentX, 1, progressPercentage);
-
-                if (shouldShowNormalHud)
-                {
-                    guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
-                }
-            }
-        }
-
-        shouldStartTick = true;
 
         guiGraphics.verticalLine(context.centerX, y - 1, y + 7, ColorHelper.CENTER_COLOR);
     }
@@ -463,10 +476,10 @@ public class Compass
             }
             else if (ClientKeybinds.CREATE.isDown())
             {
-                mc.setScreenAndShow(new PinManageScreen(context.player, null));
+                GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, null));
             } else if (ClientKeybinds.FIND.isDown())
             {
-                mc.setScreenAndShow(new PinSeachScreen());
+                GeneralUtils.setScreenAndShowNoFlicker(new PinSeachScreen());
             } else if ( ClientKeybinds.TRACK.isDown() ) {
                 if (highlightedEntry instanceof PinEntry pin)
                 {
@@ -495,7 +508,7 @@ public class Compass
                 } else if (ClientKeybinds.EDIT.isDown()) {
                     if (highlightedEntry instanceof PinEntry pin && pin.canBeEdited())
                     {
-                        mc.setScreenAndShow(new PinManageScreen(context.player, pin));
+                        GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, pin));
                     }
                     currentHeldKey = ClientKeybinds.EDIT;
 
@@ -548,8 +561,6 @@ public class Compass
     {
         return trackedPin;
     }
-
-
 
     // Static methods
 

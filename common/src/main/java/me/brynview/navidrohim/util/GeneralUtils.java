@@ -6,9 +6,12 @@ import me.brynview.navidrohim.client.hud.compass.Compass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.layouts.LayoutElement;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.profiling.Profiler;
+import net.minecraft.util.profiling.Zone;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.AABB;
@@ -57,5 +60,14 @@ public class GeneralUtils
     public static FormattedCharSequence getFormattedChar(char c)
     {
         return (out) -> out.accept(1, Style.EMPTY, c);
+    }
+
+    public static void setScreenAndShowNoFlicker(Screen screen)
+    {
+        try (Zone ignored = Profiler.get().zone("forcedTick"))
+        {
+            Minecraft mc = Minecraft.getInstance();
+            mc.gui.setScreen(screen);
+        }
     }
 }
