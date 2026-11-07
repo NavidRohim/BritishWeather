@@ -108,7 +108,7 @@ public class Compass
 
         public boolean isXOutOfBounds(int x)
         {
-            return x == Integer.MAX_VALUE || x < centerX - compassWidthHalf || x > centerX + compassWidthHalf;
+            return x == Integer.MAX_VALUE;
         }
 
         public boolean isXHighlightable(int x)
@@ -197,9 +197,6 @@ public class Compass
     public Minecraft mc;
     private KeyMapping currentHeldKey = null;
 
-    public int entriesOnLeftEdge = 0;
-    public int entriesOnRightEdge = 0;
-
     private int zoomAlertTick = 0;
     private int displayZoom = 1;
     public float zoomAmount = 1;
@@ -208,6 +205,7 @@ public class Compass
 
     private @Nullable PinEntry trackedPin;
     private @Nullable AbstractEntry highlightedEntry;
+
     private boolean shouldStartTick = false;
 
     private static final FormattedCharSequence LEFT = GeneralUtils.getFormattedChar('>');
@@ -246,7 +244,7 @@ public class Compass
             {
                 trackedPin = null;
             } else {
-                trackedPin.getRenderer().calculateState(this, context);
+                trackedPin.getRenderer().calculateState(context);
                 trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, context.getAvailableYRow(2), false);
 
                 int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
@@ -389,7 +387,12 @@ public class Compass
         }
 
         group.renderExtra(guiGraphicsExtractor, context);
-        group.getEntries().forEach(groupEntry -> groupEntry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, true, context));
+        group.getEntries().forEach(groupEntry ->
+                {
+                    groupEntry.getRenderer().calculateState(context);
+                    groupEntry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
+                }
+        );
     }
     /*
     Draw all entries and entry groups
@@ -397,9 +400,6 @@ public class Compass
     private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player)
     {
         this.renderMap.clear();
-
-        entriesOnLeftEdge = 0;
-        entriesOnRightEdge = 0;
 
         // Draw entries inside of entry groups.
         Set<AbstractEntryGroup<?>> groupsToCheck = EntryManager.getEntryGroupsInDimension(player.level().dimension());
@@ -418,9 +418,12 @@ public class Compass
         // Draw normal entries.
         for (AbstractEntry entry : EntryManager.getEntriesInDimension(player.level().dimension()))
         {
-            entry.getRenderer().calculateState(this, context);
-            float key = Math.abs(entry.getRenderer().distanceFromHeading);
-            this.renderMap.put(key, entry);
+            EntryRenderer.RenderState calculatedState = entry.getRenderer().calculateState(context);
+            if (calculatedState != EntryRenderer.RenderState.NONE)
+            {
+                float key = Math.abs(entry.getRenderer().distanceFromHeading);
+                this.renderMap.put(key, entry);
+            }
         }
 
         for (@NotNull Iterator<Map.Entry<Float, AbstractEntry>> it = this.renderMap.entrySet().iterator(); it.hasNext(); )
@@ -431,10 +434,12 @@ public class Compass
             if (!it.hasNext() && value.getRenderState() == EntryRenderer.RenderState.HIGHLIGHT)
             {
                 highlightedEntry = value;
+
+                highlightedEntry.getRenderer().renderColour = highlightedEntry.highlightColor;
                 highlightedEntry.getRenderer().setRenderState(EntryRenderer.RenderState.FOCUSED);
             }
 
-            value.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, false, context);
+            value.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
         }
     }
 
@@ -463,6 +468,7 @@ public class Compass
         }
 
         EntryManager.tick(player);
+
         zoomAlertTick--;
         boolean isPinHudKeyHeld = ClientKeybinds.ENTRY_HUD_KEY.isDown();
 

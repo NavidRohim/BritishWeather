@@ -27,9 +27,6 @@ public abstract class AbstractEntry implements TickableAndExpirable
     public int highlightBgColour;
     public int defaultColour;
 
-    public boolean isOnLeftEdge = false;
-    public boolean isOnRightEdge = false;
-
     public AbstractEntry(Vec3 position, String level, String marker, int colour, EntrySettings settings)
     {
         this.settings = settings;

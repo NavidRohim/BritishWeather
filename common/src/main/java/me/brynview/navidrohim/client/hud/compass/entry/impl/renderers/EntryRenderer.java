@@ -16,7 +16,6 @@ import org.jspecify.annotations.NonNull;
 // Might ditch
 public class EntryRenderer<T extends AbstractEntry>
 {
-    public static final int ENTRIES_ALLOWED_ON_SIDE = 7;
     private final static int MINIMUM_MARKER_LENGTH = 4;
 
     public enum RenderState
@@ -48,49 +47,38 @@ public class EntryRenderer<T extends AbstractEntry>
         this.compass = Compass.getInstance();
     }
 
-    public void calculateState(Compass compass, Compass.CompassRenderContext context)
+    public RenderState calculateState(Compass.CompassRenderContext context)
     {
         RenderState state = RenderState.NORMAL;
         renderColour = owner.defaultColour;
         backgroundColour = owner.highlightBgColour;
 
         boolean shouldDisappear = owner.getSettings().shouldDisappearWhenOOB() && !owner.isTracked();
-
         angleFromHeading = (float) MathHelper.angleFromPos(owner.getPosition(), context.player.position());
-        distanceFromHeading = Math.abs(Mth.wrapDegrees(context.yaw - angleFromHeading));
         screenX = context.getAngleX(angleFromHeading, shouldDisappear);
 
+        if (context.isXOutOfBounds(screenX))
+        {
+            setRenderState(RenderState.NONE);
+            return RenderState.NONE;
+        }
+
         boolean isHighlightable = context.isXHighlightable(screenX) && !owner.isBuiltIn();
-        owner.isOnLeftEdge = screenX == compass.context.leftX;
-        owner.isOnRightEdge = screenX == compass.context.rightX;
+        distanceFromHeading = Math.abs(Mth.wrapDegrees(context.yaw - angleFromHeading));
 
         if (owner.isTracked())
         {
-            this.setRenderState(RenderState.TRACKED);
+            state = RenderState.TRACKED;
             renderColour = ColorHelper.OBJECTIVE_MARKER_COLOUR;
             backgroundColour = ColorHelper.getBackgroundColour(renderColour);
-
-            return;
         } else if (isHighlightable)
         {
             state = RenderState.HIGHLIGHT;
-        } else if (screenX == Integer.MAX_VALUE || (owner.isOnLeftEdge && compass.entriesOnLeftEdge >= ENTRIES_ALLOWED_ON_SIDE) || (owner.isOnRightEdge && compass.entriesOnRightEdge >= ENTRIES_ALLOWED_ON_SIDE))
-        {
-            this.setRenderState(RenderState.NONE);
-            return;
         }
 
         this.setRenderState(state);
 
-        if (owner.isOnLeftEdge)
-        {
-            compass.entriesOnLeftEdge++;
-        }
-
-        if (owner.isOnRightEdge)
-        {
-            compass.entriesOnRightEdge++;
-        }
+        return state;
     }
 
     public RenderState getRenderState()
@@ -101,10 +89,6 @@ public class EntryRenderer<T extends AbstractEntry>
     public void setRenderState(RenderState renderState)
     {
         this.renderState = renderState;
-        if (renderState == RenderState.FOCUSED)
-        {
-            renderColour = owner.getHighlightColor();
-        }
     }
 
     public boolean shouldTakePriority()
@@ -112,15 +96,10 @@ public class EntryRenderer<T extends AbstractEntry>
         return getRenderState() == RenderState.TRACKED || getRenderState() == RenderState.FOCUSED;
     }
 
-    public void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick, boolean calculate, Compass.CompassRenderContext context)
+    public void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick,  Compass.CompassRenderContext context)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
-        if (calculate)
-        {
-            calculateState(compass, context);
-        }
-
-        if (!owner.shouldRender() || getRenderState() == RenderState.NONE || context.isXOutOfBounds(screenX))
+        if (!owner.shouldRender() || getRenderState() == RenderState.NONE)
         {
             return;
         }
