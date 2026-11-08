@@ -49,14 +49,14 @@
   "br.command.refresh.success": "Refreshed weather",
 
   "key.category.britishweather.keybinds": "British Weather",
-  "br.keybind.showPins": "Pin view",
+  "br.keybind.showPins": "View pins",
   "br.keybind.debug": "Debug",
   "br.keybind.delete_pin": "Delete pin",
   "br.keybind.create_pin": "Create pin",
   "br.keybind.find_pin": "Search pin",
   "br.keybind.edit_pin": "Edit pin",
   "br.keybind.track_pin": "Track pin",
-  "br.keybind.zoom_modifier": "Zoom",
+  "br.keybind.zoom_modifier": "Zoom + (scroll up / down)",
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
   "br.compass.time_methods.realtime.tooltip": "Timer will countdown in-game and while offline.",
@@ -78,5 +78,6 @@
   "br.search_screen.pin_search.narration": "Pin search box",
 
   "br.dialogue.marker_reached": "Reached pin",
-  "br.dialogue.tracking_marker": "Tracking \"%s\""
+  "br.dialogue.tracking_marker": "Tracking \"%s\"",
+  "br.dialogue.not_highlighted": "Look at a pin and try again"
 }

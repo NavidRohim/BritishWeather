@@ -15,15 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MouseMixin
 {
 
-    @Unique
-    private static double cMouse = 0;
-
     @Inject(method = "onScroll", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;setSelectedSlot(I)V"), cancellable = true)
     private void onScroll(long handle, double xoffset, double yoffset, CallbackInfo ci, @Local Vector2i wheelXY)
     {
         if (KeyHandler.ZOOM_MODIFIER.isDown())
         {
-            cMouse = wheelXY.y;
+            double cMouse = wheelXY.y;
             if (cMouse <= -1.0) // scroll up
             {
                 Compass.getInstance().displayZoom(1);

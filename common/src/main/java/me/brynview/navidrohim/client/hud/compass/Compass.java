@@ -504,6 +504,8 @@ public class Compass
         {
             EntryManager.removeEntry(this.highlightedEntry);
             this.highlightedEntry = null;
+        } else {
+            notHighlightedWarning();
         }
     }
 
@@ -517,6 +519,8 @@ public class Compass
         if (highlightedEntry != null && highlightedEntry instanceof PinEntry pin && pin.canBeEdited())
         {
             GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, pin));
+        } else {
+            notHighlightedWarning();
         }
     }
 
@@ -531,6 +535,8 @@ public class Compass
         {
             Vec3 pos = this.highlightedEntry.getPosition();
             context.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
+        } else {
+            notHighlightedWarning();
         }
     }
 
@@ -544,17 +550,10 @@ public class Compass
             } else {
                 setTrackedPin(pin);
             }
+        } else if (trackedPin == null) {
+            notHighlightedWarning();
         } else {
             setTrackedPin(null);
-        }
-    }
-
-    public void snap()
-    {
-        @Nullable AbstractEntry closest = getClosestEntry();
-        if (closest != null)
-        {
-            context.player.setYRot(closest.getRenderer().angleFromHeading);
         }
     }
 
@@ -574,20 +573,14 @@ public class Compass
         }
     }
 
-    private @Nullable AbstractEntry getClosestEntry()
-    {
-        Map.Entry<Float, AbstractEntry> lowerEntry = renderMap.lowerEntry(4f);
-        if (lowerEntry == null)
-        {
-            return null;
-        }
-
-        return lowerEntry.getValue();
-    }
-
     public @Nullable PinEntry getTrackedPin()
     {
         return trackedPin;
+    }
+
+    private void notHighlightedWarning()
+    {
+        context.player.sendOverlayMessage(Component.translatable("br.dialogue.not_highlighted"));
     }
 
     // Static methods
@@ -616,7 +609,7 @@ public class Compass
 
     public static void cleanupAndReset()
     {
-        //EntryManager.save();
+        EntryManager.savePins();
         EntryManager.clear();
 
         Compass compass = getInstance();

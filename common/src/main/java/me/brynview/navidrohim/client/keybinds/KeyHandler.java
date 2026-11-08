@@ -87,15 +87,20 @@ public class KeyHandler
         }
     }
 
+    private static int getYPosition(GuiGraphicsExtractor guiGraphics, int forI)
+    {
+        return guiGraphics.guiHeight() - (HOTBAR_HEIGHT_WITH_SPACING + (SPACING + 9 * forI)); // 25 is hotbar height (22px) plus 3px for spacing. 9 is lineHeight
+    }
     public static void extractKeyHelper(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
     {
         int i = 0;
+
         for (KeybindWrapper keybindWrapper : KEYBIND_WRAPPERS)
         {
             if (keybindWrapper.showInTable)
             {
                 i++;
-                int y = guiGraphicsExtractor.guiHeight() - (HOTBAR_HEIGHT_WITH_SPACING + (SPACING + 9 * i)); // 25 is hotbar height (22px) plus 3px for spacing. 9 is lineHeight
+                int y = getYPosition(guiGraphicsExtractor, i);
                 guiGraphicsExtractor.text(context.font, keybindWrapper.getFormattedDescriptionString(), HOTBAR_HEIGHT_WITH_SPACING, y, ColorHelper.WHITE);
             }
         }

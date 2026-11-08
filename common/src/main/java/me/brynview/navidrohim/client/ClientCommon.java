@@ -68,7 +68,6 @@ public class ClientCommon
 
     public static void leaveServerEvent()
     {
-        EntryManager.savePins();
         Compass.cleanupAndReset();
     }
 
