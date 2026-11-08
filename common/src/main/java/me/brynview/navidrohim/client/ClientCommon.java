@@ -9,6 +9,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.VehicleEn
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.DeathPin;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.TimedPin;
+import me.brynview.navidrohim.client.keybinds.KeyHandler;
 import me.brynview.navidrohim.platform.Services;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
@@ -53,6 +54,7 @@ public class ClientCommon
     public static void tickClient(@NotNull LocalPlayer player)
     {
         Compass.getInstance().tick(player);
+        KeyHandler.tick();
     }
 
     /*

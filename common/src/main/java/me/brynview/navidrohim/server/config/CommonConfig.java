@@ -33,6 +33,8 @@ public interface CommonConfig
 
     boolean shouldShowPinBackground();
 
+    boolean shouldShowKeyHelper();
+
     int getCompassSize();
 
     int getCompassY();

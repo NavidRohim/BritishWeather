@@ -86,6 +86,12 @@ public class FabricConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldShowKeyHelper()
+    {
+        return FabricConfigSerializer.shouldShowKeyHelper;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return FabricConfigSerializer.compassSize;

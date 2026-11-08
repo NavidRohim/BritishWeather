@@ -47,9 +47,10 @@ public class Constants {
         public static final boolean shouldShowEntitiesOnCompass = true;
         public static final boolean shouldShowBuiltinObjectives = true;
         public static final boolean shouldShowPinBackground = true;
+        public static final boolean shouldShowKeyHelper = true;
 
         public static final int compassSize = 35;
-        public static int compassY = 56;
+        public static final int compassY = 56;
 
     }
 

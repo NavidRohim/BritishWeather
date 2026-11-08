@@ -208,7 +208,7 @@ public class EntryRenderer<T extends AbstractEntry>
             displayable += "%";
         }
 
-        guiGraphicsExtractor.text(mc.font, displayable, x + 5, compassRenderContext.getYRowOnCompass(yRow), renderColour);
+        guiGraphicsExtractor.text(mc.font, displayable, x, compassRenderContext.getYRowOnCompass(yRow), renderColour);
     }
 
     public void drawDistance(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)

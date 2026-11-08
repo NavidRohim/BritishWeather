@@ -3,7 +3,7 @@ package me.brynview.navidrohim.client.hud.compass;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
-import me.brynview.navidrohim.client.ClientKeybinds;
+import me.brynview.navidrohim.client.keybinds.KeyHandler;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
@@ -22,7 +22,9 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +64,7 @@ public class Compass
 
         public final @NotNull LocalPlayer player;
         public final @NotNull Font font;
+        public final String displayableSpeed;
 
         public final float partialTicks;
         private final int highlightArea;
@@ -82,13 +85,22 @@ public class Compass
             this.leftContentX = leftX - 8;
 
             this.rightX = centerX + compassWidthHalf;
-            this.rightContentX = rightX + 8;
+            this.rightContentX = rightX + 13;
 
             this.y = y;
             this.contentY = y + Constants.LINE_HEIGHT_HALVED;
 
             this.yaw = player.getYRot(partialTicks);
             this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * compass.displayZoom * 2, compassWidthHalf);
+            this.displayableSpeed = "Speed: %s".formatted(getDisplayableSpeed());
+        }
+
+        public String getDisplayableSpeed()
+        {
+            double speedBlocksPerTick = player.getVehicle() == null ? player.getDeltaMovement().length() : player.getVehicle().getDeltaMovement().length();
+            double speedBlocksPerSecond = speedBlocksPerTick * 20;
+
+            return speedBlocksPerSecond <= 100D ? (int) speedBlocksPerSecond + "m/s" : "Slow down mate.";
         }
 
         public String getActualDegreesFromYaw()
@@ -203,8 +215,8 @@ public class Compass
 
     private final TreeMap<Float, AbstractEntry> renderMap = new TreeMap<>(Comparator.reverseOrder());
 
-    private @Nullable PinEntry trackedPin;
-    private @Nullable AbstractEntry highlightedEntry;
+    public @Nullable PinEntry trackedPin;
+    public @Nullable AbstractEntry highlightedEntry;
 
     private boolean shouldStartTick = false;
 
@@ -236,7 +248,7 @@ public class Compass
         drawBackground(guiGraphics, mc);
 
         // Check if the entry HUD key is pressed.
-        boolean compassView = !(ClientKeybinds.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
+        boolean compassView = !(KeyHandler.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
 
         if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
         {
@@ -290,10 +302,25 @@ public class Compass
             {
                 drawEntries(guiGraphics, player);
             }
+            drawElytraSpeed(guiGraphics);
+
+            if (BritishWeather.getConfig().shouldShowKeyHelper())
+            {
+                KeyHandler.extractKeyHelper(guiGraphics, context);
+            }
+
             shouldStartTick = false;
         }
 
         guiGraphics.verticalLine(context.centerX, y - 1, y + 7, ColorHelper.CENTER_COLOR);
+    }
+
+    private void drawElytraSpeed(GuiGraphicsExtractor guiGraphics)
+    {
+        if (context.player.getItemBySlot(EquipmentSlot.CHEST).is(Items.ELYTRA) && context.player.isFallFlying())
+        {
+            guiGraphics.text(context.font, context.displayableSpeed, context.rightContentX, context.getYRowOnCompassNextAvailable(1), ColorHelper.WHITE);
+        }
     }
 
     private void drawHeading(GuiGraphicsExtractor guiGraphics, CompassRenderContext context)
@@ -468,66 +495,61 @@ public class Compass
         }
 
         EntryManager.tick(player);
-
         zoomAlertTick--;
-        boolean isPinHudKeyHeld = ClientKeybinds.ENTRY_HUD_KEY.isDown();
+    }
 
-        // Is there a better way to listen for key presses? This is horrible.
-        if (isPinHudKeyHeld && (currentHeldKey == null || !currentHeldKey.isDown()))
+    public void delete()
+    {
+        if (highlightedEntry != null)
         {
-            if (ClientKeybinds.SNAP_TO_NEAREST.isDown())
-            {
-                snap();
-                currentHeldKey = ClientKeybinds.SNAP_TO_NEAREST;
-            }
-            else if (ClientKeybinds.CREATE.isDown())
-            {
-                GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, null));
-            } else if (ClientKeybinds.FIND.isDown())
-            {
-                GeneralUtils.setScreenAndShowNoFlicker(new PinSeachScreen());
-            } else if ( ClientKeybinds.TRACK.isDown() ) {
-                if (highlightedEntry instanceof PinEntry pin)
-                {
-                    if (pin.isTracked())
-                    {
-                        setTrackedPin(null);
-                    } else {
-                        setTrackedPin(pin);
-                    }
-                } else {
-                    setTrackedPin(null);
-                }
-
-                currentHeldKey = ClientKeybinds.TRACK;
-            } else if (highlightedEntry != null)
-            {
-                if (ClientKeybinds.DELETION.isDown())
-                {
-                    EntryManager.removeEntry(this.highlightedEntry);
-                    this.highlightedEntry = null;
-                    currentHeldKey = ClientKeybinds.DELETION;
-                } else if (ClientKeybinds.DEBUG_ON_PRESS.isDown())
-                {
-                    Vec3 pos = this.highlightedEntry.getPosition();
-                    context.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
-                } else if (ClientKeybinds.EDIT.isDown()) {
-                    if (highlightedEntry instanceof PinEntry pin && pin.canBeEdited())
-                    {
-                        GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, pin));
-                    }
-                    currentHeldKey = ClientKeybinds.EDIT;
-
-                } else {
-                    currentHeldKey = null;
-                }
-            } else {
-                currentHeldKey = null;
-            }
+            EntryManager.removeEntry(this.highlightedEntry);
+            this.highlightedEntry = null;
         }
     }
 
-    private void snap()
+    public void newPin()
+    {
+        GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, null));
+    }
+
+    public void editPin()
+    {
+        if (highlightedEntry != null && highlightedEntry instanceof PinEntry pin && pin.canBeEdited())
+        {
+            GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, pin));
+        }
+    }
+
+    public void find()
+    {
+        GeneralUtils.setScreenAndShowNoFlicker(new PinSeachScreen());
+    }
+
+    public void teleport()
+    {
+        if (highlightedEntry != null)
+        {
+            Vec3 pos = this.highlightedEntry.getPosition();
+            context.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
+        }
+    }
+
+    public void track()
+    {
+        if (highlightedEntry instanceof PinEntry pin)
+        {
+            if (pin.isTracked())
+            {
+                setTrackedPin(null);
+            } else {
+                setTrackedPin(pin);
+            }
+        } else {
+            setTrackedPin(null);
+        }
+    }
+
+    public void snap()
     {
         @Nullable AbstractEntry closest = getClosestEntry();
         if (closest != null)

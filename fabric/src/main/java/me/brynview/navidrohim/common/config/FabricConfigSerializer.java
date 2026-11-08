@@ -54,6 +54,8 @@ public class FabricConfigSerializer
     public static boolean shouldShowBuiltinObjectives = Constants.DefaultConfigValues.shouldShowBuiltinObjectives;
     @SerialEntry
     public static boolean shouldShowPinBackground =  Constants.DefaultConfigValues.shouldShowPinBackground;
+    @SerialEntry
+    public static boolean shouldShowKeyHelper = Constants.DefaultConfigValues.shouldShowKeyHelper;
 
     @SerialEntry
     public static int compassSize = Constants.DefaultConfigValues.compassSize;

@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
+import me.brynview.navidrohim.client.keybinds.KeyHandler;
 import me.brynview.navidrohim.client.particle.HailParticle;
 import me.brynview.navidrohim.client.particle.ModParticles;
 import me.brynview.navidrohim.common.WeatherUpdatePacket;
@@ -58,17 +59,12 @@ public class FabricMainClient implements ClientModInitializer
     }
     private void initKeybinds()
     {
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.DEBUG_ON_PRESS);
+        KeyMappingHelper.registerKeyMapping(KeyHandler.ENTRY_HUD_KEY);
+        KeyMappingHelper.registerKeyMapping(KeyHandler.ZOOM_MODIFIER);
 
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.ENTRY_HUD_KEY);
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.ZOOM_MODIFIER);
-
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.DELETION);
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.CREATE);
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.EDIT);
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.FIND);
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.TRACK);
-
-        KeyMappingHelper.registerKeyMapping(ClientKeybinds.SNAP_TO_NEAREST);
+        for (KeyHandler.KeybindWrapper keybindWrapper : KeyHandler.KEYBIND_WRAPPERS)
+        {
+            KeyMappingHelper.registerKeyMapping(keybindWrapper.keybind);
+        }
     }
 }

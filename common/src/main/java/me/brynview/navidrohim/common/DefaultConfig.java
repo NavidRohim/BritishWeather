@@ -93,6 +93,12 @@ public class DefaultConfig implements CommonConfig
     }
 
     @Override
+    public boolean shouldShowKeyHelper()
+    {
+        return Constants.DefaultConfigValues.shouldShowKeyHelper;
+    }
+
+    @Override
     public int getCompassSize()
     {
         return Constants.DefaultConfigValues.compassSize;

@@ -140,6 +140,13 @@ public class FabricClientConfigScreen
                                 .controller(TickBoxControllerBuilder::create)
                                 .build()
                         )
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("br.config.category.compass.shouldShowKeyHelper"))
+                                .description(OptionDescription.of(Component.translatable("br.config.category.compass.shouldShowKeyHelper.description")))
+                                .binding(FabricConfigSerializer.shouldShowKeyHelper, () -> FabricConfigSerializer.shouldShowKeyHelper, (bool) -> FabricConfigSerializer.shouldShowKeyHelper = bool)
+                                .controller(TickBoxControllerBuilder::create)
+                                .build()
+                        )
                         .option(Option.<Integer>createBuilder() // Compass width. Percentage of screen width
                                 .name(Component.translatable("br.config.category.compass.size"))
                                 .description(OptionDescription.of(Component.translatable("br.config.category.compass.size.description")))

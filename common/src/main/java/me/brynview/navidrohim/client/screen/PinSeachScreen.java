@@ -60,6 +60,8 @@ public class PinSeachScreen extends Screen
     private void typedString(String string)
     {
         entry = null;
+        searchBox.setSuggestion("");
+        hint = "";
 
         if (string.isEmpty())
         {

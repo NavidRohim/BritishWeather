@@ -1,6 +1,5 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup;
 
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
@@ -20,7 +19,6 @@ import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.item.ItemStack;
@@ -70,8 +68,8 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
 
             private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)
             {
-                String displayableSpeed = getDisplayableSpeed(vehicle, false);
-                if (!displayableSpeed.equals("0m/s"))
+                String displayableSpeed = compassRenderContext.displayableSpeed;
+                if (!displayableSpeed.equals("Speed: 0m/s"))
                 {
                     guiGraphicsExtractor.text(mc.font, displayableSpeed, compassRenderContext.centerStringAroundX(displayableSpeed, screenX), compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColour);
                 }
@@ -136,9 +134,7 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
     {
         if (currentlyRiddenVehicle != null)
         {
-
-            String rawSpeedString = "Speed: " + getDisplayableSpeed(currentlyRiddenVehicle, !(currentlyRiddenVehicle instanceof AbstractHorse));
-            guiGraphicsExtractor.text(context.font, rawSpeedString, context.rightContentX, context.getYRowOnCompassNextAvailable(1), ColorHelper.WHITE);
+            guiGraphicsExtractor.text(context.font, context.displayableSpeed, context.rightContentX, context.getYRowOnCompassNextAvailable(1), ColorHelper.WHITE);
 
             if (currentlyRiddenVehicle instanceof AbstractBoat boat)
             {
@@ -183,21 +179,5 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
         }
 
         return entity.level().getMinY();
-    }
-
-    private static String getDisplayableSpeed(Entity vehicle, boolean includeVerticalSpeed)
-    {
-        double speedBlocksPerTick;
-        if (includeVerticalSpeed)
-        {
-            speedBlocksPerTick = vehicle.getDeltaMovement().length();
-        } else {
-            Vec3 deltaMovment = vehicle.getDeltaMovement();
-            speedBlocksPerTick = Math.sqrt(deltaMovment.x * deltaMovment.x + deltaMovment.z * deltaMovment.z);
-        }
-
-        double speedBlocksPerSecond = speedBlocksPerTick * 20;
-        // implement delta tracking
-        return speedBlocksPerSecond <= 100D ? (int) speedBlocksPerSecond + "m/s" : "Slow down mate.";
     }
 }
