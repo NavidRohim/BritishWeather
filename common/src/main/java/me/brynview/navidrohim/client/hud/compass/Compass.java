@@ -22,6 +22,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Items;
@@ -92,12 +93,12 @@ public class Compass
 
             this.yaw = player.getYRot(partialTicks);
             this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * compass.displayZoom * 2, compassWidthHalf);
-            this.displayableSpeed = "Speed: %s".formatted(getDisplayableSpeed());
+            this.displayableSpeed = "Speed: %s".formatted(getDisplayableSpeed(player.getVehicle() == null ? player : player.getVehicle()));
         }
 
-        public String getDisplayableSpeed()
+        public String getDisplayableSpeed(Entity speedForEntity)
         {
-            double speedBlocksPerTick = player.getVehicle() == null ? player.getDeltaMovement().length() : player.getVehicle().getDeltaMovement().length();
+            double speedBlocksPerTick = speedForEntity.getDeltaMovement().length();
             double speedBlocksPerSecond = speedBlocksPerTick * 20;
 
             return speedBlocksPerSecond <= 100D ? (int) speedBlocksPerSecond + "m/s" : "Slow down mate.";

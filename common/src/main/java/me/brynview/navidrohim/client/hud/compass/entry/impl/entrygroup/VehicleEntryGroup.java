@@ -68,8 +68,8 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
 
             private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)
             {
-                String displayableSpeed = compassRenderContext.displayableSpeed;
-                if (!displayableSpeed.equals("Speed: 0m/s"))
+                String displayableSpeed = compassRenderContext.getDisplayableSpeed(vehicle);
+                if (!displayableSpeed.equals("0m/s"))
                 {
                     guiGraphicsExtractor.text(mc.font, displayableSpeed, compassRenderContext.centerStringAroundX(displayableSpeed, screenX), compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColour);
                 }

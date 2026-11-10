@@ -70,6 +70,7 @@ public class PinSeachScreen extends Screen
         LinearLayout master = LinearLayout.horizontal().spacing(3);
 
         searchBox = new StyledEditBox(font, PIN_SEARCH_NARRATION);
+        searchBox.setWidth(200);
         searchBox.setResponder(this::typedString);
 
         SpriteIconButton doneButton = SpriteIconButton.builder(CommonComponents.GUI_CONTINUE, (_) -> this.closeWithResult(), true)
@@ -77,10 +78,10 @@ public class PinSeachScreen extends Screen
                 .sprite(Identifier.withDefaultNamespace("icon/search"), 15, 15)
                 .build();
 
-
         master.addChild(searchBox);
         master.addChild(doneButton);
         master.arrangeElements();
+
         FrameLayout.centerInRectangle(master, getRectangle());
         master.visitWidgets(this::addRenderableWidget);
 
@@ -176,7 +177,7 @@ public class PinSeachScreen extends Screen
     public void extractRenderState(@NonNull GuiGraphicsExtractor graphics)
     {
         super.extractRenderState(graphics);
-        graphics.centeredText(minecraft.font, hint, searchBox.getX() + searchBox.getWidth() / 2, searchBox.getY() + searchBox.getHeight() + 5, ColorHelper.WHITE);
+        graphics.centeredText(minecraft.font, minecraft.font.plainSubstrByWidth(hint, width - 30), searchBox.getX() + searchBox.getWidth() / 2, searchBox.getY() + searchBox.getHeight() + 5, ColorHelper.WHITE);
     }
 
     @Override
