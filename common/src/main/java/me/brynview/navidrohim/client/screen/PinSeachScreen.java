@@ -17,6 +17,8 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
@@ -58,10 +60,12 @@ public class PinSeachScreen extends Screen
 
     private String hint = "";
     private int entryIndex = 0;
+    private ResourceKey<Level> levelKey;
 
-    public PinSeachScreen()
+    public PinSeachScreen(ResourceKey<Level> level)
     {
         super(Component.literal("Search"));
+        this.levelKey = level;
     }
 
     @Override
@@ -147,7 +151,7 @@ public class PinSeachScreen extends Screen
             return;
         }
 
-        for (AbstractEntry allEntry : EntryManager.getAllEntries())
+        for (AbstractEntry allEntry : EntryManager.getEntriesInDimension(levelKey))
         {
             if (allEntry.getMarker().toLowerCase().contains(string.toLowerCase()))
             {

@@ -527,7 +527,7 @@ public class Compass
 
     public void find()
     {
-        GeneralUtils.setScreenAndShowNoFlicker(new PinSeachScreen());
+        GeneralUtils.setScreenAndShowNoFlicker(new PinSeachScreen(context.player.level().dimension()));
     }
 
     public void teleport()
