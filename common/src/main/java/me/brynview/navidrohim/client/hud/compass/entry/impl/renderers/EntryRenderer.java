@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
@@ -27,10 +28,10 @@ public class EntryRenderer<T extends AbstractEntry>
         TRACKED
     }
 
-    protected int screenX;
     protected int screenYRow = 0;
     public float distanceFromHeading;
     public float angleFromHeading;
+    public int screenX;
 
     public int renderColour;
     public int backgroundColour;
@@ -99,7 +100,7 @@ public class EntryRenderer<T extends AbstractEntry>
     public void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick,  Compass.CompassRenderContext context)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
-        if (!owner.shouldRender() || getRenderState() == RenderState.NONE)
+        if (!owner.shouldRender() || getRenderState() == RenderState.NONE || getRenderState() == RenderState.TRACKED)
         {
             return;
         }
@@ -194,7 +195,7 @@ public class EntryRenderer<T extends AbstractEntry>
         }
     }
 
-    public void drawProgress(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow, int progress)
+    public void drawProgressAndInfo(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow, int progress)
     {
         String displayable = String.valueOf(progress);
 
@@ -208,6 +209,11 @@ public class EntryRenderer<T extends AbstractEntry>
             displayable += "%";
         }
 
+        displayable += " :: " + compassRenderContext.getDisplayableSpeed();
+        if (compassRenderContext.player.getVehicle() instanceof AbstractBoat boat)
+        {
+            displayable += " :: " + compassRenderContext.getDepthBelow(boat);
+        }
         guiGraphicsExtractor.text(mc.font, displayable, x, compassRenderContext.getYRowOnCompass(yRow), renderColour);
     }
 

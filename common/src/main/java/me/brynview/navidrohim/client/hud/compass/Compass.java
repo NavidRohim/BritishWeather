@@ -13,10 +13,10 @@ import me.brynview.navidrohim.client.screen.PinSeachScreen;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -25,12 +25,15 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static me.brynview.navidrohim.util.GeneralUtils.findOceanFloor;
 
 public class Compass
 {
@@ -59,13 +62,14 @@ public class Compass
         public final int rightX;
         public final int rightContentX;
 
-        private int availableYRow = -1;
         public final int y;
         public final int contentY;
 
         public final @NotNull LocalPlayer player;
         public final @NotNull Font font;
-        public final String displayableSpeed;
+
+        private @Nullable String displayableSpeed = null;
+        private @Nullable String displayableSpeedVertical = null;
 
         public final float partialTicks;
         private final int highlightArea;
@@ -93,15 +97,46 @@ public class Compass
 
             this.yaw = player.getYRot(partialTicks);
             this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * compass.displayZoom * 2, compassWidthHalf);
-            this.displayableSpeed = "Speed: %s".formatted(getDisplayableSpeed(player.getVehicle() == null ? player : player.getVehicle()));
         }
 
-        public String getDisplayableSpeed(Entity speedForEntity)
+        public String calculateDisplayableSpeed(Entity speedForEntity, boolean includeVerticalVector)
         {
-            double speedBlocksPerTick = speedForEntity.getDeltaMovement().length();
+            double speedBlocksPerTick;
+            if (!includeVerticalVector)
+            {
+                speedBlocksPerTick = speedForEntity.getDeltaMovement().horizontalDistance();
+            } else {
+                speedBlocksPerTick = speedForEntity.getDeltaMovement().length();
+            }
+
             double speedBlocksPerSecond = speedBlocksPerTick * 20;
 
             return speedBlocksPerSecond <= 100D ? (int) speedBlocksPerSecond + "m/s" : "Slow down mate.";
+        }
+
+        public String getDisplayableSpeed()
+        {
+            if (displayableSpeed == null)
+            {
+                this.displayableSpeed = calculateDisplayableSpeed(player.getVehicle() == null ? player : player.getVehicle(), false);
+            }
+
+            return displayableSpeed;
+        }
+
+        public String getDepthBelow(Entity entity)
+        {
+            return ((int) player.getY()) - findOceanFloor(entity) + "m";
+        }
+
+        public String getDisplayableSpeedVertical()
+        {
+            if (displayableSpeedVertical == null)
+            {
+                this.displayableSpeedVertical = calculateDisplayableSpeed(player.getVehicle() == null ? player : player.getVehicle(), true);
+            }
+
+            return displayableSpeedVertical;
         }
 
         public String getActualDegreesFromYaw()
@@ -172,23 +207,9 @@ public class Compass
             return (int) (y + (font.lineHeight * row));
         }
 
-        public int getYRowOnCompassNextAvailable(int inc)
-        {
-            int nextAvailableYRow = getAvailableYRow(inc);
-            return getYRowOnCompass(nextAvailableYRow);
-        }
-
         public int getYOnRowCentered(int row, int height)
         {
             return getYRowOnCompass(row) - (height / 4);
-        }
-
-        public int getAvailableYRow(int incrementBy)
-        {
-            int row = availableYRow;
-            availableYRow += incrementBy;
-
-            return row;
         }
 
         public int getXFromPosition(Vec3 position, boolean disappearWhenOutOfBounds)
@@ -208,7 +229,6 @@ public class Compass
 
     public CompassRenderContext context;
     public Minecraft mc;
-    private KeyMapping currentHeldKey = null;
 
     private int zoomAlertTick = 0;
     private int displayZoom = 1;
@@ -250,25 +270,6 @@ public class Compass
 
         // Check if the entry HUD key is pressed.
         boolean compassView = !(KeyHandler.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
-
-        if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
-        {
-            if (trackedPin.hasExpired())
-            {
-                trackedPin = null;
-            } else {
-                trackedPin.getRenderer().calculateState(context);
-                trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, context.getAvailableYRow(2), false);
-
-                int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
-                trackedPin.getRenderer().drawProgress(guiGraphics, context, context.rightContentX, context.getAvailableYRow(1), progressPercentage);
-
-                if (compassView)
-                {
-                    guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
-                }
-            }
-        }
 
         if (compassView)
         {
@@ -313,14 +314,36 @@ public class Compass
             shouldStartTick = false;
         }
 
+        if (trackedPin != null && trackedPin.getLevel().equals(GeneralUtils.getDimensionFromPlayer(player)))
+        {
+            if (trackedPin.hasExpired())
+            {
+                trackedPin = null;
+            } else {
+                trackedPin.getRenderer().calculateState(context);
+                trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, -1, false);
+
+                int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
+                trackedPin.getRenderer().drawProgressAndInfo(guiGraphics, context, context.rightContentX, 1, progressPercentage);
+
+                if (compassView)
+                {
+                    guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
+                } else {
+                    trackedPin.getRenderer().drawDecoration(guiGraphics, context);
+                    trackedPin.getRenderer().drawMarker(guiGraphics, context, trackedPin.getRenderer().screenX, -1);
+                }
+            }
+        }
+
         guiGraphics.verticalLine(context.centerX, y - 1, y + 7, ColorHelper.CENTER_COLOR);
     }
 
     private void drawElytraSpeed(GuiGraphicsExtractor guiGraphics)
     {
-        if (context.player.getItemBySlot(EquipmentSlot.CHEST).is(Items.ELYTRA) && context.player.isFallFlying())
+        if (context.player.getItemBySlot(EquipmentSlot.CHEST).is(Items.ELYTRA) && context.player.isFallFlying() && trackedPin == null)
         {
-            guiGraphics.text(context.font, context.displayableSpeed, context.rightContentX, context.getYRowOnCompassNextAvailable(1), ColorHelper.WHITE);
+            guiGraphics.text(context.font, context.getDisplayableSpeed(), context.rightContentX, context.getYRowOnCompass(0), ColorHelper.WHITE);
         }
     }
 
@@ -380,12 +403,18 @@ public class Compass
 
             // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
             int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
-            // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
-            int iconScale = ColorHelper.getOpacity(GeneralUtils.DETECTION_DISTANCE, distanceFromEntity, true);
-            int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
 
-            // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
-            guiGraphics.text(mc.font, ENTITY, xForEntity, context.y, livingEntity, false);
+            if (entity instanceof Player playerEntity)
+            {
+                PlayerFaceExtractor.extractRenderState(guiGraphics, context.player.connection.getPlayerInfo(playerEntity.getUUID()).getSkin(), xForEntity, context.y, 8);
+            } else {
+                // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
+                int iconScale = ColorHelper.getOpacity(GeneralUtils.DETECTION_DISTANCE, distanceFromEntity, true);
+                int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
+
+                // Entity x offset on screen. ex will be MAX_VALUE if the entity is off-screen.
+                guiGraphics.text(mc.font, ENTITY, xForEntity, context.y, livingEntity, false);
+            }
         });
     }
 
@@ -617,7 +646,6 @@ public class Compass
 
         compass.highlightedEntry = null;
         compass.trackedPin = null;
-        compass.currentHeldKey = null;
     }
 
     public static void prepareAndLoad()

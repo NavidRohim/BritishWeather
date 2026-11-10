@@ -67,10 +67,6 @@ public class ColorHelper {
     {
         switch (entity)
         {
-            case Player _ ->
-            {
-                return shiftColourToOpacity(PLAYER, opacity);
-            }
             case Monster _ ->
             {
                 return shiftColourToOpacity(HOSTILE, opacity);

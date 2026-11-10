@@ -55,12 +55,12 @@ public class PinSeachScreen extends Screen
     private static final List<String> EXAMPLES = List.of("Base", "Village", "Cave", "Farm", "Ravine", "Stronghold", "Home", "Forest", "Dungeon", "Camp");
 
     private EditBox searchBox;
-    private final HashMap<String, AbstractEntry> entriesMatching = new HashMap<>();
     private @Nullable AbstractEntry selectedEntry;
+    private final HashMap<String, AbstractEntry> entriesMatching = new HashMap<>();
+    private final ResourceKey<Level> levelKey;
 
     private String hint = "";
     private int entryIndex = 0;
-    private ResourceKey<Level> levelKey;
 
     public PinSeachScreen(ResourceKey<Level> level)
     {

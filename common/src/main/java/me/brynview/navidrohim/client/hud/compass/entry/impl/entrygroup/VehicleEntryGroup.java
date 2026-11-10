@@ -19,11 +19,11 @@ import net.minecraft.data.AtlasIds;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.vehicle.VehicleEntity;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,7 +68,7 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
 
             private void drawSpeed(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)
             {
-                String displayableSpeed = compassRenderContext.getDisplayableSpeed(vehicle);
+                String displayableSpeed = compassRenderContext.calculateDisplayableSpeed(vehicle, false);
                 if (!displayableSpeed.equals("0m/s"))
                 {
                     guiGraphicsExtractor.text(mc.font, displayableSpeed, compassRenderContext.centerStringAroundX(displayableSpeed, screenX), compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColour);
@@ -134,19 +134,20 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
     {
         if (currentlyRiddenVehicle != null)
         {
-            guiGraphicsExtractor.text(context.font, context.displayableSpeed, context.rightContentX, context.getYRowOnCompassNextAvailable(1), ColorHelper.WHITE);
+            String displayString = currentlyRiddenVehicle instanceof AbstractHorse ? context.getDisplayableSpeed() : context.getDisplayableSpeedVertical();
 
             if (currentlyRiddenVehicle instanceof AbstractBoat boat)
             {
                 if (!boat.blockPosition().equals(pos) || pos == BlockPos.ZERO)
                 {
-                    int depth = ((int) boat.getY()) - findOceanFloor(boat);
-                    displayDepth = "Depth: " + depth + "m";
+                    displayDepth = context.getDepthBelow(boat) + " depth";
                 }
 
-                guiGraphicsExtractor.text(context.font, displayDepth, context.rightContentX, context.getYRowOnCompassNextAvailable(1), ColorHelper.WHITE);
+                displayString += " :: " + displayDepth;
                 pos = boat.blockPosition();
             }
+
+            guiGraphicsExtractor.text(context.font, displayString, context.rightContentX, context.getYRowOnCompass(0), ColorHelper.WHITE);
         }
     }
 
@@ -163,21 +164,5 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
     public boolean isBuiltIn()
     {
         return true;
-    }
-
-    public static int findOceanFloor(Entity entity) {
-        BlockPos.MutableBlockPos entityBlockPosCopy = entity.blockPosition().mutable();
-
-        for (int y = entity.blockPosition().getY(); y >= entity.level().getMinY(); y--) {
-            entityBlockPosCopy.setY(y);
-            BlockState state = entity.level().getBlockState(entityBlockPosCopy);
-
-            if (!state.isAir() && state.getFluidState().isEmpty())
-            {
-                return y;
-            }
-        }
-
-        return entity.level().getMinY();
     }
 }
