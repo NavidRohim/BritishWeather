@@ -8,6 +8,7 @@ import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.renderpearl.api.commands.CommandEncoder;
 import com.mojang.renderpearl.api.device.GpuDevice;
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
@@ -23,10 +24,7 @@ import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.CycleButton;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.*;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.client.gui.layouts.GridLayout;
 import net.minecraft.client.gui.layouts.LinearLayout;
@@ -36,6 +34,7 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -139,8 +138,9 @@ public class PinManageScreen extends Screen
         this.rBox = new ColourEditBox(mc.font, Component.empty(), 255, "Red..", ColorHelper.RED);
         this.gBox = new ColourEditBox(mc.font, Component.empty(), 255, "Green..", ColorHelper.GREEN);
         this.bBox = new ColourEditBox(mc.font, Component.empty(), 255, "Blue..", ColorHelper.BLUE);
-        Button colourDropperButton = Button.builder(Component.literal("\uD83D\uDCA7"), (_) -> this.toggleDropper())
-                .width(50)
+        SpriteIconButton colourDropperButton = SpriteIconButton.builder(Component.literal("Eyedropper"), (_) -> this.toggleDropper(), true)
+                .sprite(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "icon/dropper"), 12, 12)
+                .bounds(0, 0, 20, 20)
                 .tooltip(colourDropperTooltip)
                 .build();
 
@@ -306,7 +306,6 @@ public class PinManageScreen extends Screen
         if (isSelectingColour)
         {
             enableColourDropper(false);
-            colourPicked(highlightedColourPickerR, highlightedColourPickerG, highlightedColourPickerB);
             return true;
         } else if (event.keycode() == 13)
         {
