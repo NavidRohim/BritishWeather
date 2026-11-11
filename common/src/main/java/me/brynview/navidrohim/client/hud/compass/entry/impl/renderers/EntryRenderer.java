@@ -229,6 +229,7 @@ public class EntryRenderer<T extends AbstractEntry>
             {
                 displayable += " :: " + displayDepth;
             } else {
+                entityVehicleBlockPos = boat.blockPosition();
                 displayDepth = compassRenderContext.getDepthBelow(boat);
                 displayable += " :: " + displayDepth;
             }
