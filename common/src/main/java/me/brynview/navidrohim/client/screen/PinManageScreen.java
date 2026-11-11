@@ -65,13 +65,10 @@ public class PinManageScreen extends Screen
 
     private static final Tooltip colourDropperTooltip = Tooltip.create(Component.translatable("br.pin_creation_screen.colour_picker.tooltip"));
     private static final Tooltip shouldShowDistSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_show_dist.selected.tooltip"));
-    private static final Tooltip shouldShowDistUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_show_dist.unselected.tooltip"));
     private static final Tooltip shouldDisappearWhenOOBTooltipSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_disappear_oob.selected.tooltip"));
     private static final Tooltip shouldDisappearWhenOOBTooltipUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_disappear_oob.unselected.tooltip"));
     private static final Tooltip showBackgroundSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_background.tooltip"));
-    private static final Tooltip showBackgroundUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_background.unselected.tooltip"));
     private static final Tooltip showShadowSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_shadow.tooltip"));
-    private static final Tooltip showShadowUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_shadow.unselected.tooltip"));
 
     private int highlightedColourOnPicker = 0;
     private int highlightedColourPickerR = 0;
@@ -158,11 +155,11 @@ public class PinManageScreen extends Screen
                 .withTooltip(TimeKeeper.TimeMethods::getDescription)
                 .create(Component.literal("Method"), (_, newTimeMethod) -> timeMethod = newTimeMethod);
 
-        StyledCheckbox showBg = StyledCheckbox.buildCheckbox((b) -> showBackground = b.isChecked, showBackgroundSelected, showBackgroundUnselected, EntrySettings.SHOW_BACKGROUND_DEFAULT);
+        StyledCheckbox showBg = StyledCheckbox.buildCheckbox((b) -> showBackground = b.isChecked, showBackgroundSelected, showBackgroundSelected, EntrySettings.SHOW_BACKGROUND_DEFAULT);
         StyledCheckbox isPersistentCheckbox = StyledCheckbox.buildCheckbox((b) -> persistent = b.isChecked, selectedPersistent, unselectedPersistent, EntrySettings.PERSISTENT_DEFAULT);
-        StyledCheckbox shouldShowDistCheckbox = StyledCheckbox.buildCheckbox((b) -> showDistance = b.isChecked, shouldShowDistSelected, shouldShowDistUnselected, EntrySettings.SHOW_DISTANCE_DEFAULT);
+        StyledCheckbox shouldShowDistCheckbox = StyledCheckbox.buildCheckbox((b) -> showDistance = b.isChecked, shouldShowDistSelected, shouldShowDistSelected, EntrySettings.SHOW_DISTANCE_DEFAULT);
         StyledCheckbox shouldDisappearWhenOOB = StyledCheckbox.buildCheckbox((b) -> disappearWhenOOB = b.isChecked, shouldDisappearWhenOOBTooltipSelected, shouldDisappearWhenOOBTooltipUnselected, EntrySettings.SHOULD_DISAPPEAR_OOB);
-        StyledCheckbox shouldShowShadow = StyledCheckbox.buildCheckbox((b) -> showShadow = b.isChecked, showShadowSelected, showShadowUnselected, EntrySettings.SHOW_SHADOWS_DEFAULT);
+        StyledCheckbox shouldShowShadow = StyledCheckbox.buildCheckbox((b) -> showShadow = b.isChecked, showShadowSelected, showShadowSelected, EntrySettings.SHOW_SHADOWS_DEFAULT);
 
         if (!isEditing) {
             personalisationLayout.addChild(isPersistentCheckbox, 0, 0, d -> d.padding(2));

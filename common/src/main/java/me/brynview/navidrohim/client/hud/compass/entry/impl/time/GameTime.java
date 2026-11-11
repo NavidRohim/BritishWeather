@@ -52,7 +52,7 @@ public class GameTime extends TimeKeeper
     public long timeLeft()
     {
         // timeLeft return value should be in seconds.
-        return (endTick - currentTick) / 20;
+        return (endTick - currentTick) * 50L;
     }
 
     @Override

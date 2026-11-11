@@ -111,6 +111,7 @@ public class EntryRenderer<T extends AbstractEntry>
         renderColour = ColorHelper.OBJECTIVE_MARKER_COLOUR;
         backgroundColour = ColorHelper.getBackgroundColour(renderColour);
     }
+
     public boolean shouldTakePriority()
     {
         return getRenderState() == RenderState.TRACKED || getRenderState() == RenderState.FOCUSED;
@@ -269,7 +270,7 @@ public class EntryRenderer<T extends AbstractEntry>
             }
 
             // Draw distance from entry
-            String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition(guiGraphicsExtractor.partialTicks())) + suffix;
+            String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition(guiGraphicsExtractor.partialTicks())) + suffix + owner.getExtraInformation();
             int xOnCompass = compassRenderContext.centerStringAroundX(distanceFromObjective, screenX);
 
             guiGraphicsExtractor.text(mc.font, distanceFromObjective, xOnCompass, compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColour, owner.getSettings().shouldShowShadow());

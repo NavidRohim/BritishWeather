@@ -4,7 +4,6 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
-import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.concurrent.TimeUnit;
 
@@ -37,7 +36,7 @@ public class RealTime extends TimeKeeper
     @Override
     public long timeLeft()
     {
-        return TimeUnit.MILLISECONDS.toSeconds(endTime - System.currentTimeMillis());
+        return endTime - System.currentTimeMillis();
     }
 
     public long getEndTime()
@@ -49,11 +48,5 @@ public class RealTime extends TimeKeeper
     public String getKey()
     {
         return "realtime";
-    }
-
-    public static RealTime decode(FriendlyByteBuf friendlyByteBuf)
-    {
-        long expiryMillis = friendlyByteBuf.readLong();
-        return new RealTime(expiryMillis);
     }
 }

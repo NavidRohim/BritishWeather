@@ -99,11 +99,6 @@ public abstract class AbstractEntry implements TickableAndExpirable
         return false;
     }
 
-    public EntryRenderer.RenderState getRenderState()
-    {
-        return this.getRenderer().getRenderState();
-    }
-
     public final String getId()
     {
         return this.entryId;
@@ -118,6 +113,11 @@ public abstract class AbstractEntry implements TickableAndExpirable
     public String toString()
     {
         return getId();
+    }
+
+    public String getExtraInformation()
+    {
+        return "";
     }
 
     public String debugString()

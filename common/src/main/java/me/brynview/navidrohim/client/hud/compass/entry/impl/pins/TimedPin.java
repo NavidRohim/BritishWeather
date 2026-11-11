@@ -3,14 +3,18 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
+
+import java.util.concurrent.TimeUnit;
 
 /*
 Same as PinEntry but timed.
@@ -36,6 +40,13 @@ public class TimedPin extends PinEntry
     {
         super(marker, level, position, colour, settings, trackedJourney);
         this.timeMethod = timeKeeper;
+    }
+
+    @Override
+    public String getExtraInformation()
+    {
+        long timeLeftMillis = timeMethod.timeLeft();
+        return " %sd %sh %sm".formatted(TimeUnit.MILLISECONDS.toDays(timeLeftMillis), TimeUnit.MILLISECONDS.toHours(timeLeftMillis), TimeUnit.MILLISECONDS.toMinutes(timeLeftMillis));
     }
 
     @Override

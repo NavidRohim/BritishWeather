@@ -341,7 +341,12 @@ public class Compass
             }
         }
 
-        guiGraphics.verticalLine(context.centerX, y - 1, y + 7, ColorHelper.CENTER_COLOR);
+        drawLubberLine(guiGraphics);
+    }
+
+    private void drawLubberLine(GuiGraphicsExtractor guiGraphics)
+    {
+        guiGraphics.verticalLine(context.centerX, context.y, context.y + 7, ColorHelper.CENTER_COLOR);
     }
 
     private void drawElytraSpeed(GuiGraphicsExtractor guiGraphics)
