@@ -17,12 +17,12 @@ public class CommandDispatcher
 {
     public static void registerCommandsForDispatcher(com.mojang.brigadier.CommandDispatcher<CommandSourceStack> dispatcher)
     {
-        dispatcher.register(Commands.literal("brweather") // Base
+        /*dispatcher.register(Commands.literal("brweather") // Base
                         // Change BR weather (debug only)
                         .then(Commands.literal("change").requires((c) -> !c.isPlayer() || c.getPlayer().permissions().hasPermission(Permissions.COMMANDS_ADMIN)).then(Commands.argument("weather_condition", StringArgumentType.string()).executes(CommandDispatcher::changeWeather)))
                         // Get current BR weather
                         .then(Commands.literal("get").executes(CommandDispatcher::getWeather))
-                        .then(Commands.literal("refresh").executes(CommandDispatcher::refreshWeather)));
+                        .then(Commands.literal("refresh").executes(CommandDispatcher::refreshWeather)));*/
     }
 
     private static int changeWeather(CommandContext<CommandSourceStack> commandSourceStackCommandContext)

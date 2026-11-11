@@ -33,17 +33,15 @@ public class FabricMain implements ModInitializer {
 
         // events
         ServerTickEvents.END_SERVER_TICK.register(BritishWeather::onTick);
-        ServerPlayerEvents.JOIN.register((player) -> {
-            ServerPlayNetworking.send(player, WeatherUpdatePacket.fromCurrentState());
-        });
+        ServerPlayerEvents.JOIN.register((player) -> ServerPlayNetworking.send(player, WeatherUpdatePacket.fromCurrentState()));
         BritishWeather.init(configToUse, (server) -> {
                 WeatherUpdatePacket packet = WeatherUpdatePacket.fromCurrentState();
                 server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));
         });
 
-        CommandRegistrationCallback.EVENT.register((dispatcher, _, _) -> {
+        /*CommandRegistrationCallback.EVENT.register((dispatcher, _, _) -> {
             CommandDispatcher.registerCommandsForDispatcher(dispatcher);
-        });
+        });*/
     }
 
     private void initParticles()
