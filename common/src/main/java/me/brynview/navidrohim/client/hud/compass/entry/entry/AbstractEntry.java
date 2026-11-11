@@ -52,6 +52,11 @@ public abstract class AbstractEntry implements TickableAndExpirable
         return position;
     }
 
+    public Vec3 getPosition(float partialTicks)
+    {
+        return position;
+    }
+
     public String getLevel()
     {
         return level;

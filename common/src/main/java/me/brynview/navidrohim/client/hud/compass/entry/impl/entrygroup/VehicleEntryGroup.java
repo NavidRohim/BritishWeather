@@ -100,11 +100,16 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
         }
 
         @Override
+        public Vec3 getPosition(float partialTicks)
+        {
+            return vehicle.getPosition(partialTicks);
+        }
+
+        @Override
         public Vec3 getPosition()
         {
             return vehicle.position();
         }
-
     }
 
     @Override

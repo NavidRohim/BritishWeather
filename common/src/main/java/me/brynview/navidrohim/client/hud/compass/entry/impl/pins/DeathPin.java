@@ -68,6 +68,7 @@ public final class DeathPin extends TimedPin
         super.tick(player);
         this.timeMethod.tick();
 
+        // No lerp
         Vec3 playerPos = player.position();
 
         // Checking if the player is dead is important.

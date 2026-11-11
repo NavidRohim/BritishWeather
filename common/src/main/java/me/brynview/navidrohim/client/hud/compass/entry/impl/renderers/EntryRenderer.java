@@ -8,6 +8,7 @@ import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.phys.Vec3;
@@ -41,6 +42,9 @@ public class EntryRenderer<T extends AbstractEntry>
     protected final Compass compass;
     protected final Minecraft mc;
 
+    private BlockPos entityVehicleBlockPos = BlockPos.ZERO;
+    private String displayDepth = "";
+
     public EntryRenderer(T owner)
     {
         this.owner = owner;
@@ -55,7 +59,7 @@ public class EntryRenderer<T extends AbstractEntry>
         backgroundColour = owner.highlightBgColour;
 
         boolean shouldDisappear = owner.getSettings().shouldDisappearWhenOOB() && !owner.isTracked();
-        angleFromHeading = (float) MathHelper.angleFromPos(owner.getPosition(), context.player.position());
+        angleFromHeading = (float) MathHelper.angleFromPos(owner.getPosition(context.partialTicks), context.playerPosition);
         screenX = context.getAngleX(angleFromHeading, shouldDisappear);
 
         if (context.isXOutOfBounds(screenX))
@@ -90,6 +94,15 @@ public class EntryRenderer<T extends AbstractEntry>
     public void setRenderState(RenderState renderState)
     {
         this.renderState = renderState;
+    }
+
+    /*
+     * Marks this entry as the one the player is pointing at. Must be called after calculateState for the current frame.
+     */
+    public void focus()
+    {
+        renderColour = owner.highlightColor;
+        setRenderState(RenderState.FOCUSED);
     }
 
     public boolean shouldTakePriority()
@@ -212,7 +225,13 @@ public class EntryRenderer<T extends AbstractEntry>
         displayable += " :: " + compassRenderContext.getDisplayableSpeed();
         if (compassRenderContext.player.getVehicle() instanceof AbstractBoat boat)
         {
-            displayable += " :: " + compassRenderContext.getDepthBelow(boat);
+            if (entityVehicleBlockPos.equals(boat.blockPosition()))
+            {
+                displayable += " :: " + displayDepth;
+            } else {
+                displayDepth = compassRenderContext.getDepthBelow(boat);
+                displayable += " :: " + displayDepth;
+            }
         }
         guiGraphicsExtractor.text(mc.font, displayable, x, compassRenderContext.getYRowOnCompass(yRow), renderColour);
     }
@@ -220,10 +239,10 @@ public class EntryRenderer<T extends AbstractEntry>
     public void drawDistance(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext)
     {
         // If in view, render the distance from entry and if the player should go up or down to reach it
-        Vec3 playerPos = compassRenderContext.player.position();
+        Vec3 playerPos = compassRenderContext.playerPosition;
         if (owner.getSettings().shouldShowDistance() && (shouldTakePriority() || owner.isBuiltIn()))
         {
-            int distance = MathHelper.getDistance(owner.getPosition(), playerPos);
+            int distance = MathHelper.getDistance(owner.getPosition(guiGraphicsExtractor.partialTicks()), playerPos);
 
             String suffix = "m";
             double heightDiff = playerPos.y - owner.getPosition().y;
@@ -243,7 +262,7 @@ public class EntryRenderer<T extends AbstractEntry>
             }
 
             // Draw distance from entry
-            String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition()) + suffix;
+            String distanceFromObjective = MathHelper.getDistance(playerPos, owner.getPosition(guiGraphicsExtractor.partialTicks())) + suffix;
             int xOnCompass = compassRenderContext.centerStringAroundX(distanceFromObjective, screenX);
 
             guiGraphicsExtractor.text(mc.font, distanceFromObjective, xOnCompass, compassRenderContext.getYRowOnCompass(screenYRow + 1), renderColour, owner.getSettings().shouldShowShadow());

@@ -18,7 +18,9 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -32,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 import static me.brynview.navidrohim.util.GeneralUtils.findOceanFloor;
 
@@ -48,6 +51,7 @@ public class Compass
 
         // Yaw at the current render pass
         public final float yaw;
+        public final Vec3 playerPosition;
 
         // Compass width scaled with the compass size config value
         private final int compassWidth;
@@ -96,6 +100,8 @@ public class Compass
             this.contentY = y + Constants.LINE_HEIGHT_HALVED;
 
             this.yaw = player.getYRot(partialTicks);
+            this.playerPosition = player.getPosition(partialTicks);
+
             this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * compass.displayZoom * 2, compassWidthHalf);
         }
 
@@ -105,7 +111,8 @@ public class Compass
             if (!includeVerticalVector)
             {
                 speedBlocksPerTick = speedForEntity.getDeltaMovement().horizontalDistance();
-            } else {
+            } else
+            {
                 speedBlocksPerTick = speedForEntity.getDeltaMovement().length();
             }
 
@@ -126,7 +133,7 @@ public class Compass
 
         public String getDepthBelow(Entity entity)
         {
-            return ((int) player.getY()) - findOceanFloor(entity) + "m";
+            return ((int) playerPosition.y) - findOceanFloor(entity) + "m";
         }
 
         public String getDisplayableSpeedVertical()
@@ -214,7 +221,7 @@ public class Compass
 
         public int getXFromPosition(Vec3 position, boolean disappearWhenOutOfBounds)
         {
-            double angleRelativeToPosition = MathHelper.angleFromPos(position, player.position());
+            double angleRelativeToPosition = MathHelper.angleFromPos(position, playerPosition);
             return getAngleX(angleRelativeToPosition, disappearWhenOutOfBounds);
         }
     }
@@ -234,10 +241,9 @@ public class Compass
     private int displayZoom = 1;
     public float zoomAmount = 1;
 
-    private final TreeMap<Float, AbstractEntry> renderMap = new TreeMap<>(Comparator.reverseOrder());
-
     public @Nullable PinEntry trackedPin;
     public @Nullable AbstractEntry highlightedEntry;
+    private List<LivingEntity> entitiesNearPlayer = new ArrayList<>();
 
     private boolean shouldStartTick = false;
 
@@ -286,8 +292,8 @@ public class Compass
             }
 
             // Render N/E/S/W
-            drawCardinal(guiGraphics, 0,   SOUTH);
-            drawCardinal(guiGraphics, 90,  WEST);
+            drawCardinal(guiGraphics, 0, SOUTH);
+            drawCardinal(guiGraphics, 90, WEST);
             drawCardinal(guiGraphics, 180, NORTH);
             drawCardinal(guiGraphics, 270, EAST);
 
@@ -319,17 +325,19 @@ public class Compass
             if (trackedPin.hasExpired())
             {
                 trackedPin = null;
-            } else {
+            } else
+            {
                 trackedPin.getRenderer().calculateState(context);
                 trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, -1, false);
 
-                int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(player.position());
+                int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(context.playerPosition);
                 trackedPin.getRenderer().drawProgressAndInfo(guiGraphics, context, context.rightContentX, 1, progressPercentage);
 
                 if (compassView)
                 {
                     guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
-                } else {
+                } else
+                {
                     trackedPin.getRenderer().drawDecoration(guiGraphics, context);
                     trackedPin.getRenderer().drawMarker(guiGraphics, context, trackedPin.getRenderer().screenX, -1);
                 }
@@ -393,21 +401,31 @@ public class Compass
 
     private void drawEntities(LocalPlayer player, GuiGraphicsExtractor guiGraphics)
     {
-        GeneralUtils.getEntitiesInView(player, LivingEntity.class).forEach(entity -> {
+        entitiesNearPlayer.forEach(entity -> {
+
+            if (entity.isRemoved())
+            {
+                return;
+            }
+
             // Angle from us to the entity
-            int xForEntity = context.getXFromPosition(entity.position(), true);
+            Vec3 entityPosLerp = entity.getPosition(guiGraphics.partialTicks());
+            int xForEntity = context.getXFromPosition(entityPosLerp, true);
+
             if (xForEntity == Integer.MAX_VALUE)
             {
                 return;
             }
 
-            // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
-            int distanceFromEntity = MathHelper.getDistance(player.position(), entity.position());
-
-            if (entity instanceof Player playerEntity)
+            // Is this dumb?
+            if (entity instanceof Player playerEntity && context.player.connection.getPlayerInfo(playerEntity.getUUID()) instanceof PlayerInfo info)
             {
-                PlayerFaceExtractor.extractRenderState(guiGraphics, context.player.connection.getPlayerInfo(playerEntity.getUUID()).getSkin(), xForEntity, context.y, 8);
-            } else {
+                PlayerFaceExtractor.extractRenderState(guiGraphics, info.getSkin(), xForEntity, context.y, 8);
+            } else
+            {
+                // Distance form entity. Used for the icon opacity. Further away, more transparent. Closer, more opaque
+                int distanceFromEntity = MathHelper.getDistance(context.playerPosition, entityPosLerp);
+
                 // SCALE_MAX is the maximum value iconScale can be. Cannot be over 255 because 255 is white.
                 int iconScale = ColorHelper.getOpacity(GeneralUtils.DETECTION_DISTANCE, distanceFromEntity, true);
                 int livingEntity = ColorHelper.getColourForEntity(entity, player, iconScale); // Colour entity will be on the compass.
@@ -451,13 +469,12 @@ public class Compass
                 }
         );
     }
+
     /*
     Draw all entries and entry groups
      */
     private void drawEntries(GuiGraphicsExtractor guiGraphicsExtractor, LocalPlayer player)
     {
-        this.renderMap.clear();
-
         // Draw entries inside of entry groups.
         Set<AbstractEntryGroup<?>> groupsToCheck = EntryManager.getEntryGroupsInDimension(player.level().dimension());
         Set<AbstractEntryGroup<?>> generalGroups = EntryManager.getEntryGroupsInAll();
@@ -473,30 +490,38 @@ public class Compass
         }
 
         // Draw normal entries.
-        for (AbstractEntry entry : EntryManager.getEntriesInDimension(player.level().dimension()))
+        Collection<? extends AbstractEntry> entries = EntryManager.getEntriesInDimension(player.level().dimension());
+        AbstractEntry closest = null;
+
+        // Pass 1: calculate state for every entry and find the highlightable entry closest to the heading.
+        for (AbstractEntry entry : entries)
         {
-            EntryRenderer.RenderState calculatedState = entry.getRenderer().calculateState(context);
-            if (calculatedState != EntryRenderer.RenderState.NONE)
+            EntryRenderer<?> renderer = entry.getRenderer();
+            if (renderer.calculateState(context) == EntryRenderer.RenderState.HIGHLIGHT
+                    && (closest == null || renderer.distanceFromHeading < closest.getRenderer().distanceFromHeading))
             {
-                float key = Math.abs(entry.getRenderer().distanceFromHeading);
-                this.renderMap.put(key, entry);
+                closest = entry;
             }
         }
 
-        for (@NotNull Iterator<Map.Entry<Float, AbstractEntry>> it = this.renderMap.entrySet().iterator(); it.hasNext(); )
+        if (closest != null)
         {
-            Map.Entry<Float, AbstractEntry> entry = it.next();
-            AbstractEntry value = entry.getValue();
+            highlightedEntry = closest;
+            closest.getRenderer().focus();
+        }
 
-            if (!it.hasNext() && value.getRenderState() == EntryRenderer.RenderState.HIGHLIGHT)
+        // Pass 2: draw everything else, then the focused entry last so it sits on top.
+        for (AbstractEntry entry : entries)
+        {
+            if (entry != closest)
             {
-                highlightedEntry = value;
-
-                highlightedEntry.getRenderer().renderColour = highlightedEntry.highlightColor;
-                highlightedEntry.getRenderer().setRenderState(EntryRenderer.RenderState.FOCUSED);
+                entry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
             }
+        }
 
-            value.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
+        if (closest != null)
+        {
+            closest.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
         }
     }
 
@@ -524,6 +549,11 @@ public class Compass
             return;
         }
 
+        if (zoomAlertTick % 20 == 0)
+        {
+            entitiesNearPlayer = GeneralUtils.getEntitiesInView(player, LivingEntity.class);
+        }
+
         EntryManager.tick(player);
         zoomAlertTick--;
     }
@@ -534,7 +564,8 @@ public class Compass
         {
             EntryManager.removeEntry(this.highlightedEntry);
             this.highlightedEntry = null;
-        } else {
+        } else
+        {
             notHighlightedWarning();
         }
     }
@@ -549,7 +580,8 @@ public class Compass
         if (highlightedEntry != null && highlightedEntry instanceof PinEntry pin && pin.canBeEdited())
         {
             GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, pin));
-        } else {
+        } else
+        {
             notHighlightedWarning();
         }
     }
@@ -565,7 +597,8 @@ public class Compass
         {
             Vec3 pos = this.highlightedEntry.getPosition();
             context.player.connection.sendCommand("tp @s %s %s %s".formatted(pos.x, pos.y, pos.z));
-        } else {
+        } else
+        {
             notHighlightedWarning();
         }
     }
@@ -577,12 +610,15 @@ public class Compass
             if (pin.isTracked())
             {
                 setTrackedPin(null);
-            } else {
+            } else
+            {
                 setTrackedPin(pin);
             }
-        } else if (trackedPin == null) {
+        } else if (trackedPin == null)
+        {
             notHighlightedWarning();
-        } else {
+        } else
+        {
             setTrackedPin(null);
         }
     }

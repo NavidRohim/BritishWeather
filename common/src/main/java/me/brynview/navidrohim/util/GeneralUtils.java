@@ -36,7 +36,7 @@ public class GeneralUtils
         return player.level().dimension().identifier().toString();
     }
 
-    public static <T extends Entity> Stream<T> getEntitiesInView(@NotNull LocalPlayer player, @NotNull Class<T> entityClass)
+    public static <T extends Entity> List<T> getEntitiesInView(@NotNull LocalPlayer player, @NotNull Class<T> entityClass)
     {
         Minecraft mc = Minecraft.getInstance();
         Vec3 look = player.getViewVector(0).scale(DETECTION_DISTANCE);
@@ -49,9 +49,7 @@ public class GeneralUtils
                 .inflate(EXPAND_INFLATE_WITH_FOV_CONST * fov); // inflate so entities don't get cut off from compass
 
         // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
-        return mc.level.getEntitiesOfClass(entityClass, inFrontOfPlayer, (en) -> en != player && !en.getBoundingBox().intersects(normalBB) )
-                .stream()
-                .limit(MAX_ALLOWED_ENTITIES_ON_COMPASS);
+        return mc.level.getEntitiesOfClass(entityClass, inFrontOfPlayer, (en) -> en != player && en != player.getVehicle());
     }
 
     public static void renderFillForElement(GuiGraphicsExtractor renderer, LayoutElement element, int colour)
