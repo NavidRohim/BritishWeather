@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.renderers;
 
 import me.brynview.navidrohim.BritishWeather;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -73,9 +74,8 @@ public class EntryRenderer<T extends AbstractEntry>
 
         if (owner.isTracked())
         {
-            state = RenderState.TRACKED;
-            renderColour = ColorHelper.OBJECTIVE_MARKER_COLOUR;
-            backgroundColour = ColorHelper.getBackgroundColour(renderColour);
+            trackedState();
+            return renderState;
         } else if (isHighlightable)
         {
             state = RenderState.HIGHLIGHT;
@@ -83,7 +83,7 @@ public class EntryRenderer<T extends AbstractEntry>
 
         this.setRenderState(state);
 
-        return state;
+        return renderState;
     }
 
     public RenderState getRenderState()
@@ -101,10 +101,16 @@ public class EntryRenderer<T extends AbstractEntry>
      */
     public void focus()
     {
-        renderColour = owner.highlightColor;
         setRenderState(RenderState.FOCUSED);
+        renderColour = owner.highlightColor;
     }
 
+    public void trackedState()
+    {
+        setRenderState(RenderState.TRACKED);
+        renderColour = ColorHelper.OBJECTIVE_MARKER_COLOUR;
+        backgroundColour = ColorHelper.getBackgroundColour(renderColour);
+    }
     public boolean shouldTakePriority()
     {
         return getRenderState() == RenderState.TRACKED || getRenderState() == RenderState.FOCUSED;
@@ -113,7 +119,7 @@ public class EntryRenderer<T extends AbstractEntry>
     public void draw(GuiGraphicsExtractor guiGraphicsExtractor, @NotNull LocalPlayer player, boolean shouldStartTick,  Compass.CompassRenderContext context)
     {
         // Check if the entry should be rendered and the entry dimension matches the players current dimension
-        if (!owner.shouldRender() || getRenderState() == RenderState.NONE || getRenderState() == RenderState.TRACKED)
+        if (!owner.shouldRender() || getRenderState() == RenderState.NONE)
         {
             return;
         }

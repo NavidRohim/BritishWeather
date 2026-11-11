@@ -255,9 +255,9 @@ public class Compass
 
     private boolean shouldStartTick = false;
 
+    public static final FormattedCharSequence ENTITY = GeneralUtils.getFormattedChar('⏺');
     private static final FormattedCharSequence LEFT = GeneralUtils.getFormattedChar('>');
     private static final FormattedCharSequence RIGHT = GeneralUtils.getFormattedChar('<');
-    private static final FormattedCharSequence ENTITY = GeneralUtils.getFormattedChar('⏺');
 
     private static final FormattedCharSequence NORTH = GeneralUtils.getFormattedChar('N');
     private static final FormattedCharSequence SOUTH = GeneralUtils.getFormattedChar('S');
@@ -308,7 +308,7 @@ public class Compass
             drawCardinal(guiGraphics, 270, EAST);
 
             // Render current heading in degrees if config allows
-            drawHeading(guiGraphics, context);
+            drawHeading(guiGraphics);
 
             // Rendering normal compass now, so set to false so stop tick isn't sent multiple times
             shouldStartTick = true;
@@ -337,20 +337,7 @@ public class Compass
                 trackedPin = null;
             } else
             {
-                trackedPin.getRenderer().calculateState(context);
-                trackedPin.getRenderer().drawMarker(guiGraphics, context, context.rightContentX, -1, false);
-
-                int progressPercentage = (int) trackedPin.getJourney().getJourneyProgress(context.playerPosition);
-                trackedPin.getRenderer().drawProgressAndInfo(guiGraphics, context, context.rightContentX, 1, progressPercentage);
-
-                if (compassView)
-                {
-                    guiGraphics.text(mc.font, ENTITY, trackedPin.getRenderer().getX(), context.y, trackedPin.getRenderer().renderColour);
-                } else
-                {
-                    trackedPin.getRenderer().drawDecoration(guiGraphics, context);
-                    trackedPin.getRenderer().drawMarker(guiGraphics, context, trackedPin.getRenderer().screenX, -1);
-                }
+                trackedPin.drawJourneyInfo(guiGraphics, context, compassView);
             }
         }
 
@@ -365,7 +352,7 @@ public class Compass
         }
     }
 
-    private void drawHeading(GuiGraphicsExtractor guiGraphics, CompassRenderContext context)
+    private void drawHeading(GuiGraphicsExtractor guiGraphics)
     {
         if (BritishWeather.getConfig().shouldRenderHeading())
         {
@@ -502,13 +489,17 @@ public class Compass
         // Draw normal entries.
         Collection<? extends AbstractEntry> entries = EntryManager.getEntriesInDimension(player.level().dimension());
         AbstractEntry closest = null;
+        AbstractEntry trackedPinRender = null;
 
         // Pass 1: calculate state for every entry and find the highlightable entry closest to the heading.
         for (AbstractEntry entry : entries)
         {
             EntryRenderer<?> renderer = entry.getRenderer();
-            if (renderer.calculateState(context) == EntryRenderer.RenderState.HIGHLIGHT
-                    && (closest == null || renderer.distanceFromHeading < closest.getRenderer().distanceFromHeading))
+
+            if (entry == trackedPin)
+            {
+                trackedPinRender = entry;
+            } else if (renderer.calculateState(context) == EntryRenderer.RenderState.HIGHLIGHT && (closest == null || renderer.distanceFromHeading < closest.getRenderer().distanceFromHeading))
             {
                 closest = entry;
             }
@@ -523,7 +514,7 @@ public class Compass
         // Pass 2: draw everything else, then the focused entry last so it sits on top.
         for (AbstractEntry entry : entries)
         {
-            if (entry != closest)
+            if (entry != closest && entry != trackedPinRender)
             {
                 entry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
             }
@@ -532,6 +523,11 @@ public class Compass
         if (closest != null)
         {
             closest.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
+        }
+
+        if (trackedPinRender != null)
+        {
+            trackedPinRender.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
         }
     }
 

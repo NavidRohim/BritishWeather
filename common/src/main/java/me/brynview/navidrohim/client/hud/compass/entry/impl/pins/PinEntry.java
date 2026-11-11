@@ -2,16 +2,15 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
-import me.brynview.navidrohim.util.ColorHelper;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.Vec3;
-import org.jetbrains.annotations.Nullable;
 
 public class PinEntry extends AbstractEntry
 {
@@ -75,6 +74,19 @@ public class PinEntry extends AbstractEntry
     public void untrack()
     {
         this.trackedJourney.reset();
+    }
+
+    public void drawJourneyInfo(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, boolean viewingCompass)
+    {
+        getRenderer().calculateState(context);
+        int progressPercentage = (int) getJourney().getJourneyProgress(context.playerPosition);
+        guiGraphicsExtractor.text(context.font, getMarker(), context.rightContentX, context.getYRowOnCompass(-1), getRenderer().renderColour);
+        getRenderer().drawProgressAndInfo(guiGraphicsExtractor, context, context.rightContentX, 1, progressPercentage);
+
+        if (viewingCompass)
+        {
+            guiGraphicsExtractor.text(context.font, Compass.ENTITY, getRenderer().getX(), context.y, getRenderer().renderColour);
+        }
     }
 
     public TrackedJourney getJourney()
