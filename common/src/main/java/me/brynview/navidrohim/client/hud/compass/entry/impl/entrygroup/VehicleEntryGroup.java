@@ -137,7 +137,7 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
     @Override
     public void renderExtra(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
     {
-        if (currentlyRiddenVehicle != null)
+        if (currentlyRiddenVehicle != null && !context.isTracking)
         {
             String displayString = currentlyRiddenVehicle instanceof AbstractHorse ? context.getDisplayableSpeed() : context.getDisplayableSpeedVertical();
 

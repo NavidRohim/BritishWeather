@@ -20,7 +20,6 @@ import net.minecraft.client.gui.components.PlayerFaceExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 import static me.brynview.navidrohim.util.GeneralUtils.findOceanFloor;
 
@@ -79,8 +77,11 @@ public class Compass
         private final int highlightArea;
         private final float zoom;
 
-        public CompassRenderContext(int width, int y, float partialTick, final @NotNull LocalPlayer player, final Compass compass, float zoom)
+        public final boolean isTracking;
+
+        public CompassRenderContext(int width, int y, float partialTick, float yaw, final @NotNull LocalPlayer player, final Compass compass, float zoom, boolean isTracking)
         {
+            this.isTracking = isTracking;
             this.player = player;
             this.font = compass.mc.font;
             this.compassWidth = (int) (((float) BritishWeather.getConfig().getCompassSize() / 100f) * (float) width); // All these float are dumb
@@ -99,7 +100,7 @@ public class Compass
             this.y = y;
             this.contentY = y + Constants.LINE_HEIGHT_HALVED;
 
-            this.yaw = player.getYRot(partialTicks);
+            this.yaw = yaw;
             this.playerPosition = player.getPosition(partialTicks);
 
             this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * compass.displayZoom * 2, compassWidthHalf);
@@ -241,6 +242,13 @@ public class Compass
     private int displayZoom = 1;
     public float zoomAmount = 1;
 
+    // Yaw smoothing. Higher zoom spreads each degree over more pixels, so the compass is eased to stop it feeling twitchy.
+    private static final float YAW_SMOOTHING_PER_ZOOM = 0.02F; // Seconds of easing per zoom step above 1x
+    private static final long YAW_SNAP_AFTER_NANOS = 250_000_000L; // If not drawn for this long, snap instead of swinging round
+
+    private float displayYaw; // Our current actual yaw
+    private long lastYawUpdateNanos = 0L;
+
     public @Nullable PinEntry trackedPin;
     public @Nullable AbstractEntry highlightedEntry;
     private List<LivingEntity> entitiesNearPlayer = new ArrayList<>();
@@ -269,14 +277,16 @@ public class Compass
         highlightedEntry = null;
 
         // Calculate compass dimensions
-        context = new CompassRenderContext(scaledWidth, y, guiGraphics.partialTicks(), player, this, zoomAmount);
+        float partialTicks = guiGraphics.partialTicks();
+        float yaw = smoothYaw(player.getYRot(partialTicks));
+        boolean compassView = !(KeyHandler.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
+
+        context = new CompassRenderContext(scaledWidth, y, partialTicks, yaw, player, this, zoomAmount, trackedPin != null);
 
         // Compass background
         drawBackground(guiGraphics, mc);
 
         // Check if the entry HUD key is pressed.
-        boolean compassView = !(KeyHandler.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
-
         if (compassView)
         {
             // Will be true on the first render pass after entry HUD disappears.
@@ -523,6 +533,28 @@ public class Compass
         {
             closest.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
         }
+    }
+
+    /*
+     * Eases the displayed yaw towards the player's yaw. Instant at 1x zoom, slower the further the compass is zoomed.
+     * Uses real frame time so the speed is the same regardless of FPS.
+     */
+    private float smoothYaw(float targetYaw)
+    {
+        long now = System.nanoTime();
+        long elapsed = now - lastYawUpdateNanos;
+        lastYawUpdateNanos = now;
+
+        float timeConstant = YAW_SMOOTHING_PER_ZOOM * (zoomAmount - 1F);
+        if (timeConstant <= 0F || elapsed > YAW_SNAP_AFTER_NANOS)
+        {
+            displayYaw = targetYaw;
+            return displayYaw;
+        }
+
+        float alpha = 1F - (float) Math.exp(-(elapsed / 1_000_000_000D) / timeConstant);
+        displayYaw += Mth.wrapDegrees(targetYaw - displayYaw) * alpha; // wrapDegrees so it takes the short way round
+        return displayYaw;
     }
 
     public void displayZoom(int zoomStep)
