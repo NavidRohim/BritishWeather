@@ -17,7 +17,7 @@ public class RealTime extends TimeKeeper
 
     private final long endTime;
 
-    public RealTime(TimeUnit unit, int duration)
+    public RealTime(TimeUnit unit, long  duration)
     {
         this.endTime = System.currentTimeMillis() + unit.toMillis(duration);
     }

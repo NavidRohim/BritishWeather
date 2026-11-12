@@ -60,9 +60,9 @@ public abstract class TimeKeeper
         REALTIME("real time", RealTime::new);
 
         private final String displayString;
-        private final BiFunction<TimeUnit, Integer, TimeKeeper> supplier;
+        private final BiFunction<TimeUnit, Long, TimeKeeper> supplier;
 
-        TimeMethods(String displayName, BiFunction<TimeUnit, Integer, TimeKeeper> supplier)
+        TimeMethods(String displayName, BiFunction<TimeUnit, Long, TimeKeeper> supplier)
         {
             this.displayString = displayName;
             this.supplier = supplier;
@@ -78,7 +78,7 @@ public abstract class TimeKeeper
             return Tooltip.create(Component.translatable("br.compass.time_methods.%s.tooltip".formatted(this.name().toLowerCase())));
         }
 
-        public TimeKeeper createTimeMethod(TimeUnit timeUnit, int time)
+        public TimeKeeper createTimeMethod(TimeUnit timeUnit, long time)
         {
             return supplier.apply(timeUnit, time);
         }

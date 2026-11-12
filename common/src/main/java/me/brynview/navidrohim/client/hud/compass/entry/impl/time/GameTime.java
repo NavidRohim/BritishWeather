@@ -14,14 +14,14 @@ public class GameTime extends TimeKeeper
     public static final MapCodec<GameTime> CODEC = RecordCodecBuilder.mapCodec(instance ->
             instance.group(
                     Codec.INT.fieldOf("currentTick").forGetter(GameTime::getCurrentTick),
-                    Codec.INT.fieldOf("endTick").forGetter(GameTime::getEndTick)
+                    Codec.LONG.fieldOf("endTick").forGetter(GameTime::getEndTick)
             ).apply(instance, GameTime::new)
     );
 
     public int currentTick;
-    public int endTick;
+    public long endTick;
 
-    public GameTime(int currentTick, int endTick)
+    public GameTime(int currentTick, long endTick)
     {
         this.currentTick = currentTick;
         this.endTick = endTick;
@@ -30,10 +30,10 @@ public class GameTime extends TimeKeeper
     /*
     Deserialisation constructor
      */
-    public GameTime(TimeUnit unit, int duration)
+    public GameTime(TimeUnit unit, long duration)
     {
         currentTick = 0;
-        endTick = Math.toIntExact(unit.toSeconds(duration) * 20);
+        endTick = unit.toSeconds(duration) * 20;
     }
 
     @Override
@@ -51,7 +51,7 @@ public class GameTime extends TimeKeeper
     @Override
     public long timeLeft()
     {
-        // timeLeft return value should be in seconds.
+        // timeLeft return value should be in millis
         return (endTick - currentTick) * 50L;
     }
 
@@ -66,7 +66,7 @@ public class GameTime extends TimeKeeper
         return currentTick;
     }
 
-    public int getEndTick()
+    public long getEndTick()
     {
         return endTick;
     }

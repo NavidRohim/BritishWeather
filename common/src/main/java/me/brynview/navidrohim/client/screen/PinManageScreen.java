@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jspecify.annotations.NonNull;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.concurrent.TimeUnit;
 
 public class PinManageScreen extends Screen
@@ -69,17 +71,24 @@ public class PinManageScreen extends Screen
     private static final Tooltip shouldDisappearWhenOOBTooltipUnselected = Tooltip.create(Component.translatable("br.pin_creation_screen.should_disappear_oob.unselected.tooltip"));
     private static final Tooltip showBackgroundSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_background.tooltip"));
     private static final Tooltip showShadowSelected = Tooltip.create(Component.translatable("br.pin_creation_screen.show_shadow.tooltip"));
+    private static final Tooltip selectedPersistent = Tooltip.create(Component.translatable("br.pin_creation_screen.persistent_checkbox.selected.tooltip"));
+    private static final Tooltip unselectedPersistent = Tooltip.create(Component.translatable("br.pin_creation_screen.persistent_checkbox.unselected.tooltip"));
+    private static final Tooltip calendarRealTime = Tooltip.create(Component.translatable("br.pin_creation_screen.calendar"));
 
-    private int highlightedColourOnPicker = 0;
-    private int highlightedColourPickerR = 0;
-    private int highlightedColourPickerG = 0;
-    private int highlightedColourPickerB = 0;
+    private int pickerColour = 255;
+    private int red = 255;
+    private int green = 255;
+    private int blue = 255;
+
+    private long calendarTimeSeconds = 0L;
 
     private boolean persistent = EntrySettings.PERSISTENT_DEFAULT;
     private boolean disappearWhenOOB = EntrySettings.SHOULD_DISAPPEAR_OOB;
     private boolean showDistance = EntrySettings.SHOW_DISTANCE_DEFAULT;
     private boolean showBackground = EntrySettings.SHOW_BACKGROUND_DEFAULT;
     private boolean showShadow = EntrySettings.SHOW_SHADOWS_DEFAULT;
+
+    private String marker = "Pin label..";
 
     GpuBuffer pixelBuffer;
     RenderTarget mainRenderTarget;
@@ -97,9 +106,6 @@ public class PinManageScreen extends Screen
     IntegerEditBox integerEditBox;
     TimeKeeper.TimeMethods timeMethod = TimeKeeper.TimeMethods.GAMETIME;
     TimeUnit selectedTimeUnit = TimeUnit.SECONDS;
-
-    Tooltip selectedPersistent = Tooltip.create(Component.translatable("br.pin_creation_screen.persistent_checkbox.selected.tooltip"));
-    Tooltip unselectedPersistent = Tooltip.create(Component.translatable("br.pin_creation_screen.persistent_checkbox.unselected.tooltip"));
 
     public PinManageScreen(@NotNull LocalPlayer player, @Nullable PinEntry editablePin)
     {
@@ -124,17 +130,36 @@ public class PinManageScreen extends Screen
     @Override
     protected void init()
     {
+
+        if (isEditing)
+        {
+            // Colour
+            int colour = pin.getHighlightColor();
+            EntrySettings settings = pin.getSettings();
+
+            red = ARGB.red(colour);
+            green = ARGB.green(colour);
+            blue = ARGB.blue(colour);
+
+            marker = pin.getMarker();
+
+            showShadow = settings.shouldShowShadow();
+            disappearWhenOOB = settings.shouldDisappearWhenOOB();
+            showBackground = settings.shouldShowBackground();
+            persistent = settings.isPersistent();
+            showDistance = settings.shouldShowDistance();
+        }
+
         LinearLayout masterLayout = LinearLayout.horizontal().spacing(7);
         LinearLayout colourLayout = LinearLayout.vertical().spacing(5);
         GridLayout personalisationLayout = new GridLayout();
         LinearLayout central = LinearLayout.vertical().spacing(5);
 
         this.markerBox = new EditBox(mc.font, Component.empty());
-        this.markerBox.setValue("Pin label..");
 
-        this.rBox = new ColourEditBox(mc.font, Component.empty(), 255, "Red..", ColorHelper.RED);
-        this.gBox = new ColourEditBox(mc.font, Component.empty(), 255, "Green..", ColorHelper.GREEN);
-        this.bBox = new ColourEditBox(mc.font, Component.empty(), 255, "Blue..", ColorHelper.BLUE);
+        this.rBox = new ColourEditBox(mc.font, Component.empty(), red, "Red..", ColorHelper.RED);
+        this.gBox = new ColourEditBox(mc.font, Component.empty(), green, "Green..", ColorHelper.GREEN);
+        this.bBox = new ColourEditBox(mc.font, Component.empty(), blue, "Blue..", ColorHelper.BLUE);
         SpriteIconButton colourDropperButton = SpriteIconButton.builder(Component.literal("Eyedropper"), (_) -> this.toggleDropper(), true)
                 .sprite(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "icon/dropper"), 12, 12)
                 .bounds(0, 0, 20, 20)
@@ -146,6 +171,14 @@ public class PinManageScreen extends Screen
         // Define main layout elements
         this.integerEditBox = new IntegerEditBox(mc.font, Component.empty());
 
+        Button selectFromCalenderButton = Button.builder(Component.literal("Chose from calender"), (_) ->
+        {
+            this.saveState();
+            minecraft.setScreenAndShow(new DatePicker(this, null, this::calenderCallback));
+        }).build();
+        selectFromCalenderButton.setTooltip(calendarRealTime);
+        selectFromCalenderButton.active = timeMethod == TimeKeeper.TimeMethods.REALTIME;
+
         CycleButton<TimeUnit> timeUnitCycleButton = CycleButton.builder((timeUnit -> Component.literal(timeUnit.name().toLowerCase())), selectedTimeUnit)
                 .withValues(TimeUnit.values())
                 .create(Component.literal("Time"), (_, newTimeUnit) -> this.selectedTimeUnit = newTimeUnit);
@@ -153,13 +186,17 @@ public class PinManageScreen extends Screen
         CycleButton<TimeKeeper.TimeMethods> timeMethodCycleButton = CycleButton.builder(tu -> Component.literal(tu.getDisplayName()), timeMethod)
                 .withValues(TimeKeeper.TimeMethods.values())
                 .withTooltip(TimeKeeper.TimeMethods::getDescription)
-                .create(Component.literal("Method"), (_, newTimeMethod) -> timeMethod = newTimeMethod);
+                .create(Component.literal("Method"), (_, newTimeMethod) ->
+                {
+                    timeMethod = newTimeMethod;
+                    selectFromCalenderButton.active = newTimeMethod == TimeKeeper.TimeMethods.REALTIME;
+                });
 
-        StyledCheckbox showBg = StyledCheckbox.buildCheckbox((b) -> showBackground = b.isChecked, showBackgroundSelected, showBackgroundSelected, EntrySettings.SHOW_BACKGROUND_DEFAULT);
-        StyledCheckbox isPersistentCheckbox = StyledCheckbox.buildCheckbox((b) -> persistent = b.isChecked, selectedPersistent, unselectedPersistent, EntrySettings.PERSISTENT_DEFAULT);
-        StyledCheckbox shouldShowDistCheckbox = StyledCheckbox.buildCheckbox((b) -> showDistance = b.isChecked, shouldShowDistSelected, shouldShowDistSelected, EntrySettings.SHOW_DISTANCE_DEFAULT);
-        StyledCheckbox shouldDisappearWhenOOB = StyledCheckbox.buildCheckbox((b) -> disappearWhenOOB = b.isChecked, shouldDisappearWhenOOBTooltipSelected, shouldDisappearWhenOOBTooltipUnselected, EntrySettings.SHOULD_DISAPPEAR_OOB);
-        StyledCheckbox shouldShowShadow = StyledCheckbox.buildCheckbox((b) -> showShadow = b.isChecked, showShadowSelected, showShadowSelected, EntrySettings.SHOW_SHADOWS_DEFAULT);
+        StyledCheckbox showBg = StyledCheckbox.buildCheckbox((b) -> showBackground = b.isChecked, showBackgroundSelected, showBackgroundSelected, showBackground);
+        StyledCheckbox isPersistentCheckbox = StyledCheckbox.buildCheckbox((b) -> persistent = b.isChecked, selectedPersistent, unselectedPersistent, persistent);
+        StyledCheckbox shouldShowDistCheckbox = StyledCheckbox.buildCheckbox((b) -> showDistance = b.isChecked, shouldShowDistSelected, shouldShowDistSelected, showDistance);
+        StyledCheckbox shouldDisappearWhenOOB = StyledCheckbox.buildCheckbox((b) -> disappearWhenOOB = b.isChecked, shouldDisappearWhenOOBTooltipSelected, shouldDisappearWhenOOBTooltipUnselected, disappearWhenOOB);
+        StyledCheckbox shouldShowShadow = StyledCheckbox.buildCheckbox((b) -> showShadow = b.isChecked, showShadowSelected, showShadowSelected, showShadow);
 
         if (!isEditing) {
             personalisationLayout.addChild(isPersistentCheckbox, 0, 0, d -> d.padding(2));
@@ -180,6 +217,7 @@ public class PinManageScreen extends Screen
             central.addChild(this.integerEditBox);
             central.addChild(timeUnitCycleButton);
             central.addChild(timeMethodCycleButton);
+            central.addChild(selectFromCalenderButton);
         }
         central.addChild(enterButton);
 
@@ -189,37 +227,33 @@ public class PinManageScreen extends Screen
 
         // Position elements within main layout and render
 
-        if (isEditing)
-        {
-            EntrySettings settings = pin.getSettings();
-
-            markerBox.setValue(pin.getMarker());
-            shouldDisappearWhenOOB.setChecked(settings.shouldDisappearWhenOOB());
-            shouldShowDistCheckbox.setChecked(settings.shouldShowDistance());
-            showBg.setChecked(settings.shouldShowBackground());
-            shouldShowShadow.setChecked(settings.shouldShowShadow());
-
-            showShadow = settings.shouldShowShadow();
-            disappearWhenOOB = settings.shouldDisappearWhenOOB();
-            showBackground = settings.shouldShowBackground();
-            persistent = settings.isPersistent();
-            showDistance = settings.shouldShowDistance();
-
-            int colour = pin.getHighlightColor();
-
-            rBox.setIntValue(ARGB.red(colour));
-            gBox.setIntValue(ARGB.green(colour));
-            bBox.setIntValue(ARGB.blue(colour));
-        }
+        markerBox.setValue(marker);
+        shouldDisappearWhenOOB.setChecked(disappearWhenOOB);
+        shouldShowDistCheckbox.setChecked(showDistance);
+        showBg.setChecked(showBackground);
+        shouldShowShadow.setChecked(showShadow);
 
         masterLayout.arrangeElements();
         FrameLayout.centerInRectangle(masterLayout, 0, height / 4, width, mc.getWindow().getGuiScaledHeight() / 4);
         masterLayout.visitWidgets(this::addRenderableWidget);
     }
 
+    private void calenderCallback(ZonedDateTime zonedDateTime, Instant instant, Long aLong, Component component)
+    {
+        long timeSecs = zonedDateTime.toEpochSecond() - ZonedDateTime.now().toEpochSecond();
+        if (timeSecs <= 0)
+        {
+            Constants.LOG.error("Date in the past was picked! Skipping.");
+        } else {
+            calendarTimeSeconds = timeSecs;
+            selectedTimeUnit = TimeUnit.SECONDS;
+        }
+    }
+
     private void create()
     {
-        int expiryTime = this.integerEditBox.getIntValue();
+
+        long expiryTime = timeMethod == TimeKeeper.TimeMethods.REALTIME ? Math.max(this.integerEditBox.getIntValue(), calendarTimeSeconds) : this.integerEditBox.getIntValue();
 
         EntrySettings settings = new EntrySettings()
                 .setDisappearWhenOOB(disappearWhenOOB)
@@ -249,6 +283,14 @@ public class PinManageScreen extends Screen
 
         pin.setMarker(getMarker());
         pin.setHighlightColor(getHighlightColor());
+    }
+
+    private void saveState()
+    {
+        red = rBox.getIntValue();
+        green = gBox.getIntValue();
+        blue = bBox.getIntValue();
+        marker = markerBox.getValue();
     }
 
     private void enterSelection()
@@ -318,7 +360,7 @@ public class PinManageScreen extends Screen
         if (isSelectingColour && frameCounter >= 10)
         {
             enableColourDropper(false);
-            colourPicked(highlightedColourPickerR, highlightedColourPickerG, highlightedColourPickerB);
+            colourPicked(red, green, blue);
         }
 
         return didAction;
@@ -376,7 +418,7 @@ public class PinManageScreen extends Screen
 
         guiGraphicsExtractor.fill(mXOutline, mYOutline, mXOutline + PICKER_GLASS_SIZE, mYOutline + PICKER_GLASS_SIZE, PICKER_BG);
         guiGraphicsExtractor.outline(mXOutline, mYOutline, PICKER_GLASS_SIZE, PICKER_GLASS_SIZE, ColorHelper.COMPASS_BG_COLOR);
-        guiGraphicsExtractor.fill(mXOutline + PICKER_COLOUR_SPACING, mYOutline + PICKER_COLOUR_SPACING, mXOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), mYOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), highlightedColourOnPicker);
+        guiGraphicsExtractor.fill(mXOutline + PICKER_COLOUR_SPACING, mYOutline + PICKER_COLOUR_SPACING, mXOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), mYOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), pickerColour);
     }
 
     private void readPixel(GpuBuffer pixelBuffer)
@@ -385,10 +427,10 @@ public class PinManageScreen extends Screen
         {
 
             ByteBuffer data = view.data();
-            highlightedColourPickerR = Byte.toUnsignedInt(data.get(0));
-            highlightedColourPickerG = Byte.toUnsignedInt(data.get(1));
-            highlightedColourPickerB = Byte.toUnsignedInt(data.get(2));
-            highlightedColourOnPicker = ColorHelper.rgb(highlightedColourPickerR, highlightedColourPickerG, highlightedColourPickerB, 255);
+            red = Byte.toUnsignedInt(data.get(0));
+            green = Byte.toUnsignedInt(data.get(1));
+            blue = Byte.toUnsignedInt(data.get(2));
+            pickerColour = ColorHelper.rgb(red, green, blue, 255);
         }
     }
 

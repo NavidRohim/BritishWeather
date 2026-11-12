@@ -38,10 +38,6 @@ public class FabricMain implements ModInitializer {
                 WeatherUpdatePacket packet = WeatherUpdatePacket.fromCurrentState();
                 server.getPlayerList().getPlayers().forEach(player -> ServerPlayNetworking.send(player, packet));
         });
-
-        /*CommandRegistrationCallback.EVENT.register((dispatcher, _, _) -> {
-            CommandDispatcher.registerCommandsForDispatcher(dispatcher);
-        });*/
     }
 
     private void initParticles()

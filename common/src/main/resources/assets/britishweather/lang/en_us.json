@@ -69,12 +69,14 @@
   "br.pin_creation_screen.show_shadow.tooltip": "Show shadow",
   "br.pin_creation_screen.colour_picker.tooltip": "Pick colour from game window.",
   "br.pin_creation_screen.press_any_to_exit": "Press any key to exit colour picker. Click to select colour.",
-
+  "br.pin_creation_screen.calendar": "Pick expiry time on calendar. Only possible when using real time.",
   "br.no_config_screen.no_config": "YACL is not installed!",
 
   "br.search_screen.pin_search.narration": "Pin search box",
 
   "br.dialogue.marker_reached": "Reached pin",
   "br.dialogue.tracking_marker": "Tracking \"%s\"",
-  "br.dialogue.not_highlighted": "Look at a pin and try again"
+  "br.dialogue.not_highlighted": "Look at a pin and try again",
+  "br.ui.calendar.nav_month": "Month",
+  "br.ui.calendar.nav_year": "Year"
 }

@@ -3,18 +3,14 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
-import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
-import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jspecify.annotations.NonNull;
-
-import java.util.concurrent.TimeUnit;
 
 /*
 Same as PinEntry but timed.
@@ -45,8 +41,29 @@ public class TimedPin extends PinEntry
     @Override
     public String getExtraInformation()
     {
-        long timeLeftMillis = timeMethod.timeLeft();
-        return " %sd %sh %sm".formatted(TimeUnit.MILLISECONDS.toDays(timeLeftMillis), TimeUnit.MILLISECONDS.toHours(timeLeftMillis), TimeUnit.MILLISECONDS.toMinutes(timeLeftMillis));
+        StringBuilder sb = new StringBuilder().append(' ');
+        long totalSeconds = getTimeMethod().timeLeft() / 1000L;
+
+        long days = totalSeconds / 86_400L;
+        long hours = (totalSeconds % 86_400L) / 3_600L;
+        long minutes = (totalSeconds % 3_600L) / 60L;
+
+        if (days > 0)
+        {
+            sb.append(days).append("d ");
+        }
+
+        if (hours > 0)
+        {
+            sb.append(hours).append("h ");
+        }
+
+        if (minutes > 0)
+        {
+            sb.append(minutes).append("m ");
+        }
+
+        return sb.toString();
     }
 
     @Override
