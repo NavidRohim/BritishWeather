@@ -127,7 +127,7 @@ public class EntryRenderer<T extends AbstractEntry>
 
         if (shouldStartTick)
         {
-            owner.startTick(player);
+            owner.startTick(player, context);
         }
 
         drawRawEntry(guiGraphicsExtractor, context);

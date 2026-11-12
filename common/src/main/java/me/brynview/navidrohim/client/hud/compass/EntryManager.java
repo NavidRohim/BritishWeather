@@ -150,8 +150,7 @@ public class EntryManager
             NbtIo.write(master, getCurrentPath());
         } catch (IOException e)
         {
-            // Bad, again
-            Constants.LOG.info("Could not save pins to persistent storage. Error: {}", e.getMessage());
+            Constants.LOG.error("Could not save pins to persistent storage. Error: {}", e.getMessage());
         }
     }
 

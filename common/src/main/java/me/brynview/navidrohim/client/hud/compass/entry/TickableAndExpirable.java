@@ -1,5 +1,6 @@
 package me.brynview.navidrohim.client.hud.compass.entry;
 
+import me.brynview.navidrohim.client.hud.compass.Compass;
 import net.minecraft.client.player.LocalPlayer;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ Possibilities are endless.
 public interface TickableAndExpirable
 {
     default void tick(@NotNull LocalPlayer player) {}
-    default void startTick(@NotNull LocalPlayer player) {}
+    default void startTick(@NotNull LocalPlayer player, Compass.CompassRenderContext context) {}
     default void endTick(@NotNull LocalPlayer player) {}
 
     default boolean hasExpired()

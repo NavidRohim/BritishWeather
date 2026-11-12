@@ -94,7 +94,7 @@ public class MapEntryGroup extends AbstractEntryGroup<MapEntryGroup.MapEntry>
     Only get the maps the player currently has at the start tick (When the player first activates the entry HUD)
      */
     @Override
-    public void startTick(@NotNull LocalPlayer player)
+    public void startTick(@NotNull LocalPlayer player, Compass.CompassRenderContext context)
     {
         Inventory inventory = player.getInventory();
         for (ItemStack itemStack : inventory)

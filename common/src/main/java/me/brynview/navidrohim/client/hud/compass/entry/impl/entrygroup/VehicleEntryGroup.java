@@ -113,10 +113,10 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
     }
 
     @Override
-    public void startTick(@NotNull LocalPlayer player)
+    public void startTick(@NotNull LocalPlayer player, Compass.CompassRenderContext context)
     {
         currentlyRiddenVehicle = player.getVehicle();
-        GeneralUtils.getEntitiesInView(player, VehicleEntity.class).forEach(entity ->
+        GeneralUtils.getEntitiesInView(player, VehicleEntity.class, context.partialTicks).forEach(entity ->
         {
             @Nullable ItemStack vehicleItemStack = entity.getPickResult();
             if (vehicleItemStack == null)

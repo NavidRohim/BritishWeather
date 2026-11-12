@@ -21,18 +21,18 @@ import java.util.List;
 public class GeneralUtils
 {
     // Math constants used for rendering
-    public static final int DETECTION_DISTANCE = 30; // How far to check in front of the player for entities
+    public static final int DETECTION_DISTANCE = 25; // How far to check in front of the player for entities
 
     public static String getDimensionFromPlayer(@NotNull LocalPlayer player)
     {
         return player.level().dimension().identifier().toString();
     }
 
-    public static <T extends Entity> List<T> getEntitiesInView(@NotNull LocalPlayer player, @NotNull Class<T> entityClass)
+    public static <T extends Entity> List<T> getEntitiesInView(@NotNull LocalPlayer player, @NotNull Class<T> entityClass, float partialTicks)
     {
-        Vec3 look = player.getViewVector(0).scale(DETECTION_DISTANCE);
+        Vec3 look = player.getViewVector(partialTicks);
         AABB normalBB = player.getBoundingBox();
-        AABB inFrontOfPlayer = normalBB.expandTowards(look.x, 0, look.z);
+        AABB inFrontOfPlayer = normalBB.expandTowards(look.x, 0, look.z).inflate(DETECTION_DISTANCE);
 
         // For every LivingEntity (includes all living things but not items or arrows) except current player. Does include armour stands
         return player.level().getEntitiesOfClass(entityClass, inFrontOfPlayer, (en) -> en != player && en != player.getVehicle());

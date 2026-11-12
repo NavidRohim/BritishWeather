@@ -60,19 +60,13 @@ public class DatePicker extends Screen
 
     private static final List<Integer> STUPID_BRITISH_ENGLISH_ORDINAL_INDICATOR_EXCEPTIONS = List.of(11, 12, 13);
 
-    protected DatePicker(@NotNull Screen parentScreen, @Nullable LayoutElement element, DatePickerCallback callback)
+    protected DatePicker(@NotNull Screen parentScreen, DatePickerCallback callback)
     {
         super(Component.literal("Select Date"));
-        this.parent = parentScreen;
 
-        if (element != null)
-        {
-            this.openAtX = element.getX() + element.getWidth();
-            this.openAtY = element.getY() - widthHeightPicker;
-        } else {
-            this.openAtX = parent.width / 2 - widthHeightPicker / 2;
-            this.openAtY = parent.height / 2 - widthHeightPicker / 2;
-        }
+        this.parent = parentScreen;
+        this.openAtX = parent.width / 2 - widthHeightPicker / 2;
+        this.openAtY = parent.height / 2 - widthHeightPicker / 2;
         this.selectedYear = Year.now().getValue();
         this.month = getMonthFromInt(this.selectedMonth);
         this.callback = callback;
@@ -159,17 +153,17 @@ public class DatePicker extends Screen
         setTitleWithDate();
     }
 
-    public boolean lastYearIsValid()
+    private boolean lastYearIsValid()
     {
         return (this.selectedYear == this.currentYear.getValue() + 1 && this.selectedMonth >= currentMonth.getValue() || this.selectedYear > currentYear.getValue() + 1);
     }
 
-    public boolean lastMonthIsValid()
+    private boolean lastMonthIsValid()
     {
         return (this.selectedMonth > currentMonth.getValue() || this.selectedYear > currentYear.getValue());
     }
 
-    public void scrollLeft()
+    private void scrollLeft()
     {
 
         if (lastMonthIsValid())
@@ -186,7 +180,7 @@ public class DatePicker extends Screen
         }
     }
 
-    public void scrollLeftByYear()
+    private void scrollLeftByYear()
     {
         if (lastYearIsValid()) {
             this.selectedYear--;
@@ -194,7 +188,7 @@ public class DatePicker extends Screen
         }
     }
 
-    public void scrollRight()
+    private void scrollRight()
     {
         if (this.selectedMonth + 1 > 12)
         {
@@ -208,13 +202,13 @@ public class DatePicker extends Screen
         render();
     }
 
-    public void scrollRightByYear()
+    private void scrollRightByYear()
     {
         this.selectedYear++;
         render();
     }
 
-    public Month getMonthFromInt(int monthIndex)
+    private Month getMonthFromInt(int monthIndex)
     {
         return Month.of(monthIndex);
     }
@@ -270,13 +264,13 @@ public class DatePicker extends Screen
         }
     }
 
-    public void setCurrentDayFromButton(Button button)
+    private void setCurrentDayFromButton(Button button)
     {
         this.selectedDay = Integer.parseInt(button.getMessage().getString());
         this.setTitleWithDate();
     }
 
-    public void setTitleWithDate()
+    private void setTitleWithDate()
     {
         String day = "";
         String yearMonth = month.getDisplayName(TextStyle.FULL, Locale.getDefault()) + " " + selectedYear;

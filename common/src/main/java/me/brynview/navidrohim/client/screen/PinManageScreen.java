@@ -130,7 +130,6 @@ public class PinManageScreen extends Screen
     @Override
     protected void init()
     {
-
         if (isEditing)
         {
             // Colour
@@ -174,7 +173,7 @@ public class PinManageScreen extends Screen
         Button selectFromCalenderButton = Button.builder(Component.literal("Chose from calender"), (_) ->
         {
             this.saveState();
-            minecraft.setScreenAndShow(new DatePicker(this, null, this::calenderCallback));
+            minecraft.setScreenAndShow(new DatePicker(this, this::calenderCallback));
         }).build();
         selectFromCalenderButton.setTooltip(calendarRealTime);
         selectFromCalenderButton.active = timeMethod == TimeKeeper.TimeMethods.REALTIME;
@@ -252,7 +251,6 @@ public class PinManageScreen extends Screen
 
     private void create()
     {
-
         long expiryTime = timeMethod == TimeKeeper.TimeMethods.REALTIME ? Math.max(this.integerEditBox.getIntValue(), calendarTimeSeconds) : this.integerEditBox.getIntValue();
 
         EntrySettings settings = new EntrySettings()

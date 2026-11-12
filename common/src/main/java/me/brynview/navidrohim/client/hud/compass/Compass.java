@@ -460,7 +460,7 @@ public class Compass
 
         if (shouldStartTick)
         {
-            group.startTick(player);
+            group.startTick(player, context);
         }
 
         group.renderExtra(guiGraphicsExtractor, context);
@@ -582,9 +582,9 @@ public class Compass
             return;
         }
 
-        if (zoomAlertTick % 20 == 0)
+        if (zoomAlertTick % 20 == 0 && context != null)
         {
-            entitiesNearPlayer = GeneralUtils.getEntitiesInView(player, LivingEntity.class);
+            entitiesNearPlayer = GeneralUtils.getEntitiesInView(player, LivingEntity.class, context.partialTicks);
         }
 
         EntryManager.tick(player);

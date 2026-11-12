@@ -74,7 +74,7 @@ public class JMWaypointGroup extends AbstractEntryGroup<JMWaypointGroup.Waypoint
     }
 
     @Override
-    public void startTick(@NotNull LocalPlayer player)
+    public void startTick(@NotNull LocalPlayer player, Compass.CompassRenderContext context)
     {
         for (Waypoint waypoint : this.api.getAllWaypoints(player.level().dimension()))
         {
