@@ -170,22 +170,24 @@ public class PinManageScreen extends Screen
         // Define main layout elements
         this.integerEditBox = new IntegerEditBox(mc.font, Component.empty());
 
-        Button selectFromCalenderButton = Button.builder(Component.literal("Chose from calender"), (_) ->
-        {
+        SpriteIconButton selectFromCalenderButton = SpriteIconButton.builder(CommonComponents.EMPTY, (_) -> {
             this.saveState();
             minecraft.setScreenAndShow(new DatePicker(this, this::calenderCallback));
-        }).build();
-        selectFromCalenderButton.setTooltip(calendarRealTime);
+        }, true)
+                .bounds(0, 0, 20, 20)
+                .sprite(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "icon/calendar"), 12, 12)
+                .tooltip(calendarRealTime)
+                .build();
         selectFromCalenderButton.active = timeMethod == TimeKeeper.TimeMethods.REALTIME;
 
         CycleButton<TimeUnit> timeUnitCycleButton = CycleButton.builder((timeUnit -> Component.literal(timeUnit.name().toLowerCase())), selectedTimeUnit)
                 .withValues(TimeUnit.values())
-                .create(Component.literal("Time"), (_, newTimeUnit) -> this.selectedTimeUnit = newTimeUnit);
+                .create(Component.literal("Unit"), (_, newTimeUnit) -> this.selectedTimeUnit = newTimeUnit);
 
         CycleButton<TimeKeeper.TimeMethods> timeMethodCycleButton = CycleButton.builder(tu -> Component.literal(tu.getDisplayName()), timeMethod)
                 .withValues(TimeKeeper.TimeMethods.values())
                 .withTooltip(TimeKeeper.TimeMethods::getDescription)
-                .create(Component.literal("Method"), (_, newTimeMethod) ->
+                .create(Component.literal("Count in"), (_, newTimeMethod) ->
                 {
                     timeMethod = newTimeMethod;
                     selectFromCalenderButton.active = newTimeMethod == TimeKeeper.TimeMethods.REALTIME;
@@ -213,10 +215,10 @@ public class PinManageScreen extends Screen
         central.addChild(this.markerBox);
         if (!isEditing)
         {
+            colourLayout.addChild(selectFromCalenderButton);
             central.addChild(this.integerEditBox);
             central.addChild(timeUnitCycleButton);
             central.addChild(timeMethodCycleButton);
-            central.addChild(selectFromCalenderButton);
         }
         central.addChild(enterButton);
 

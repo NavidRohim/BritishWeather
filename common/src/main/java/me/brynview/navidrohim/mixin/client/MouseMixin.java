@@ -6,7 +6,6 @@ import me.brynview.navidrohim.client.hud.compass.Compass;
 import net.minecraft.client.MouseHandler;
 import org.joml.Vector2i;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -16,7 +15,7 @@ public class MouseMixin
 {
 
     @Inject(method = "onScroll", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/player/Inventory;setSelectedSlot(I)V"), cancellable = true)
-    private void onScroll(long handle, double xoffset, double yoffset, CallbackInfo ci, @Local Vector2i wheelXY)
+    private void onScroll(long handle, double xoffset, double yoffset, CallbackInfo ci, @Local(name = "wheelXY") Vector2i wheelXY)
     {
         if (KeyHandler.ZOOM_MODIFIER.isDown())
         {
