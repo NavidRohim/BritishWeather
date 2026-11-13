@@ -104,7 +104,7 @@ public class DatePicker extends Screen
         mainLayout = LinearLayout.vertical().spacing(2);
 
         LinearLayout actionLayout = LinearLayout.horizontal().spacing(2);
-        EditBox box = actionLayout.addChild(new EditBox(minecraft.font, 0, 0, widthHeightPicker + 20, 15, Component.empty()));
+        EditBox box = actionLayout.addChild(new EditBox(minecraft.font, 0, 0, widthHeightPicker + 20, 15, CommonComponents.EMPTY));
 
         box.setValue("HH:MM:SS");
         box.setMaxLength(8);

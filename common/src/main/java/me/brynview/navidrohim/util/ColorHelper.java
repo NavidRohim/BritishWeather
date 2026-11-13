@@ -13,16 +13,16 @@ import java.awt.*;
 
 public class ColorHelper {
 
-    // Colours for compass elements
-    public static final int CENTER_COLOR = decode("#FF0A01").getRGB(); // Red
-    public static final int COMPASS_BG_COLOR = decode("#FFFFFF").getRGB();
-    public static final int COMPASS_BG_SHADOW_COLOUR = ARGB.scaleRGB(COMPASS_BG_COLOR, 0.25f);
-
+    public static final int FADED_WHITE = rgb(210, 210, 210, 240);
     public static final int WHITE = decode("#FFFFFF").getRGB();
     public static final int RED = decode("#FF0000").getRGB();
     public static final int GREEN = decode("#00FF00").getRGB();
     public static final int BLUE = decode("#0000FF").getRGB();
     public static final int BLACK = decode("#000000").getRGB();
+
+    // Colours for compass elements
+    public static final int CENTER_COLOR = decode("#FF0A01").getRGB(); // Red
+    public static final int COMPASS_BG_SHADOW_COLOUR = ARGB.scaleRGB(WHITE, 0.25f);
 
     // Colours for entity markers
     public static final int PLAYER = rgb(125, 255, 125, 255);

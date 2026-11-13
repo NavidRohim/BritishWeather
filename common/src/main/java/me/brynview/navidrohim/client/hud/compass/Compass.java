@@ -371,7 +371,7 @@ public class Compass
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
         int decoY = context.contentY - Constants.LINE_HEIGHT_HALVED;
 
-        guiGraphicsExtractor.horizontalLine(context.leftX + 1, context.rightX, context.contentY - 1, ColorHelper.COMPASS_BG_COLOR);
+        guiGraphicsExtractor.horizontalLine(context.leftX + 1, context.rightX, context.contentY - 1, ColorHelper.WHITE);
         guiGraphicsExtractor.horizontalLine(context.leftX + 2, context.rightX, context.contentY, ColorHelper.COMPASS_BG_SHADOW_COLOUR);
 
         if (zoomAlertTick > 0)
@@ -383,8 +383,8 @@ public class Compass
         }
 
         // Draw the two little caps on each end of the compass. Inspired from the God of War 2018 compass.
-        guiGraphicsExtractor.text(mc.font, LEFT, context.leftX - 3, decoY, ColorHelper.COMPASS_BG_COLOR, true);
-        guiGraphicsExtractor.text(mc.font, RIGHT, context.rightX, decoY, ColorHelper.COMPASS_BG_COLOR, true);
+        guiGraphicsExtractor.text(mc.font, LEFT, context.leftX - 3, decoY, ColorHelper.WHITE, true);
+        guiGraphicsExtractor.text(mc.font, RIGHT, context.rightX, decoY, ColorHelper.WHITE, true);
     }
 
     private void drawZoomLevelEffects(GuiGraphicsExtractor guiGraphicsExtractor, int colour)

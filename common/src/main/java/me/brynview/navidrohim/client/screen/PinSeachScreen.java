@@ -1,7 +1,6 @@
 package me.brynview.navidrohim.client.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -12,7 +11,6 @@ import net.minecraft.client.gui.components.SpriteIconButton;
 import net.minecraft.client.gui.layouts.FrameLayout;
 import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -59,7 +57,7 @@ public class PinSeachScreen extends Screen
     private final HashMap<String, AbstractEntry> entriesMatching = new HashMap<>();
     private final ResourceKey<Level> levelKey;
 
-    private String hint = "";
+    private Set<Map.Entry<String, AbstractEntry>> hints = Set.of();
     private int entryIndex = 0;
 
     public PinSeachScreen(ResourceKey<Level> level)
@@ -102,10 +100,10 @@ public class PinSeachScreen extends Screen
             return true;
         } else if (event.key() == InputConstants.KEY_DOWN)
         {
-            return selectPossibleEntry(-1);
+            return selectPossibleEntry(1);
         } else if (event.key() == InputConstants.KEY_UP)
         {
-            return selectPossibleEntry(1);
+            return selectPossibleEntry(-1);
         } else {
             return super.keyPressed(event);
         }
@@ -130,15 +128,14 @@ public class PinSeachScreen extends Screen
         selectedEntry = null;
         entriesMatching.clear();
         searchBox.setSuggestion("");
-        hint = "";
         entryIndex = 0;
+        hints = Set.of();
     }
 
     private void setExample()
     {
         Random randomSrc = new Random(); // Doing random operations in Java is so shit compared to Python.
         searchBox.setSuggestion(" Maybe: " + EXAMPLES.get(randomSrc.nextInt(0, EXAMPLES.size())));
-        hint = "Type pin name. Use up / down arrow keys to scroll through results.";
     }
 
     private void typedString(String string)
@@ -159,7 +156,7 @@ public class PinSeachScreen extends Screen
             }
         }
 
-        hint = String.join(", ", entriesMatching.keySet());
+        hints = entriesMatching.entrySet();
         selectPossibleEntry(entryIndex);
     }
 
@@ -181,7 +178,29 @@ public class PinSeachScreen extends Screen
     public void extractRenderState(@NonNull GuiGraphicsExtractor graphics)
     {
         super.extractRenderState(graphics);
-        graphics.centeredText(minecraft.font, minecraft.font.plainSubstrByWidth(hint, width - 30), searchBox.getX() + searchBox.getWidth() / 2, searchBox.getY() + searchBox.getHeight() + 5, ColorHelper.WHITE);
+        int xForHint = searchBox.getX();
+        int baseHintY = searchBox.getY() + searchBox.getHeight();
+
+        if (!entriesMatching.isEmpty())
+        {
+            int i = 0;
+            for (Map.Entry<String, AbstractEntry> stringAbstractEntryEntry : hints)
+            {
+                i++;
+                int renderColour = ColorHelper.shiftColourToOpacity(stringAbstractEntryEntry.getValue().highlightColor, 210);
+                String displayableKey = stringAbstractEntryEntry.getKey();
+
+                if (stringAbstractEntryEntry.getValue() == selectedEntry)
+                {
+                    renderColour = ColorHelper.WHITE;
+                    displayableKey = "→ " + displayableKey;
+                }
+
+                graphics.text(minecraft.font, displayableKey, xForHint, baseHintY + (minecraft.font.lineHeight * i), renderColour);
+            }
+        } else {
+            graphics.centeredText(minecraft.font, Component.literal("Type pin name. Use up / down arrow keys to scroll through results."), xForHint + searchBox.getWidth() / 2, baseHintY + 5, ColorHelper.FADED_WHITE);
+        }
     }
 
     @Override

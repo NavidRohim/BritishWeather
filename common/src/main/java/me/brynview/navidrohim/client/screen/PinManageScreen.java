@@ -154,11 +154,11 @@ public class PinManageScreen extends Screen
         GridLayout personalisationLayout = new GridLayout();
         LinearLayout central = LinearLayout.vertical().spacing(5);
 
-        this.markerBox = new EditBox(mc.font, Component.empty());
+        this.markerBox = new EditBox(mc.font, CommonComponents.EMPTY);
 
-        this.rBox = new ColourEditBox(mc.font, Component.empty(), red, "Red..", ColorHelper.RED);
-        this.gBox = new ColourEditBox(mc.font, Component.empty(), green, "Green..", ColorHelper.GREEN);
-        this.bBox = new ColourEditBox(mc.font, Component.empty(), blue, "Blue..", ColorHelper.BLUE);
+        this.rBox = new ColourEditBox(mc.font, CommonComponents.EMPTY, red, "Red..", ColorHelper.RED);
+        this.gBox = new ColourEditBox(mc.font, CommonComponents.EMPTY, green, "Green..", ColorHelper.GREEN);
+        this.bBox = new ColourEditBox(mc.font, CommonComponents.EMPTY, blue, "Blue..", ColorHelper.BLUE);
         SpriteIconButton colourDropperButton = SpriteIconButton.builder(Component.literal("Eyedropper"), (_) -> this.toggleDropper(), true)
                 .sprite(Identifier.fromNamespaceAndPath(Constants.MOD_ID, "icon/dropper"), 12, 12)
                 .bounds(0, 0, 20, 20)
@@ -168,7 +168,7 @@ public class PinManageScreen extends Screen
         Button enterButton = Button.builder(CommonComponents.GUI_DONE, (_) -> enterSelection()).build();
 
         // Define main layout elements
-        this.integerEditBox = new IntegerEditBox(mc.font, Component.empty());
+        this.integerEditBox = new IntegerEditBox(mc.font, CommonComponents.EMPTY);
 
         SpriteIconButton selectFromCalenderButton = SpriteIconButton.builder(CommonComponents.EMPTY, (_) -> {
             this.saveState();
@@ -417,7 +417,7 @@ public class PinManageScreen extends Screen
         guiGraphicsExtractor.requestCursor(CursorTypes.CROSSHAIR);
 
         guiGraphicsExtractor.fill(mXOutline, mYOutline, mXOutline + PICKER_GLASS_SIZE, mYOutline + PICKER_GLASS_SIZE, PICKER_BG);
-        guiGraphicsExtractor.outline(mXOutline, mYOutline, PICKER_GLASS_SIZE, PICKER_GLASS_SIZE, ColorHelper.COMPASS_BG_COLOR);
+        guiGraphicsExtractor.outline(mXOutline, mYOutline, PICKER_GLASS_SIZE, PICKER_GLASS_SIZE, ColorHelper.WHITE);
         guiGraphicsExtractor.fill(mXOutline + PICKER_COLOUR_SPACING, mYOutline + PICKER_COLOUR_SPACING, mXOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), mYOutline + (PICKER_GLASS_SIZE - PICKER_COLOUR_SPACING), pickerColour);
     }
 
