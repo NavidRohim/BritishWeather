@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.ColorHelper;
@@ -57,8 +58,9 @@ public class PinSeachScreen extends Screen
     private final HashMap<String, AbstractEntry> entriesMatching = new HashMap<>();
     private final ResourceKey<Level> levelKey;
 
-    private Set<Map.Entry<String, AbstractEntry>> hints = Set.of();
+    private List<Map.Entry<String, AbstractEntry>> hints = List.of();
     private int entryIndex = 0;
+    private int maxEntryIndex = 1;
 
     public PinSeachScreen(ResourceKey<Level> level)
     {
@@ -100,27 +102,40 @@ public class PinSeachScreen extends Screen
             return true;
         } else if (event.key() == InputConstants.KEY_DOWN)
         {
-            return selectPossibleEntry(1);
+            return scrollEntry(1);
         } else if (event.key() == InputConstants.KEY_UP)
         {
-            return selectPossibleEntry(-1);
+            return scrollEntry(-1);
         } else {
             return super.keyPressed(event);
         }
     }
 
-    private boolean selectPossibleEntry(int incBy)
+    public boolean scrollEntry(int incBy)
     {
         if (entriesMatching.isEmpty())
         {
             return false;
         }
 
-        entryIndex = Math.clamp(entryIndex + incBy, 0, entriesMatching.size() - 1);
-        selectedEntry = entriesMatching.entrySet().stream().toList().get(entryIndex).getValue();
+        entryIndex = Math.clamp(entryIndex + incBy, 0, Math.min(hints.size() - 1, maxEntryIndex - 1));
+        selectedEntry = hints.get(entryIndex).getValue();
         searchBox.setSuggestion(" " + selectedEntry.getMarker());
 
         return true;
+    }
+
+    @Override
+    public boolean mouseScrolled(double x, double y, double scrollX, double scrollY)
+    {
+        if (scrollY >= 0.45)
+        {
+            return scrollEntry(1);
+        } else if  (scrollY <= -0.45)
+        {
+            return scrollEntry(-1);
+        }
+        return super.mouseScrolled(x, y, scrollX, scrollY);
     }
 
     private void reset()
@@ -129,7 +144,8 @@ public class PinSeachScreen extends Screen
         entriesMatching.clear();
         searchBox.setSuggestion("");
         entryIndex = 0;
-        hints = Set.of();
+        maxEntryIndex = 1;
+        hints = List.of();
     }
 
     private void setExample()
@@ -152,12 +168,18 @@ public class PinSeachScreen extends Screen
         {
             if (allEntry.getMarker().toLowerCase().contains(string.toLowerCase()))
             {
-                entriesMatching.put(allEntry.getMarker(), allEntry);
+                String marker = allEntry.getMarker();
+                if (entriesMatching.containsKey(marker))
+                {
+                    marker += " (%s)".formatted(allEntry.getReadablePosition());
+                }
+
+                entriesMatching.put(marker, allEntry);
             }
         }
 
-        hints = entriesMatching.entrySet();
-        selectPossibleEntry(entryIndex);
+        hints = new ArrayList<>(entriesMatching.entrySet());
+        scrollEntry(entryIndex);
     }
 
     private void closeWithResult()
@@ -186,7 +208,14 @@ public class PinSeachScreen extends Screen
             int i = 0;
             for (Map.Entry<String, AbstractEntry> stringAbstractEntryEntry : hints)
             {
-                i++;
+                int renderY = baseHintY + (minecraft.font.lineHeight * (i + 1));
+                if (renderY + maxEntryIndex >= height)
+                {
+                    graphics.text(minecraft.font, "> Be more specific!", xForHint, renderY, ColorHelper.WHITE);
+                    return;
+                }
+
+                maxEntryIndex = i + 1;
                 int renderColour = ColorHelper.shiftColourToOpacity(stringAbstractEntryEntry.getValue().highlightColor, 210);
                 String displayableKey = stringAbstractEntryEntry.getKey();
 
@@ -196,7 +225,8 @@ public class PinSeachScreen extends Screen
                     displayableKey = "→ " + displayableKey;
                 }
 
-                graphics.text(minecraft.font, displayableKey, xForHint, baseHintY + (minecraft.font.lineHeight * i), renderColour);
+                graphics.text(minecraft.font, displayableKey, xForHint, renderY, renderColour);
+                i++;
             }
         } else {
             graphics.centeredText(minecraft.font, Component.literal("Type pin name. Use up / down arrow keys to scroll through results."), xForHint + searchBox.getWidth() / 2, baseHintY + 5, ColorHelper.FADED_WHITE);

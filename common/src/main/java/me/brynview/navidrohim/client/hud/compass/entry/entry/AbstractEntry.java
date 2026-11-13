@@ -57,6 +57,11 @@ public abstract class AbstractEntry implements TickableAndExpirable
         return position;
     }
 
+    public String getReadablePosition()
+    {
+        return "%s %s %s".formatted((int) position.x, (int) position.y, (int) position.z);
+    }
+
     public String getLevel()
     {
         return level;

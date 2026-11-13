@@ -71,4 +71,19 @@ public class ClientCommon
         Compass.cleanupAndReset();
     }
 
+    public static boolean scrollEvent(boolean scrollingUp, boolean scrollingDown)
+    {
+        if (KeyHandler.ZOOM_MODIFIER.isDown())
+        {
+            if (scrollingUp) // scroll up
+            {
+                Compass.getInstance().displayZoom(1);
+            } else if (scrollingDown) {
+                Compass.getInstance().displayZoom(-1);
+            }
+            return true;
+        }
+        return false;
+    }
+
 }
