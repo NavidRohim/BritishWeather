@@ -494,7 +494,7 @@ public class Compass
         // Draw normal entries.
         Collection<? extends AbstractEntry> entries = EntryManager.getEntriesInDimension(player.level().dimension());
         AbstractEntry closest = null;
-        AbstractEntry trackedPinRender = null;
+        AbstractEntry tracked = null;
 
         // Pass 1: calculate state for every entry and find the highlightable entry closest to the heading.
         for (AbstractEntry entry : entries)
@@ -503,7 +503,7 @@ public class Compass
 
             if (entry == trackedPin)
             {
-                trackedPinRender = entry;
+                tracked = entry;
             } else if (renderer.calculateState(context) == EntryRenderer.RenderState.HIGHLIGHT && (closest == null || renderer.distanceFromHeading < closest.getRenderer().distanceFromHeading))
             {
                 closest = entry;
@@ -519,7 +519,7 @@ public class Compass
         // Pass 2: draw everything else, then the focused entry last so it sits on top.
         for (AbstractEntry entry : entries)
         {
-            if (entry != closest && entry != trackedPinRender)
+            if (entry != closest && entry != tracked)
             {
                 entry.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
             }
@@ -530,9 +530,9 @@ public class Compass
             closest.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
         }
 
-        if (trackedPinRender != null)
+        if (tracked != null)
         {
-            trackedPinRender.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
+            tracked.getRenderer().draw(guiGraphicsExtractor, player, shouldStartTick, context);
         }
     }
 

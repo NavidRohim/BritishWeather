@@ -27,18 +27,19 @@ import org.jspecify.annotations.NonNull;
 import java.util.*;
 import java.util.List;
 
+import static me.brynview.navidrohim.util.ColorHelper.FADED_WHITE;
 import static me.brynview.navidrohim.util.ColorHelper.WHITE;
 
 public class PinSearchScreen extends Screen
 {
     private final class StyledEditBox extends EditBox
     {
-        private int renderColour = WHITE;
+        private int renderColour = FADED_WHITE;
         public StyledEditBox(Font font, Component narration)
         {
             super(font, narration);
-            this.setTextColor(WHITE);
-            this.setTextColorUneditable(WHITE);
+            this.setTextColor(FADED_WHITE);
+            this.setTextColorUneditable(FADED_WHITE);
             this.setTextShadow(false);
         }
 
@@ -64,7 +65,6 @@ public class PinSearchScreen extends Screen
     }
 
     private static final Component PIN_SEARCH_NARRATION = Component.translatable("br.search_screen.pin_search.narration");
-    private static final List<String> EXAMPLES = List.of("Base", "Village", "Cave", "Farm", "Ravine", "Stronghold", "Home", "Forest", "Dungeon", "Camp");
     private static final double FAT_TEXT_SCALE = 1.8D;
     private static final double SCALED_LINE_HEIGHT = Constants.LINE_HEIGHT * FAT_TEXT_SCALE;
     private static final float NANOS_TO_SECONDS_MAGIC =  1_000_000_000.0F;
@@ -116,7 +116,6 @@ public class PinSearchScreen extends Screen
         FrameLayout.centerInRectangle(master, this.getRectangle());
 
         this.setInitialFocus(searchBox);
-        setExample();
     }
 
     @Override
@@ -175,20 +174,12 @@ public class PinSearchScreen extends Screen
         hints = List.of();
     }
 
-    private void setExample()
-    {
-        Random randomSrc = new Random(); // Doing random operations in Java is so shit compared to Python.
-        searchBox.setSuggestion(" Maybe: " + EXAMPLES.get(randomSrc.nextInt(0, EXAMPLES.size())));
-        searchBox.setRenderColour(WHITE);
-    }
-
     private void typedString(String string)
     {
         reset();
 
         if (string.isEmpty())
         {
-            setExample();
             return;
         }
 
@@ -247,18 +238,19 @@ public class PinSearchScreen extends Screen
 
                 if (hint.getValue() == selectedEntry)
                 {
-                    int fadeColourBox = selectedEntryOld != null ? ARGB.srgbLerp(selectedAnimationProgress, selectedEntryOld.highlightColor, selectedEntry.highlightColor) : selectedEntry.highlightColor;
+                    int fadeColourBox = ARGB.srgbLerp(selectedAnimationProgress, selectedEntryOld != null ? selectedEntryOld.highlightColor : searchBox.renderColour, selectedEntry.highlightColor);
                     searchBox.setRenderColour(fadeColourBox);
                 }
                 drawScaledText(graphics, hint.getKey(), xForHint + searchBox.getWidth() / 2, y, scale, animationColour);
 
                 if (BritishWeather.getConfig().debug())
                 {
-                    graphics.centeredText(minecraft.font, "%.2f".formatted(selectedAnimationProgress), xForHint + searchBox.getWidth(), (int) y, ColorHelper.WHITE);
+                    graphics.centeredText(minecraft.font, "%.2f".formatted(selectedAnimationProgress), xForHint + searchBox.getWidth(), (int) y, WHITE);
                 }
             }
         } else {
             graphics.centeredText(minecraft.font, Component.literal("Type pin name. Up / down arrow keys to scroll through results."), searchBox.getX() + searchBox.getWidth() / 2, baseHintY + 5, ColorHelper.FADED_WHITE);
+            searchBox.setRenderColour(FADED_WHITE);
         }
         super.extractRenderState(graphics);
     }
