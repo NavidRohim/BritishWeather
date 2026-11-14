@@ -1,6 +1,7 @@
 package me.brynview.navidrohim.client.screen;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
@@ -8,6 +9,8 @@ import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.layouts.FrameLayout;
+import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.player.LocalPlayer;
@@ -21,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
 import org.jspecify.annotations.NonNull;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -31,6 +33,7 @@ public class PinSearchScreen extends Screen
 {
     private final class StyledEditBox extends EditBox
     {
+        private int renderColour = WHITE;
         public StyledEditBox(Font font, Component narration)
         {
             super(font, narration);
@@ -42,12 +45,15 @@ public class PinSearchScreen extends Screen
         @Override
         public void extractWidgetRenderState(@NonNull GuiGraphicsExtractor graphics)
         {
-            int colour = selectedEntry != null ? selectedEntry.highlightColor : WHITE;
-            graphics.outline(getX(), getY(), width, height, colour);
             graphics.fill(getX(), getY(), getX() + width, getY() + height, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));
-            this.setTextColor(colour);
-
+            graphics.outline(getX(), getY(), width, height, renderColour);
             super.extractWidgetRenderState(graphics);
+        }
+
+        public void setRenderColour(int colour)
+        {
+            this.renderColour = colour;
+            this.setTextColor(colour);
         }
 
         @Override
@@ -63,7 +69,8 @@ public class PinSearchScreen extends Screen
     private static final double SCALED_LINE_HEIGHT = Constants.LINE_HEIGHT * FAT_TEXT_SCALE;
     private static final float NANOS_TO_SECONDS_MAGIC =  1_000_000_000.0F;
 
-    private EditBox searchBox;
+    private StyledEditBox searchBox;
+    private @Nullable AbstractEntry selectedEntryOld;
     private @Nullable AbstractEntry selectedEntry;
 
     private final LocalPlayer localPlayer;
@@ -73,10 +80,9 @@ public class PinSearchScreen extends Screen
     private List<Map.Entry<String, AbstractEntry>> hints = List.of();
     private int entryIndex = 0;
 
-    private static final float SCROLL_EASE_SPEED = 18.0F; // Higher = snappier. ~18 settles in roughly 200ms.
+    private static final float SCROLL_EASE_SPEED = 18F; // Higher = snappier. ~18 settles in roughly 200ms.
     private float animatedIndex = 0.0F; // Smoothly follows entryIndex for the scroll animation.
     private long lastAnimationNanos = -1L;
-    private int animationColour = ColorHelper.WHITE;
 
 
     public PinSearchScreen(ResourceKey<Level> level, LocalPlayer localPlayer)
@@ -89,25 +95,26 @@ public class PinSearchScreen extends Screen
     @Override
     protected void init()
     {
-        //LinearLayout master = LinearLayout.horizontal().spacing(3);
+        LinearLayout master = LinearLayout.horizontal().spacing(3);
 
         searchBox = new StyledEditBox(font, PIN_SEARCH_NARRATION);
         searchBox.setWidth(200);
         searchBox.setResponder(this::typedString);
-        searchBox.setX(10);
-        searchBox.setY(height / 2);
-
         /*
         SpriteIconButton doneButton = SpriteIconButton.builder(CommonComponents.GUI_CONTINUE, (_) -> this.closeWithResult(), true)
                 .bounds(0, 0, 20, 20)
                 .sprite(Identifier.withDefaultNamespace("icon/search"), 15, 15)
                 .build();
 
-        //master.addChild(searchBox);
+        /
         //master.addChild(doneButton);
-        //master.arrangeElements();
-        //master.visitWidgets(this::addRenderableWidget);*/
-        this.addRenderableWidget(searchBox);
+   */
+
+        master.addChild(searchBox);
+        master.arrangeElements();
+        master.visitWidgets(this::addRenderableWidget);
+        FrameLayout.centerInRectangle(master, this.getRectangle());
+
         this.setInitialFocus(searchBox);
         setExample();
     }
@@ -138,6 +145,7 @@ public class PinSearchScreen extends Screen
         }
 
         entryIndex = Math.clamp(entryIndex + incBy, 0, hints.size() - 1);
+        selectedEntryOld = selectedEntry;
         selectedEntry = hints.get(entryIndex).getValue();
         
         return true;
@@ -159,6 +167,7 @@ public class PinSearchScreen extends Screen
     private void reset()
     {
         selectedEntry = null;
+        selectedEntryOld = null;
         entriesMatching.clear();
         searchBox.setSuggestion("");
         entryIndex = 0;
@@ -170,6 +179,7 @@ public class PinSearchScreen extends Screen
     {
         Random randomSrc = new Random(); // Doing random operations in Java is so shit compared to Python.
         searchBox.setSuggestion(" Maybe: " + EXAMPLES.get(randomSrc.nextInt(0, EXAMPLES.size())));
+        searchBox.setRenderColour(WHITE);
     }
 
     private void typedString(String string)
@@ -227,17 +237,28 @@ public class PinSearchScreen extends Screen
                 // How far from selected slot `i` is
                 float offset = i - animatedIndex;
                 // 1 when selected (highlighted entry) 0 is normal size. Any number in between is the animation
-                float selectedness = Math.clamp(1.0F - Math.abs(offset), 0.0F, 1.0F);
+                float selectedAnimationProgress = Math.clamp(1.0F - Math.abs(offset), 0.0F, 1.0F);
 
                 float y = yForSlotOffset(offset, baseHintY);
-                float scale = Mth.lerp(selectedness, 1.0F, (float) FAT_TEXT_SCALE);
+                float scale = Mth.lerp(selectedAnimationProgress, 1.0F, (float) FAT_TEXT_SCALE);
 
                 // Selected entry is white, do colour change animation to white
-                animationColour = ARGB.srgbLerp(selectedness, ColorHelper.shiftColourToOpacity(hint.getValue().highlightColor, 190), hint.getValue().highlightColor);
-                drawScaledText(graphics, hint.getKey(), xForHint, y, scale, animationColour);
+                int animationColour = ARGB.srgbLerp(selectedAnimationProgress, ColorHelper.shiftColourToOpacity(hint.getValue().highlightColor, 190), hint.getValue().highlightColor);
+
+                if (hint.getValue() == selectedEntry)
+                {
+                    int fadeColourBox = selectedEntryOld != null ? ARGB.srgbLerp(selectedAnimationProgress, selectedEntryOld.highlightColor, selectedEntry.highlightColor) : selectedEntry.highlightColor;
+                    searchBox.setRenderColour(fadeColourBox);
+                }
+                drawScaledText(graphics, hint.getKey(), xForHint + searchBox.getWidth() / 2, y, scale, animationColour);
+
+                if (BritishWeather.getConfig().debug())
+                {
+                    graphics.centeredText(minecraft.font, "%.2f".formatted(selectedAnimationProgress), xForHint + searchBox.getWidth(), (int) y, ColorHelper.WHITE);
+                }
             }
         } else {
-            graphics.text(minecraft.font, Component.literal("Type pin name. Use up / down arrow keys to scroll through results."), searchBox.getX(), baseHintY + 5, ColorHelper.FADED_WHITE);
+            graphics.centeredText(minecraft.font, Component.literal("Type pin name. Up / down arrow keys to scroll through results."), searchBox.getX() + searchBox.getWidth() / 2, baseHintY + 5, ColorHelper.FADED_WHITE);
         }
         super.extractRenderState(graphics);
     }
@@ -262,7 +283,7 @@ public class PinSearchScreen extends Screen
             return;
         }
 
-        animatedIndex += remaining * (1.0F - (float) Math.exp(-SCROLL_EASE_SPEED * deltaSeconds));
+        animatedIndex += remaining * (1.0F - (float) Math.exp((BritishWeather.getConfig().debug() ? -1.5F : -SCROLL_EASE_SPEED) * deltaSeconds));
     }
 
     /**
@@ -291,11 +312,12 @@ public class PinSearchScreen extends Screen
 
     private void drawScaledText(GuiGraphicsExtractor graphics, String text, int x, float y, float scale, int colour)
     {
+        int correctedCenteredScale = font.width(text) / 2;
         Matrix3x2fStack pose = graphics.pose();
         pose.pushMatrix();
         pose.translate(x, y);
         pose.scale(scale, scale);
-        graphics.text(minecraft.font, text, 0, 0, colour);
+        graphics.text(minecraft.font, text, -correctedCenteredScale, 0, colour);
         pose.popMatrix();
     }
 
