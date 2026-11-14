@@ -3,6 +3,7 @@ package me.brynview.navidrohim;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSource;
 import me.brynview.navidrohim.server.weather.sources.WeatherLocationSources;
 import me.brynview.navidrohim.util.WeatherUtil;
+import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,9 @@ public class Constants {
 
     // This value is Minecraft.font.lineHeight, halved, and rounded down. I don't think the value ever changes so this is here.
     // Maybe in the future it will be glaringly obvious why I shouldn't hardcode this value.
-    public static final int LINE_HEIGHT_HALVED = 4;
+    // later note: why the fuck is Font.lineHeight not static? It is marked as final.
+    public static final int LINE_HEIGHT = 9;
+    public static final int LINE_HEIGHT_HALVED = LINE_HEIGHT / 2;
 
     public static final class DefaultConfigValues
     {

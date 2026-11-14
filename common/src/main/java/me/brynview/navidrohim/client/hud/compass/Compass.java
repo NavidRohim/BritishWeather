@@ -9,7 +9,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.client.screen.PinManageScreen;
-import me.brynview.navidrohim.client.screen.PinSeachScreen;
+import me.brynview.navidrohim.client.screen.PinSearchScreen;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
@@ -269,7 +269,7 @@ public class Compass
         final LocalPlayer player = mc.player;
         Screen currentScreen = mc.gui.screen();
 
-        if ((currentScreen instanceof PinManageScreen) && !isDummy || player == null || !BritishWeather.getConfig().shouldRenderCompass())
+        if ((currentScreen instanceof PinManageScreen) && !isDummy || player == null || !BritishWeather.getConfig().shouldRenderCompass() || currentScreen instanceof PinSearchScreen)
         {
             return;
         }
@@ -279,7 +279,7 @@ public class Compass
         // Calculate compass dimensions
         float partialTicks = guiGraphics.partialTicks();
         float yaw = smoothYaw(player.getYRot(partialTicks));
-        boolean compassView = !(KeyHandler.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSeachScreen) && !isDummy;
+        boolean compassView = !(KeyHandler.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSearchScreen) && !isDummy;
 
         context = new CompassRenderContext(scaledWidth, y, partialTicks, yaw, player, this, zoomAmount, trackedPin != null);
 
@@ -621,7 +621,7 @@ public class Compass
 
     public void find()
     {
-        GeneralUtils.setScreenAndShowNoFlicker(new PinSeachScreen(context.player.level().dimension()));
+        GeneralUtils.setScreenAndShowNoFlicker(new PinSearchScreen(context.player.level().dimension(), context.player));
     }
 
     public void teleport()
