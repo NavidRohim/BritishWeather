@@ -67,7 +67,6 @@ public class PinSearchScreen extends Screen
     private static final Component PIN_SEARCH_NARRATION = Component.translatable("br.search_screen.pin_search.narration");
     private static final double FAT_TEXT_SCALE = 1.8D;
     private static final double SCALED_LINE_HEIGHT = Constants.LINE_HEIGHT * FAT_TEXT_SCALE;
-    private static final float NANOS_TO_SECONDS_MAGIC =  1_000_000_000.0F;
 
     private StyledEditBox searchBox;
     private @Nullable AbstractEntry selectedEntryOld;
@@ -82,7 +81,7 @@ public class PinSearchScreen extends Screen
 
     private static final float SCROLL_EASE_SPEED = 18F; // Higher = snappier. ~18 settles in roughly 200ms.
     private float animatedIndex = 0.0F; // Smoothly follows entryIndex for the scroll animation.
-    private long lastAnimationNanos = -1L;
+    private long nowOld = -1L;
 
 
     public PinSearchScreen(ResourceKey<Level> level, LocalPlayer localPlayer)
@@ -264,8 +263,8 @@ public class PinSearchScreen extends Screen
         // Slow transition animatedIndex to entryIndex
 
         long now = Util.getNanos();
-        float deltaSeconds = lastAnimationNanos < 0 ? 0.0F : (now - lastAnimationNanos) / NANOS_TO_SECONDS_MAGIC;
-        lastAnimationNanos = now;
+        float deltaSeconds = nowOld < 0 ? 0.0F : (now - nowOld) / Constants.NANOS_TO_SECONDS_MAGIC;
+        nowOld = now;
 
         float remaining = entryIndex - animatedIndex;
         // If we are close enough to the index, just set it
@@ -275,7 +274,7 @@ public class PinSearchScreen extends Screen
             return;
         }
 
-        animatedIndex += remaining * (1.0F - (float) Math.exp((BritishWeather.getConfig().debug() ? -1.5F : -SCROLL_EASE_SPEED) * deltaSeconds));
+        animatedIndex += remaining * (1.0F - (float) Math.exp(-SCROLL_EASE_SPEED * deltaSeconds));
     }
 
     /**

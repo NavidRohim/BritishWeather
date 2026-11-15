@@ -11,15 +11,20 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.Mth;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Matrix3x2fStack;
 import org.jspecify.annotations.NonNull;
+
+import java.util.function.Consumer;
 
 // Might ditch
 public class EntryRenderer<T extends AbstractEntry>
 {
     private final static int MINIMUM_MARKER_LENGTH = 4;
+    private final static float MAX_FOCUS_SCALE = 1.2F;
 
     public enum RenderState
     {
@@ -39,12 +44,25 @@ public class EntryRenderer<T extends AbstractEntry>
     public int backgroundColour;
 
     protected RenderState renderState;
+    protected RenderState oldRenderState;
+
     protected final T owner;
     protected final Compass compass;
     protected final Minecraft mc;
 
     private BlockPos entityVehicleBlockPos = BlockPos.ZERO;
     private String displayDepth = "";
+
+    // animation variables
+    private float totalAnimationTime = 0.0F;
+    private long oldNow = 0;
+    private boolean shouldAnimate = false;
+
+    private Consumer<Double> animationCallback = (_) -> {};
+    private float markerScale = 1.0F;
+
+    private static final float ANIMATION_DURATION = 1.5F; // seconds
+    private static final double ANIMATION_STEEPNESS = 5.0; // higher = snappier start, longer tail
 
     public EntryRenderer(T owner)
     {
@@ -55,7 +73,8 @@ public class EntryRenderer<T extends AbstractEntry>
 
     public RenderState calculateState(Compass.CompassRenderContext context)
     {
-        RenderState state = RenderState.NORMAL;
+        RenderState state;
+
         renderColour = owner.defaultColour;
         backgroundColour = owner.highlightBgColour;
 
@@ -79,6 +98,8 @@ public class EntryRenderer<T extends AbstractEntry>
         } else if (isHighlightable)
         {
             state = RenderState.HIGHLIGHT;
+        } else {
+            state = RenderState.NORMAL;
         }
 
         this.setRenderState(state);
@@ -91,15 +112,67 @@ public class EntryRenderer<T extends AbstractEntry>
         return renderState;
     }
 
-    public void setRenderState(RenderState renderState)
+    public void setRenderState(RenderState newRenderState)
     {
-        this.renderState = renderState;
+        if (newRenderState == RenderState.FOCUSED && this.oldRenderState != RenderState.FOCUSED) // We just focused.
+        {
+            onFocus();
+        } else if (newRenderState != RenderState.FOCUSED && this.oldRenderState == RenderState.FOCUSED)
+        {
+            onUnfocus();
+        }
+
+        this.oldRenderState = this.renderState;
+        this.renderState = newRenderState;
     }
 
+    protected void onFocus()
+    {
+        // Set flag to start animation somehow
+        shouldAnimate = true;
+        animationCallback = (lerp) -> markerScale = (float) Mth.lerp(lerp, markerScale, MAX_FOCUS_SCALE);
+    }
+
+    protected void onUnfocus()
+    {
+        shouldAnimate = true;
+        animationCallback = (lerp) -> markerScale = (float) Mth.lerp(lerp, markerScale, 1);
+    }
+
+    protected void animationTick()
+    {
+        // Tick this on render tick.
+        long now = Util.getNanos();
+        totalAnimationTime += oldNow <= 0 ? 0.0F : (now - oldNow) / Constants.NANOS_TO_SECONDS_MAGIC;
+        float remainingTime = ANIMATION_DURATION - totalAnimationTime;
+        oldNow = now;
+
+        // Exponential ease-out: fast at the start, slowing as it approaches 1.
+        // Normalised by 1 - 2^-k so it lands exactly on 1 at the end of the duration.
+        float percentageFinished = Math.clamp(totalAnimationTime / ANIMATION_DURATION, 0.0F, 1.0F);
+        double animationProgression = (1.0 - Math.pow(2.0, -ANIMATION_STEEPNESS * percentageFinished)) / (1.0 - Math.pow(2.0, -ANIMATION_STEEPNESS));
+        this.animationCallback.accept(animationProgression);
+
+        if (remainingTime < 0.0001F)
+        {
+            shouldAnimate = false;
+            oldNow = 0;
+            totalAnimationTime = 0;
+        }
+    }
+
+    public void renderTick(@NotNull LocalPlayer ignored)
+    {
+        // Do check for animaiton tick
+        if (shouldAnimate)
+        {
+            animationTick();
+        }
+    }
     /*
      * Marks this entry as the one the player is pointing at. Must be called after calculateState for the current frame.
      */
-    public void focus()
+    public void focusState()
     {
         setRenderState(RenderState.FOCUSED);
         renderColour = owner.highlightColor;
@@ -172,6 +245,10 @@ public class EntryRenderer<T extends AbstractEntry>
 
     public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
     {
+        if (markerScale == 1)
+        {
+
+        }
         drawMarker(guiGraphicsExtractor, context, screenX, screenYRow - 1);
         if (shouldTakePriority())
         {
@@ -197,8 +274,20 @@ public class EntryRenderer<T extends AbstractEntry>
         int renderX = centerAroundX ? compassRenderContext.centerWidthAroundX(markerWidth, x) : x + 5;
         int renderY = compassRenderContext.getYRowOnCompass(yRow) - 1;
 
-        drawBackground(guiGraphicsExtractor, renderColour, renderX, renderY, markerWidth);
-        guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, renderColour, owner.getSettings().shouldShowShadow());
+        if (markerScale > 1)
+        {
+            Matrix3x2fStack pose = guiGraphicsExtractor.pose();
+
+            pose.pushMatrix();
+            pose.translate(renderX - markerScale, renderY - markerScale);
+            pose.scale(markerScale, markerScale);
+            drawBackground(guiGraphicsExtractor, renderColour, 0, 0, markerWidth);
+            guiGraphicsExtractor.text(mc.font, displayableMarker, 0, 0, renderColour, owner.getSettings().shouldShowShadow());
+            pose.popMatrix();
+        } else {
+            drawBackground(guiGraphicsExtractor, renderColour, renderX, renderY, markerWidth);
+            guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, renderColour, owner.getSettings().shouldShowShadow());
+        }
     }
 
     public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, int yRow)
@@ -232,14 +321,12 @@ public class EntryRenderer<T extends AbstractEntry>
         displayable += " :: " + compassRenderContext.getDisplayableSpeed();
         if (compassRenderContext.player.getVehicle() instanceof AbstractBoat boat)
         {
-            if (entityVehicleBlockPos.equals(boat.blockPosition()))
+            if (!entityVehicleBlockPos.equals(boat.blockPosition()))
             {
-                displayable += " :: " + displayDepth;
-            } else {
                 entityVehicleBlockPos = boat.blockPosition();
                 displayDepth = compassRenderContext.getDepthBelow(boat);
-                displayable += " :: " + displayDepth;
             }
+            displayable += " :: " + displayDepth;
         }
         guiGraphicsExtractor.text(mc.font, displayable, x, compassRenderContext.getYRowOnCompass(yRow), renderColour);
     }

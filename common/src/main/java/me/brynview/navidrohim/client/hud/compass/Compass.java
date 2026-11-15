@@ -500,6 +500,7 @@ public class Compass
         for (AbstractEntry entry : entries)
         {
             EntryRenderer<?> renderer = entry.getRenderer();
+            entry.getRenderer().renderTick(player);
 
             if (entry == trackedPin)
             {
@@ -513,7 +514,7 @@ public class Compass
         if (closest != null)
         {
             highlightedEntry = closest;
-            closest.getRenderer().focus();
+            closest.getRenderer().focusState();
         }
 
         // Pass 2: draw everything else, then the focused entry last so it sits on top.

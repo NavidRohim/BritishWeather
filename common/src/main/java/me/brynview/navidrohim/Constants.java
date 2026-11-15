@@ -29,6 +29,7 @@ public class Constants {
     // later note: why the fuck is Font.lineHeight not static? It is marked as final.
     public static final int LINE_HEIGHT = 9;
     public static final int LINE_HEIGHT_HALVED = LINE_HEIGHT / 2;
+    public static final float NANOS_TO_SECONDS_MAGIC =  1_000_000_000.0F;
 
     public static final class DefaultConfigValues
     {
