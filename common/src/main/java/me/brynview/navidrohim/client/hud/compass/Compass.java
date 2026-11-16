@@ -211,8 +211,13 @@ public class Compass
 
         public int getYRowOnCompass(double row)
         {
+            return getYRowOnCompass(row, 1);
+        }
+
+        public int getYRowOnCompass(double row, float scale)
+        {
             // Could this be cached? And if so, would it be faster?
-            return (int) (y + (font.lineHeight * row));
+            return (int) (y + (scale * font.lineHeight * row));
         }
 
         public int getYOnRowCentered(int row, int height)

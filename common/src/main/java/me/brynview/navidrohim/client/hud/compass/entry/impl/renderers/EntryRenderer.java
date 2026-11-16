@@ -1,24 +1,25 @@
 package me.brynview.navidrohim.client.hud.compass.entry.impl.renderers;
 
 import me.brynview.navidrohim.BritishWeather;
-import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.entry.EntryAnimation;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.animations.FadeoutAnimation;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.animations.HighlightedAnimation;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
-import net.minecraft.util.Util;
 import net.minecraft.world.entity.vehicle.boat.AbstractBoat;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
 import org.jspecify.annotations.NonNull;
-
-import java.util.function.Consumer;
 
 // Might ditch
 public class EntryRenderer<T extends AbstractEntry>
@@ -40,11 +41,12 @@ public class EntryRenderer<T extends AbstractEntry>
     public float angleFromHeading;
     public int screenX;
 
-    public int renderColour;
-    public int backgroundColour;
+    public int renderColour = 0;
+    public int backgroundColour = 0;
 
     protected RenderState renderState;
     protected RenderState oldRenderState;
+    protected @Nullable EntryAnimation animation;
 
     protected final T owner;
     protected final Compass compass;
@@ -54,15 +56,7 @@ public class EntryRenderer<T extends AbstractEntry>
     private String displayDepth = "";
 
     // animation variables
-    private float totalAnimationTime = 0.0F;
-    private long oldNow = 0;
-    private boolean shouldAnimate = false;
-
-    private Consumer<Double> animationCallback = (_) -> {};
-    private float markerScale = 1.0F;
-
-    private static final float ANIMATION_DURATION = 1.5F; // seconds
-    private static final double ANIMATION_STEEPNESS = 5.0; // higher = snappier start, longer tail
+    private float scale = 1.0F;
 
     public EntryRenderer(T owner)
     {
@@ -75,8 +69,11 @@ public class EntryRenderer<T extends AbstractEntry>
     {
         RenderState state;
 
-        renderColour = owner.defaultColour;
-        backgroundColour = owner.highlightBgColour;
+        if (renderColour == 0 || backgroundColour == 0)
+        {
+            renderColour = owner.defaultColour;
+            backgroundColour = owner.highlightBgColour;
+        }
 
         boolean shouldDisappear = owner.getSettings().shouldDisappearWhenOOB() && !owner.isTracked();
         angleFromHeading = (float) MathHelper.angleFromPos(owner.getPosition(context.partialTicks), context.playerPosition);
@@ -103,7 +100,6 @@ public class EntryRenderer<T extends AbstractEntry>
         }
 
         this.setRenderState(state);
-
         return renderState;
     }
 
@@ -114,7 +110,7 @@ public class EntryRenderer<T extends AbstractEntry>
 
     public void setRenderState(RenderState newRenderState)
     {
-        if (newRenderState == RenderState.FOCUSED && this.oldRenderState != RenderState.FOCUSED) // We just focused.
+        if (newRenderState == RenderState.FOCUSED && this.oldRenderState != RenderState.FOCUSED)
         {
             onFocus();
         } else if (newRenderState != RenderState.FOCUSED && this.oldRenderState == RenderState.FOCUSED)
@@ -129,44 +125,36 @@ public class EntryRenderer<T extends AbstractEntry>
     protected void onFocus()
     {
         // Set flag to start animation somehow
-        shouldAnimate = true;
-        animationCallback = (lerp) -> markerScale = (float) Mth.lerp(lerp, markerScale, MAX_FOCUS_SCALE);
+        if (animation != null)
+        {
+            animation.interrupted();
+            animation.reset();
+        }
+        animation = new HighlightedAnimation((lerp) -> {
+            scale = (float) Mth.lerp(lerp, scale, MAX_FOCUS_SCALE);
+            renderColour = ARGB.srgbLerp(lerp.floatValue(), renderColour, owner.highlightColor);
+        }, this.owner);
     }
 
     protected void onUnfocus()
     {
-        shouldAnimate = true;
-        animationCallback = (lerp) -> markerScale = (float) Mth.lerp(lerp, markerScale, 1);
-    }
-
-    protected void animationTick()
-    {
-        // Tick this on render tick.
-        long now = Util.getNanos();
-        totalAnimationTime += oldNow <= 0 ? 0.0F : (now - oldNow) / Constants.NANOS_TO_SECONDS_MAGIC;
-        float remainingTime = ANIMATION_DURATION - totalAnimationTime;
-        oldNow = now;
-
-        // Exponential ease-out: fast at the start, slowing as it approaches 1.
-        // Normalised by 1 - 2^-k so it lands exactly on 1 at the end of the duration.
-        float percentageFinished = Math.clamp(totalAnimationTime / ANIMATION_DURATION, 0.0F, 1.0F);
-        double animationProgression = (1.0 - Math.pow(2.0, -ANIMATION_STEEPNESS * percentageFinished)) / (1.0 - Math.pow(2.0, -ANIMATION_STEEPNESS));
-        this.animationCallback.accept(animationProgression);
-
-        if (remainingTime < 0.0001F)
+        if (animation != null)
         {
-            shouldAnimate = false;
-            oldNow = 0;
-            totalAnimationTime = 0;
+            animation.interrupted();
+            animation.reset();
         }
+        animation = new FadeoutAnimation((lerp) -> {
+            scale = (float) Mth.lerp(lerp, scale, 1);
+            renderColour = ARGB.srgbLerp(lerp.floatValue(), renderColour, owner.defaultColour);
+        }, this.owner);
     }
 
     public void renderTick(@NotNull LocalPlayer ignored)
     {
         // Do check for animaiton tick
-        if (shouldAnimate)
+        if (animation != null)
         {
-            animationTick();
+            this.animation.tick();
         }
     }
     /*
@@ -175,7 +163,6 @@ public class EntryRenderer<T extends AbstractEntry>
     public void focusState()
     {
         setRenderState(RenderState.FOCUSED);
-        renderColour = owner.highlightColor;
     }
 
     public void trackedState()
@@ -245,10 +232,6 @@ public class EntryRenderer<T extends AbstractEntry>
 
     public void drawRawEntry(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context)
     {
-        if (markerScale == 1)
-        {
-
-        }
         drawMarker(guiGraphicsExtractor, context, screenX, screenYRow - 1);
         if (shouldTakePriority())
         {
@@ -266,33 +249,24 @@ public class EntryRenderer<T extends AbstractEntry>
         }
     }
 
-    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow, boolean centerAroundX)
+    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow)
     {
         String displayableMarker = getDisplayableMarker(owner, compassRenderContext, owner.getMarker().length() <= 15, screenX);
 
         int markerWidth = mc.font.width(displayableMarker);
-        int renderX = centerAroundX ? compassRenderContext.centerWidthAroundX(markerWidth, x) : x + 5;
-        int renderY = compassRenderContext.getYRowOnCompass(yRow) - 1;
+        int renderX = compassRenderContext.centerWidthAroundX((int) (markerWidth * scale), x);
+        int renderY = compassRenderContext.getYRowOnCompass(yRow, MAX_FOCUS_SCALE) - 1;
 
-        if (markerScale > 1)
-        {
-            Matrix3x2fStack pose = guiGraphicsExtractor.pose();
 
-            pose.pushMatrix();
-            pose.translate(renderX - markerScale, renderY - markerScale);
-            pose.scale(markerScale, markerScale);
-            drawBackground(guiGraphicsExtractor, renderColour, 0, 0, markerWidth);
-            guiGraphicsExtractor.text(mc.font, displayableMarker, 0, 0, renderColour, owner.getSettings().shouldShowShadow());
-            pose.popMatrix();
-        } else {
-            drawBackground(guiGraphicsExtractor, renderColour, renderX, renderY, markerWidth);
-            guiGraphicsExtractor.text(mc.font, displayableMarker, renderX, renderY, renderColour, owner.getSettings().shouldShowShadow());
-        }
-    }
+        Matrix3x2fStack pose = guiGraphicsExtractor.pose();
 
-    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, int yRow)
-    {
-        drawMarker(guiGraphicsExtractor, context, x, yRow, true);
+        pose.pushMatrix();
+        pose.translate(renderX, renderY);
+        pose.scale(scale, scale);
+
+        drawBackground(guiGraphicsExtractor, renderColour, 0, 0, markerWidth);
+        guiGraphicsExtractor.text(mc.font, displayableMarker, 0, 0, renderColour, owner.getSettings().shouldShowShadow());
+        pose.popMatrix();
     }
 
     public void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)

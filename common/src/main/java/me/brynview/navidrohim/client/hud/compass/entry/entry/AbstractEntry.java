@@ -96,7 +96,7 @@ public abstract class AbstractEntry implements TickableAndExpirable
     {
         this.highlightColor = highlightColor;
         this.highlightBgColour = ColorHelper.getBackgroundColour(highlightColor);
-        this.defaultColour = ColorHelper.shiftColourToOpacity(highlightColor, 124);
+        this.defaultColour = ColorHelper.shiftColourToOpacity(highlightColor, 170);
     }
 
     public boolean isSingleton()
