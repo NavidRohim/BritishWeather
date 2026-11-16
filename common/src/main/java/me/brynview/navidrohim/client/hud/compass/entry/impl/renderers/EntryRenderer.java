@@ -130,10 +130,13 @@ public class EntryRenderer<T extends AbstractEntry>
             animation.interrupted();
             animation.reset();
         }
-        animation = new HighlightedAnimation((lerp) -> {
-            scale = (float) Mth.lerp(lerp, scale, MAX_FOCUS_SCALE);
-            renderColour = ARGB.srgbLerp(lerp.floatValue(), renderColour, owner.highlightColor);
-        }, this.owner);
+        if (!owner.isTracked())
+        {
+            animation = new HighlightedAnimation((lerp) -> {
+                scale = (float) Mth.lerp(lerp, scale, MAX_FOCUS_SCALE);
+                renderColour = ARGB.srgbLerp(lerp.floatValue(), renderColour, owner.highlightColor);
+            }, this.owner);
+        }
     }
 
     protected void onUnfocus()
@@ -143,10 +146,14 @@ public class EntryRenderer<T extends AbstractEntry>
             animation.interrupted();
             animation.reset();
         }
-        animation = new FadeoutAnimation((lerp) -> {
-            scale = (float) Mth.lerp(lerp, scale, 1);
-            renderColour = ARGB.srgbLerp(lerp.floatValue(), renderColour, owner.defaultColour);
-        }, this.owner);
+
+        if (!owner.isTracked())
+        {
+            animation = new FadeoutAnimation((lerp) -> {
+                scale = (float) Mth.lerp(lerp, scale, 1);
+                renderColour = ARGB.srgbLerp(lerp.floatValue(), renderColour, owner.defaultColour);
+            }, this.owner);
+        }
     }
 
     public void renderTick(@NotNull LocalPlayer ignored)
@@ -155,6 +162,10 @@ public class EntryRenderer<T extends AbstractEntry>
         if (animation != null)
         {
             this.animation.tick();
+            if (animation.hasFinished())
+            {
+                animation = null;
+            }
         }
     }
     /*
@@ -168,6 +179,7 @@ public class EntryRenderer<T extends AbstractEntry>
     public void trackedState()
     {
         setRenderState(RenderState.TRACKED);
+
         renderColour = ColorHelper.OBJECTIVE_MARKER_COLOUR;
         backgroundColour = ColorHelper.getBackgroundColour(renderColour);
     }

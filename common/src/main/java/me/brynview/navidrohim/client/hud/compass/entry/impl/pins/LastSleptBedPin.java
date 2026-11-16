@@ -70,7 +70,7 @@ public class LastSleptBedPin extends TimedPin
     public LastSleptBedPin(String level, Vec3 position)
     {
         super(
-                "last bed location. If your somehow seeing this in-game, my code is fucked.",
+                "Last sleep position",
                 level,
                 position,
                 ColorHelper.RED,

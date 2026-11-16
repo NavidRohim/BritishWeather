@@ -15,6 +15,7 @@ public class HighlightedAnimation implements EntryAnimation
 
     private float totalAnimationTime = 0.0F;
     private long oldNow = 0;
+    private boolean hasFinished = false;
 
     private final Consumer<Double> lerpChangeCallback;
     private final AbstractEntry owner;
@@ -35,6 +36,12 @@ public class HighlightedAnimation implements EntryAnimation
     public Consumer<Double> lerpChangeCallback()
     {
         return lerpChangeCallback;
+    }
+
+    @Override
+    public boolean hasFinished()
+    {
+        return hasFinished;
     }
 
     @Override
@@ -62,5 +69,6 @@ public class HighlightedAnimation implements EntryAnimation
     {
         oldNow = 0;
         totalAnimationTime = 0;
+        hasFinished = true;
     }
 }

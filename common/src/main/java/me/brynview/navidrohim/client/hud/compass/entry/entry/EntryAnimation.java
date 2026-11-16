@@ -7,9 +7,9 @@ public interface EntryAnimation
 {
     AbstractEntry getEntryOwner();
     Consumer<Double> lerpChangeCallback();
+    boolean hasFinished();
 
     default void reset() {}
     default void interrupted() {}
     default void tick() {}
-
 }

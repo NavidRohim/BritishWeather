@@ -17,6 +17,7 @@ public class FadeoutAnimation implements EntryAnimation
 
     private float totalAnimationTime = 0.0F;
     private long oldNow = 0;
+    private boolean hasFinished = false;
 
     public FadeoutAnimation(Consumer<Double> lerpChangeCallback, AbstractEntry owner)
     {
@@ -34,6 +35,12 @@ public class FadeoutAnimation implements EntryAnimation
     public Consumer<Double> lerpChangeCallback()
     {
         return this.lerpChangeCallback;
+    }
+
+    @Override
+    public boolean hasFinished()
+    {
+        return hasFinished;
     }
 
     @Override
@@ -60,5 +67,6 @@ public class FadeoutAnimation implements EntryAnimation
     {
         oldNow = 0;
         totalAnimationTime = 0;
+        hasFinished = true;
     }
 }
