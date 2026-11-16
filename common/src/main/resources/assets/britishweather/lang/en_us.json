@@ -77,6 +77,9 @@
   "br.dialogue.marker_reached": "Reached pin",
   "br.dialogue.tracking_marker": "Tracking \"%s\"",
   "br.dialogue.not_highlighted": "Look at a pin and try again",
+  "br.dialogue.pin_not_editable": "This pin is not editable.",
+  "br.dialogue.pin_not_deletable": "This pin is built-in and cannot be deleted.",
+
   "br.ui.calendar.nav_month": "Month",
   "br.ui.calendar.nav_year": "Year"
 }

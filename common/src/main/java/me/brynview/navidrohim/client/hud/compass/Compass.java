@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client.hud.compass;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.ClientCommon;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.LastSleptBedPin;
 import me.brynview.navidrohim.client.keybinds.KeyHandler;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
@@ -220,7 +221,7 @@ public class Compass
             return (int) (y + (scale * font.lineHeight * row));
         }
 
-        public int getYOnRowCentered(int row, int height)
+        public int getYOnRowCentered(float row, int height)
         {
             return getYRowOnCompass(row) - (height / 4);
         }
@@ -235,6 +236,10 @@ public class Compass
     // Text used for compass decorations
     private static final int ZOOM_ALERT_DURATION = 40;
     private static final int HIGHLIGHT_BOUNDS = 7;
+
+    private static final Component NOT_LOOKING_AT_PIN = Component.translatable("br.dialogue.not_highlighted");
+    private static final Component PIN_NOT_EDITABLE = Component.translatable("br.dialogue.pin_not_editable");
+    private static final Component PIN_NOT_DELETABLE = Component.translatable("br.dialogue.pin_not_deletable");
 
     private static Compass INSTANCE;
 
@@ -601,6 +606,12 @@ public class Compass
     {
         if (highlightedEntry != null)
         {
+            if (highlightedEntry.isBuiltIn())
+            {
+                context.player.sendOverlayMessage(PIN_NOT_DELETABLE);
+                return;
+            }
+
             EntryManager.removeEntry(this.highlightedEntry);
             this.highlightedEntry = null;
         } else
@@ -616,8 +627,13 @@ public class Compass
 
     public void editPin()
     {
-        if (highlightedEntry != null && highlightedEntry instanceof PinEntry pin && pin.canBeEdited())
+        if (highlightedEntry != null && highlightedEntry instanceof PinEntry pin)
         {
+            if (!pin.canBeEdited() || pin.isBuiltIn())
+            {
+                context.player.sendOverlayMessage(PIN_NOT_EDITABLE);
+                return;
+            }
             GeneralUtils.setScreenAndShowNoFlicker(new PinManageScreen(context.player, pin));
         } else
         {
@@ -685,7 +701,7 @@ public class Compass
 
     private void notHighlightedWarning()
     {
-        context.player.sendOverlayMessage(Component.translatable("br.dialogue.not_highlighted"));
+        context.player.sendOverlayMessage(NOT_LOOKING_AT_PIN);
     }
 
     // Static methods
@@ -727,5 +743,10 @@ public class Compass
     {
         EntryManager.clear();
         EntryManager.loadPins();
+    }
+
+    public static void wakeEvent(LivingEntity entity)
+    {
+        addEntry(new LastSleptBedPin(GeneralUtils.getDimensionFromPlayer(entity), entity.position()));
     }
 }

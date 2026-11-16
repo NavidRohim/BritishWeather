@@ -16,9 +16,11 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.particle.v1.ParticleProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.entity.event.v1.EntitySleepEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.LivingEntity;
 
 public class FabricMainClient implements ClientModInitializer
 {
@@ -42,7 +44,6 @@ public class FabricMainClient implements ClientModInitializer
             ClientCommon.tickClient(player);
         });
         ClientLifecycleEvents.CLIENT_STARTED.register((_) -> ClientCommon.initNativeEntryGroups());
-
         initKeybinds();
         ClientCommon.init();
     }

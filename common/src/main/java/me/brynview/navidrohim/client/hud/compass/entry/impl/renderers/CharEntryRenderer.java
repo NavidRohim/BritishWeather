@@ -21,7 +21,7 @@ public class CharEntryRenderer extends EntryRenderer<AbstractEntry>
     }
 
     @Override
-    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, int yRow)
+    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, float yRow)
     {
         int renderX = context.centerWidthAroundX(charWidth, x);
         int renderY = context.getYRowOnCompass(yRow) - 1;

@@ -60,7 +60,7 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
             }
 
             @Override
-            public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, int yRow)
+            public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, float yRow)
             {
                 TextureAtlasSprite vehicleSprite = atlas.getSprite(texture);
                 guiGraphicsExtractor.blitSprite(GuiPipeline.OPAQUE_TEXTURED_BACKGROUND, vehicleSprite, x - 5, context.getYOnRowCentered(yRow, SPRITE_SIZE), SPRITE_SIZE, SPRITE_SIZE);

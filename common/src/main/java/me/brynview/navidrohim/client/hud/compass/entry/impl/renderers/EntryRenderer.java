@@ -36,7 +36,7 @@ public class EntryRenderer<T extends AbstractEntry>
         TRACKED
     }
 
-    protected int screenYRow = 0;
+    protected float screenYRow = 0;
     public float distanceFromHeading;
     public float angleFromHeading;
     public int screenX;
@@ -85,7 +85,7 @@ public class EntryRenderer<T extends AbstractEntry>
             return RenderState.NONE;
         }
 
-        boolean isHighlightable = context.isXHighlightable(screenX) && !owner.isBuiltIn();
+        boolean isHighlightable = context.isXHighlightable(screenX);
         distanceFromHeading = Math.abs(Mth.wrapDegrees(context.yaw - angleFromHeading));
 
         if (owner.isTracked())
@@ -245,18 +245,17 @@ public class EntryRenderer<T extends AbstractEntry>
     {
         if (BritishWeather.getConfig().debug() && shouldTakePriority())
         {
-            guiGraphicsExtractor.centeredText(context.font, this.owner.debugString(), screenX, context.getYRowOnCompass(2), renderColour);
+            guiGraphicsExtractor.centeredText(context.font, this.owner.debugString(), screenX, context.getYRowOnCompass(screenYRow + 2), renderColour);
         }
     }
 
-    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow)
+    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, float yRow)
     {
         String displayableMarker = getDisplayableMarker(owner, compassRenderContext, owner.getMarker().length() <= 15, screenX);
 
         int markerWidth = mc.font.width(displayableMarker);
         int renderX = compassRenderContext.centerWidthAroundX((int) (markerWidth * scale), x);
         int renderY = compassRenderContext.getYRowOnCompass(yRow, MAX_FOCUS_SCALE) - 1;
-
 
         Matrix3x2fStack pose = guiGraphicsExtractor.pose();
 

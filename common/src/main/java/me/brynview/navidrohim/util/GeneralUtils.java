@@ -23,7 +23,7 @@ public class GeneralUtils
     // Math constants used for rendering
     public static final int DETECTION_DISTANCE = 25; // How far to check in front of the player for entities
 
-    public static String getDimensionFromPlayer(@NotNull LocalPlayer player)
+    public static String getDimensionFromPlayer(@NotNull Entity player)
     {
         return player.level().dimension().identifier().toString();
     }

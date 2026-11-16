@@ -7,6 +7,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.JMWaypoin
 import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.MapEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.entrygroup.VehicleEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.DeathPin;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.LastSleptBedPin;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.TimedPin;
 import me.brynview.navidrohim.client.keybinds.KeyHandler;
@@ -30,9 +31,10 @@ public class ClientCommon
         WEATHER_MANAGER = new ClientWeatherManager();
         compass = Compass.init();
 
-        EntryManager.addPinCodec(PinEntry.PIN_ID, PinEntry.CODEC);
-        EntryManager.addPinCodec(TimedPin.PIN_ID, TimedPin.CODEC);
-        EntryManager.addPinCodec(DeathPin.PIN_ID, DeathPin.CODEC);
+        EntryManager.registerPersistentPin(PinEntry.PIN_ID, PinEntry.CODEC);
+        EntryManager.registerPersistentPin(TimedPin.PIN_ID, TimedPin.CODEC);
+        EntryManager.registerPersistentPin(DeathPin.PIN_ID, DeathPin.CODEC);
+        EntryManager.registerPersistentPin(LastSleptBedPin.PIN_ID, LastSleptBedPin.CODEC);
     }
 
     public static void initNativeEntryGroups()

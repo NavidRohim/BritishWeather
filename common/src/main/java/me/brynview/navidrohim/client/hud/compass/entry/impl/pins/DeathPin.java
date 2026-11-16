@@ -66,7 +66,6 @@ public final class DeathPin extends TimedPin
     public void tick(@NotNull LocalPlayer player)
     {
         super.tick(player);
-        this.timeMethod.tick();
 
         // No lerp
         Vec3 playerPos = player.position();
@@ -83,7 +82,7 @@ public final class DeathPin extends TimedPin
     public boolean hasExpired()
     {
         // entry will expire if player arrives at their deathpoint.
-        return this.timeMethod.isExpired() || hasArrived;
+        return super.hasExpired() || hasArrived;
     }
 
     @Override

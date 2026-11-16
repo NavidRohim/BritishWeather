@@ -10,6 +10,7 @@
     "client.ClientLevelMixin",
     "client.DeathScreenMixin",
     "client.MouseMixin",
+    "client.PlayerSleepMixin",
     "client.WeatherEffectRendererMixin"
   ],
   "server": [],

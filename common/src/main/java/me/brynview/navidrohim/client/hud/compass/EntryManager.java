@@ -95,7 +95,7 @@ public class EntryManager
                 if (codecForPin != null)
                 {
                     PinEntry decodedPin = codecForPin.parse(NbtOps.INSTANCE, stringTagEntry.getValue()).getOrThrow();
-                    Compass.addEntry(decodedPin);
+                    addEntry(decodedPin);
 
                     if (trackedPinId.equals(decodedPin.getId()) && decodedPin.isTracked())
                     {
@@ -106,6 +106,8 @@ public class EntryManager
                         Constants.LOG.warn("Pin \"{}\" is marked as tracked, but NBT `tracked` value is not pointing to this pin. Resetting pin tracking information.", decodedPin.getId());
                         decodedPin.trackedJourney.reset();
                     }
+                } else if (!stringTagEntry.getKey().equals("tracked")) {
+                    Constants.LOG.error("Pin {} has no registered constructor! This is bad!", stringTagEntry.getKey());
                 }
             }
         } catch (NullPointerException | IllegalStateException exc)
@@ -138,9 +140,12 @@ public class EntryManager
 
         for (AbstractEntry entry : defaultEntries)
         {
-            if (entry instanceof PinEntry pin && pin.getSettings().isPersistent())
+            if (entry instanceof PinEntry pin && entry.getSettings().isPersistent())
             {
-                master.put(pin.getId(), pin.encode());
+                master.put(entry.getId(), pin.encode());
+            } else if (entry.getSettings().isPersistent())
+            {
+                Constants.LOG.warn("Entry {} is marked as persistent, but has no encoder.", entry.debugString());
             }
         }
 
@@ -243,7 +248,7 @@ public class EntryManager
         PROVIDER_GROUPS_DIMENSION_SORTED.forEach((_, subSet) -> subSet.removeIf((g) -> !g.isBuiltIn()));
     }
 
-    public static void addPinCodec(String key, Codec<? extends PinEntry> codec)
+    public static void registerPersistentPin(String key, Codec<? extends PinEntry> codec)
     {
         PIN_CONSTRUCTORS.put(key, codec);
     }
