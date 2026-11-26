@@ -4,6 +4,7 @@ import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.GeneralUtils;
+import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.util.FormattedCharSequence;
 
@@ -15,6 +16,7 @@ public class CharEntryRenderer extends EntryRenderer<AbstractEntry>
     public CharEntryRenderer(AbstractEntry owner)
     {
         super(owner);
+
         char charToRender = owner.getMarker().charAt(0);
         this.charSeq = GeneralUtils.getFormattedChar(charToRender);
         this.charWidth = mc.font.width(charSeq);
@@ -23,7 +25,8 @@ public class CharEntryRenderer extends EntryRenderer<AbstractEntry>
     @Override
     public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext context, int x, float yRow)
     {
-        int renderX = context.centerWidthAroundX(charWidth, x) + 1;
+
+        int renderX = MathHelper.centerWidthAroundX(charWidth, x) + 1;
         int renderY = context.getYRowOnCompass(yRow) - 1;
 
         if (shouldTakePriority() && BritishWeather.getConfig().shouldShowPinBackground())

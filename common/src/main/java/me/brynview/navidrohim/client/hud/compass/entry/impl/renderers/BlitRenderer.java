@@ -3,6 +3,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.renderers;
 import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
 import me.brynview.navidrohim.util.ColorHelper;
+import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.GuiPipeline;
 import net.minecraft.resources.Identifier;
@@ -37,7 +38,7 @@ public class BlitRenderer extends EntryRenderer<AbstractEntry>
     @Override
     public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, float yRow)
     {
-        int renderX = compassRenderContext.centerWidthAroundX(blitWidth, x);
+        int renderX = MathHelper.centerWidthAroundX(blitWidth, x);
         int renderY = compassRenderContext.getYOnRowCentered(yRow, blitHeight) - 1;
 
         if (isSprite)

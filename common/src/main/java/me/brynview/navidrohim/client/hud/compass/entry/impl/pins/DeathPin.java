@@ -2,6 +2,7 @@ package me.brynview.navidrohim.client.hud.compass.entry.impl.pins;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import me.brynview.navidrohim.Constants;
 import me.brynview.navidrohim.client.hud.compass.entry.TimeKeeper;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.TrackedJourney;
@@ -9,9 +10,12 @@ import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.CharEntryR
 import me.brynview.navidrohim.client.hud.compass.entry.impl.time.GameTime;
 import me.brynview.navidrohim.util.ColorHelper;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.level.FullChunkStatus;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,22 +43,22 @@ public final class DeathPin extends TimedPin
 
     private static final String SKULL = "☠";
     private boolean hasArrived = false; // If the user has arrived at the deathpoint.
-    private final Vec3i deathpoint;
+    private final BlockPos deathpoint;
 
     /*
     Normal constructor
      */
     public DeathPin(Vec3 position, String level)
     {
-        super(SKULL, level, position, ColorHelper.RED, EntrySettings.defaults().setShowDistance(true), TrackedJourney.empty(), new GameTime(TimeUnit.MINUTES, 30)); // no
-        this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
+        super(SKULL, level, position, ColorHelper.DEATH_RED, EntrySettings.defaults().setShowDistance(true), TrackedJourney.empty(), new GameTime(TimeUnit.MINUTES, 30)); // no
+        this.deathpoint = BlockPos.containing(position);
         this.renderer = new CharEntryRenderer(this);
     }
 
     public DeathPin(String marker, String level, Vec3 position, Integer colour, EntrySettings settings, TrackedJourney trackedJourney, TimeKeeper timeKeeper)
     {
         super(marker, level, position, colour, settings, trackedJourney, timeKeeper);
-        this.deathpoint = new Vec3i((int) position.x, (int) position.y, (int) position.z);
+        this.deathpoint = BlockPos.containing(position);
         this.renderer = new CharEntryRenderer(this);
     }
 
@@ -66,13 +70,9 @@ public final class DeathPin extends TimedPin
     public void tick(@NotNull LocalPlayer player)
     {
         super.tick(player);
-
-        // No lerp
-        Vec3 playerPos = player.position();
-
         // Checking if the player is dead is important.
         // When the user dies, they will still technically have "arrived" at the deathpoint as their location stays the same until they respawn.
-        if ( !player.isDeadOrDying() && (int) playerPos.x == deathpoint.getX() && (int) Math.abs(playerPos.y - deathpoint.getY()) <= 4 && (int) playerPos.z == deathpoint.getZ())
+        if ( !player.isDeadOrDying() && player.blockPosition().equals(this.deathpoint))
         {
             hasArrived = true;
         }

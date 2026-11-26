@@ -23,6 +23,8 @@ public class ColorHelper {
     // Colours for compass elements
     public static final int CENTER_COLOR = decode("#FF0A01").getRGB(); // Red
     public static final int COMPASS_BG_SHADOW_COLOUR = ARGB.scaleRGB(WHITE, 0.25f);
+    public static final int DEATH_RED = rgb(255, 40, 40, 255);
+    public static final int INVISIBLE = rgb(255, 255, 255, 0);
 
     // Colours for entity markers
     public static final int PLAYER = rgb(125, 255, 125, 255);

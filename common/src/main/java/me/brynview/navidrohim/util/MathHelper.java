@@ -22,4 +22,15 @@ public class MathHelper
         // Use atan2 as it supports a full 360 circle instead of just 180deg
         return Math.toDegrees(-Math.atan2(relativePos.x, relativePos.z));
     }
+
+    public static double xAngleFromPos(Vec3 pos, Vec3 ourPos)
+    {
+        Vec3 relativePos = pos.subtract(ourPos);
+        return Math.toDegrees(-Math.atan2(relativePos.y, relativePos.horizontalDistance()));
+    }
+
+    public static int centerWidthAroundX(int width, int x)
+    {
+        return x - width / 2;
+    }
 }

@@ -1,5 +1,7 @@
 package me.brynview.navidrohim.client.screen;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Maps;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.cursor.CursorTypes;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -44,10 +46,23 @@ import org.jspecify.annotations.NonNull;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class PinManageScreen extends Screen
 {
+
+    private final ImmutableMap<String, Vec3> easterEggPositions = ImmutableMap.of(
+            "Spyglass Point", new Vec3(50.71108, 60, 1.89721),
+            "Cooper dean", new Vec3(50.7485, 60, 1.8320),
+            "Desiro", new Vec3(50.7275, 60, 1.8639),
+            "Yeomans road", new Vec3(50.756656, 60, 1.840821),
+            "Two Riversmeet", new Vec3(50.73319, 60, 1.76834)
+    );
+
     private final Vec3 pinPosition;
     private final String level;
 
@@ -262,13 +277,15 @@ public class PinManageScreen extends Screen
                 .setPersistent(persistent)
                 .setShadow(showShadow);
 
+        Vec3 finalPos = easterEggPositions.getOrDefault(getMarker(), pinPosition);
+
         if (expiryTime == 0)
         {
-            Compass.addEntry(new PinEntry(getMarker(), level, pinPosition, getHighlightColor(), settings, TrackedJourney.empty())); // no
+            Compass.addEntry(new PinEntry(getMarker(), level, finalPos, getHighlightColor(), settings, TrackedJourney.empty())); // no
         } else
         {
             TimeKeeper chosenMethod = timeMethod.createTimeMethod(selectedTimeUnit, expiryTime);
-            Compass.addEntry(new TimedPin(getMarker(), level, pinPosition, getHighlightColor(), settings, TrackedJourney.empty(), chosenMethod)); // no
+            Compass.addEntry(new TimedPin(getMarker(), level, finalPos, getHighlightColor(), settings, TrackedJourney.empty(), chosenMethod)); // no
         }
     }
 

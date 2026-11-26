@@ -8,6 +8,7 @@ import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntryGroup;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.EntrySettings;
 import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.platform.Services;
+import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.GuiPipeline;
 import net.minecraft.client.player.LocalPlayer;
@@ -36,7 +37,7 @@ public class JMWaypointGroup extends AbstractEntryGroup<JMWaypointGroup.Waypoint
                 guiGraphicsExtractor.blit(
                         GuiPipeline.OPAQUE_TEXTURED_BACKGROUND,
                         waypoint.getIconIdentifier(),
-                        compassRenderContext.centerWidthAroundX(12, screenX), compassRenderContext.getYRowOnCompass(screenYRow) - 2,
+                        MathHelper.centerWidthAroundX(12, screenX), compassRenderContext.getYRowOnCompass(screenYRow) - 2,
                         0, 0,
                         12, 12,
                         12, 12,

@@ -3,14 +3,16 @@ package me.brynview.navidrohim.client.screen;
 import com.mojang.blaze3d.platform.InputConstants;
 import me.brynview.navidrohim.BritishWeather;
 import me.brynview.navidrohim.Constants;
+import me.brynview.navidrohim.client.hud.compass.Compass;
 import me.brynview.navidrohim.client.hud.compass.EntryManager;
 import me.brynview.navidrohim.client.hud.compass.entry.entry.AbstractEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.pins.PinEntry;
+import me.brynview.navidrohim.client.hud.compass.entry.impl.renderers.EntryRenderer;
 import me.brynview.navidrohim.util.ColorHelper;
+import me.brynview.navidrohim.util.MathHelper;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.layouts.FrameLayout;
-import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.player.LocalPlayer;
@@ -20,6 +22,8 @@ import net.minecraft.util.ARGB;
 import net.minecraft.util.Mth;
 import net.minecraft.util.Util;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3x2fStack;
 import org.jspecify.annotations.NonNull;
@@ -67,6 +71,12 @@ public class PinSearchScreen extends Screen
     private static final Component PIN_SEARCH_NARRATION = Component.translatable("br.search_screen.pin_search.narration");
     private static final double FAT_TEXT_SCALE = 1.8D;
     private static final double SCALED_LINE_HEIGHT = Constants.LINE_HEIGHT * FAT_TEXT_SCALE;
+    private static final int INFO_BOX_WIDTH = 130;
+    private static final int INFO_BOX_MINIMISED_WIDTH_HEIGHT = 3;
+
+    private static final int SLOT_SPACING = 2; // 2px for top and bottom. Total is 4px.
+    private static final int SLOT_HEIGHT = Constants.LINE_HEIGHT + (SLOT_SPACING * 2);
+    //private static final int AVAILABLE_SLOTS = INFO_BOX_WIDTH_HEIGHT / SLOT_HEIGHT;
 
     private StyledEditBox searchBox;
     private @Nullable AbstractEntry selectedEntryOld;
@@ -94,27 +104,23 @@ public class PinSearchScreen extends Screen
     @Override
     protected void init()
     {
-        LinearLayout master = LinearLayout.horizontal().spacing(3);
-
         searchBox = new StyledEditBox(font, PIN_SEARCH_NARRATION);
         searchBox.setWidth(200);
         searchBox.setResponder(this::typedString);
-        /*
-        SpriteIconButton doneButton = SpriteIconButton.builder(CommonComponents.GUI_CONTINUE, (_) -> this.closeWithResult(), true)
-                .bounds(0, 0, 20, 20)
-                .sprite(Identifier.withDefaultNamespace("icon/search"), 15, 15)
-                .build();
+        searchBox.setX(10);
+        searchBox.setY(height / 2);
 
-        /
-        //master.addChild(doneButton);
-   */
-
-        master.addChild(searchBox);
-        master.arrangeElements();
-        master.visitWidgets(this::addRenderableWidget);
-        FrameLayout.centerInRectangle(master, this.getRectangle());
-
+        this.addRenderableWidget(searchBox);
         this.setInitialFocus(searchBox);
+    }
+
+    private void setYRot(float yRot)
+    {
+        localPlayer.setYRot(yRot);
+        if (localPlayer.getVehicle() != null)
+        {
+            localPlayer.getVehicle().setYRot(yRot);
+        }
     }
 
     @Override
@@ -145,7 +151,11 @@ public class PinSearchScreen extends Screen
         entryIndex = Math.clamp(entryIndex + incBy, 0, hints.size() - 1);
         selectedEntryOld = selectedEntry;
         selectedEntry = hints.get(entryIndex).getValue();
-        
+
+        Constants.LOG.info(String.valueOf(selectedEntry.getRenderer().angleYawFromHeading));
+        //setYRot(selectedEntry.getRenderer().angleYawFromHeading);
+        //localPlayer.setXRot(selectedEntry.getRenderer().angleTiltFromHeading);
+
         return true;
     }
 
@@ -202,9 +212,9 @@ public class PinSearchScreen extends Screen
 
     private void closeWithResult()
     {
-        if (selectedEntry != null)
+        if (selectedEntry != null && selectedEntry instanceof PinEntry trackablePin)
         {
-            localPlayer.setYRot(selectedEntry.getRenderer().angleFromHeading);
+            Compass.getInstance().setTrackedPin(trackablePin);
         }
         this.onClose();
     }
@@ -215,20 +225,22 @@ public class PinSearchScreen extends Screen
     {
         int xForHint = searchBox.getX();
         int baseHintY = searchBox.getY() + searchBox.getHeight();
+        float selectedEntryAnimationProgress = 1;
 
         updateScrollAnimation();
-        
-        if (!entriesMatching.isEmpty())
+
+        if (!entriesMatching.isEmpty() && selectedEntry != null)
         {
+            // Calculate if pin is behind player by using dot method.
             for (int i = 0; i < hints.size(); i++)
             {
                 Map.Entry<String, AbstractEntry> hint = hints.get(i);
+                AbstractEntry entry = hint.getValue();
 
                 // How far from selected slot `i` is
                 float offset = i - animatedIndex;
                 // 1 when selected (highlighted entry) 0 is normal size. Any number in between is the animation
                 float selectedAnimationProgress = Math.clamp(1.0F - Math.abs(offset), 0.0F, 1.0F);
-
                 float y = yForSlotOffset(offset, baseHintY);
                 float scale = Mth.lerp(selectedAnimationProgress, 1.0F, (float) FAT_TEXT_SCALE);
 
@@ -239,19 +251,79 @@ public class PinSearchScreen extends Screen
                 {
                     int fadeColourBox = ARGB.srgbLerp(selectedAnimationProgress, selectedEntryOld != null ? selectedEntryOld.highlightColor : searchBox.renderColour, selectedEntry.highlightColor);
                     searchBox.setRenderColour(fadeColourBox);
+                    selectedEntryAnimationProgress = selectedAnimationProgress;
                 }
-                drawScaledText(graphics, hint.getKey(), xForHint + searchBox.getWidth() / 2, y, scale, animationColour);
+
+                drawScaledText(graphics, hint.getKey(), xForHint, y, scale, animationColour);
+
+                boolean pinAheadOfPlayer = entry.getPosition()
+                        .subtract(localPlayer.position())
+                        .dot(localPlayer.getViewVector(0)) > 0;
+
+                if (pinAheadOfPlayer && entry != selectedEntry)
+                {
+                    drawPinInfo(graphics, selectedAnimationProgress, entry);
+                } else if (!pinAheadOfPlayer && entry == selectedEntry)
+                {
+                    setYRot(selectedEntry.getRenderer().angleYawFromHeading);
+                }
 
                 if (BritishWeather.getConfig().debug())
                 {
                     graphics.centeredText(minecraft.font, "%.2f".formatted(selectedAnimationProgress), xForHint + searchBox.getWidth(), (int) y, WHITE);
                 }
             }
+
+            drawPinInfo(graphics, selectedEntryAnimationProgress, selectedEntry);
         } else {
-            graphics.centeredText(minecraft.font, Component.literal("Type pin name. Up / down arrow keys to scroll through results."), searchBox.getX() + searchBox.getWidth() / 2, baseHintY + 5, ColorHelper.FADED_WHITE);
+            graphics.text(minecraft.font, Component.literal("Type pin name. Up / down arrow keys to scroll through results."), searchBox.getX(), baseHintY + 5, ColorHelper.FADED_WHITE);
             searchBox.setRenderColour(FADED_WHITE);
         }
         super.extractRenderState(graphics);
+    }
+
+    private void drawPinInfo(@NotNull GuiGraphicsExtractor graphics, float animationProgress, AbstractEntry entry)
+    {
+        Vec3 pinPos = entry.getPosition(graphics.partialTicks());
+        Vec3 ndc = minecraft.gameRenderer.projectPointToScreen(pinPos);
+
+        int x = (int) ((ndc.x + 1.0) * 0.5 * width);
+        int y = (int) ((1.0 - ndc.y) * 0.5 * height);
+        int finalInfoBoxHeight = (SLOT_HEIGHT * 2) + SLOT_SPACING;
+
+        if ( (x < 0 || y < 0 || x + INFO_BOX_WIDTH > width || y + finalInfoBoxHeight > height) && entry == selectedEntry)
+        {
+            setYRot(selectedEntry.getRenderer().angleYawFromHeading);
+        }
+
+        int lerpInfoBoxHeight = (int) Mth.lerp(animationProgress, INFO_BOX_MINIMISED_WIDTH_HEIGHT, (SLOT_HEIGHT * 2) + SLOT_SPACING);
+        int lerpInfoBoxWidth = (int) Mth.lerp(animationProgress, INFO_BOX_MINIMISED_WIDTH_HEIGHT, INFO_BOX_WIDTH);
+
+        graphics.fill(x, y, x + lerpInfoBoxWidth, y + lerpInfoBoxHeight, entry.getRenderer().backgroundColour);
+        graphics.outline(x, y, lerpInfoBoxWidth, lerpInfoBoxHeight, entry.highlightColor);
+
+        int markerWidth = minecraft.font.width(entry.getMarker());
+
+        if (entry == selectedEntry)
+        {
+            int markerY = y - (minecraft.font.lineHeight + EntryRenderer.LEFT_RIGHT_MARGINS);
+            int textColour = ARGB.srgbLerp(animationProgress, ColorHelper.INVISIBLE, entry.highlightColor);
+            // 4 and 6 is padding.
+
+            graphics.fill(x, markerY, x + markerWidth + EntryRenderer.HORIZONTAL_BACKGROUND_MARGINS, markerY + minecraft.font.lineHeight + EntryRenderer.VERTICAL_BACKGROUND_MARGINS, entry.getRenderer().backgroundColour);
+            graphics.outline(x, markerY, markerWidth + EntryRenderer.HORIZONTAL_BACKGROUND_MARGINS, minecraft.font.lineHeight + EntryRenderer.VERTICAL_BACKGROUND_MARGINS, textColour);
+            graphics.text(minecraft.font, entry.getMarker(), x + EntryRenderer.LEFT_RIGHT_MARGINS, y - minecraft.font.lineHeight, textColour, false);
+
+            int baseSlotYPos = y + (SLOT_SPACING * 2);
+            graphics.text(minecraft.font, "XYZ: %s".formatted(selectedEntry.getReadablePosition()), x + 4, baseSlotYPos, textColour, false);
+            graphics.text(minecraft.font, "Distance: %s blocks".formatted(MathHelper.getDistance(selectedEntry.getPosition(), localPlayer.position())), x + 4, baseSlotYPos + SLOT_HEIGHT, textColour, false);
+        }
+    }
+
+    @Override
+    public void extractBackground(@NonNull GuiGraphicsExtractor graphics)
+    {
+
     }
 
     /**
@@ -268,7 +340,7 @@ public class PinSearchScreen extends Screen
 
         float remaining = entryIndex - animatedIndex;
         // If we are close enough to the index, just set it
-        if (Math.abs(remaining) < 0.001F)
+        if (Math.abs(remaining) < 0.01F)
         {
             animatedIndex = entryIndex;
             return;
@@ -303,12 +375,11 @@ public class PinSearchScreen extends Screen
 
     private void drawScaledText(GuiGraphicsExtractor graphics, String text, int x, float y, float scale, int colour)
     {
-        int correctedCenteredScale = font.width(text) / 2;
         Matrix3x2fStack pose = graphics.pose();
         pose.pushMatrix();
         pose.translate(x, y);
         pose.scale(scale, scale);
-        graphics.text(minecraft.font, text, -correctedCenteredScale, 0, colour);
+        graphics.text(minecraft.font, text, 0, 0, colour);
         pose.popMatrix();
     }
 

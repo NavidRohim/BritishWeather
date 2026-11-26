@@ -27,6 +27,11 @@ public class EntryRenderer<T extends AbstractEntry>
     private final static int MINIMUM_MARKER_LENGTH = 4;
     private final static float MAX_FOCUS_SCALE = 1.2F;
 
+    public final static int HORIZONTAL_BACKGROUND_MARGINS = 6;
+    public final static int VERTICAL_BACKGROUND_MARGINS = 4;
+    public final static int TOP_BOTTOM_MARGINS = VERTICAL_BACKGROUND_MARGINS / 2;
+    public final static int LEFT_RIGHT_MARGINS = HORIZONTAL_BACKGROUND_MARGINS / 2;
+
     public enum RenderState
     {
         NONE,
@@ -37,8 +42,10 @@ public class EntryRenderer<T extends AbstractEntry>
     }
 
     protected float screenYRow = 0;
-    public float distanceFromHeading;
-    public float angleFromHeading;
+    public float distanceFromHeadingDeg;
+    public float angleYawFromHeading;
+    public float angleTiltFromHeading;
+
     public int screenX;
 
     public int renderColour = 0;
@@ -76,17 +83,20 @@ public class EntryRenderer<T extends AbstractEntry>
         }
 
         boolean shouldDisappear = owner.getSettings().shouldDisappearWhenOOB() && !owner.isTracked();
-        angleFromHeading = (float) MathHelper.angleFromPos(owner.getPosition(context.partialTicks), context.playerPosition);
-        screenX = context.getAngleX(angleFromHeading, shouldDisappear);
 
-        if (context.isXOutOfBounds(screenX))
+        Vec3 entryPos = owner.getPosition(context.partialTicks);
+        angleYawFromHeading = (float) MathHelper.angleFromPos(entryPos, context.playerPosition);
+        angleTiltFromHeading = (float) MathHelper.xAngleFromPos(entryPos, context.playerPosition);
+        screenX = context.getAngleX(angleYawFromHeading, shouldDisappear);
+
+        if (screenX == Integer.MAX_VALUE)
         {
             setRenderState(RenderState.NONE);
             return RenderState.NONE;
         }
 
         boolean isHighlightable = context.isXHighlightable(screenX);
-        distanceFromHeading = Math.abs(Mth.wrapDegrees(context.yaw - angleFromHeading));
+        distanceFromHeadingDeg = Math.abs(Mth.wrapDegrees(context.yaw - angleYawFromHeading));
 
         if (owner.isTracked())
         {
@@ -263,30 +273,38 @@ public class EntryRenderer<T extends AbstractEntry>
 
     public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, float yRow)
     {
-        String displayableMarker = getDisplayableMarker(owner, compassRenderContext, owner.getMarker().length() <= 15, screenX);
+        int renderY = compassRenderContext.getYRowOnCompass(yRow, MAX_FOCUS_SCALE) - 1;
+        drawMarker(guiGraphicsExtractor, compassRenderContext, x, renderY, true);
+    }
+
+    public int drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, @Nullable Compass.CompassRenderContext compassRenderContext, int x, int y, boolean shouldCenterX)
+    {
+        String displayableMarker = compassRenderContext != null ? getDisplayableMarker(owner, compassRenderContext, owner.getMarker().length() <= 15, screenX) : owner.getMarker();
 
         int markerWidth = mc.font.width(displayableMarker);
-        int renderX = compassRenderContext.centerWidthAroundX((int) (markerWidth * scale), x);
-        int renderY = compassRenderContext.getYRowOnCompass(yRow, MAX_FOCUS_SCALE) - 1;
+        int centeredX = shouldCenterX ? MathHelper.centerWidthAroundX((int) (markerWidth * scale), x) : x;
 
         Matrix3x2fStack pose = guiGraphicsExtractor.pose();
 
         pose.pushMatrix();
-        pose.translate(renderX, renderY);
+        pose.translate(centeredX, y);
         pose.scale(scale, scale);
 
-        drawBackground(guiGraphicsExtractor, renderColour, 0, 0, markerWidth);
-        guiGraphicsExtractor.text(mc.font, displayableMarker, 0, 0, renderColour, owner.getSettings().shouldShowShadow());
-        pose.popMatrix();
-    }
-
-    public void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int colour, int x, int y, int markerWidth)
-    {
         if (shouldTakePriority() && BritishWeather.getConfig().shouldShowPinBackground() && owner.getSettings().shouldShowBackground())
         {
-            guiGraphicsExtractor.fill(x - 2, y - 2, x + markerWidth + 2, y + mc.font.lineHeight, backgroundColour);
-            guiGraphicsExtractor.outline(x - 3, y - 3, markerWidth + 5, mc.font.lineHeight + 4, colour);
+            drawBackground(guiGraphicsExtractor, 0, 0, markerWidth);
         }
+
+        guiGraphicsExtractor.text(mc.font, displayableMarker, 0, 0, renderColour, owner.getSettings().shouldShowShadow());
+        pose.popMatrix();
+
+        return markerWidth;
+    }
+
+    public void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int x, int y, int markerWidth)
+    {
+        guiGraphicsExtractor.fill(x - TOP_BOTTOM_MARGINS, y - TOP_BOTTOM_MARGINS, x + markerWidth + TOP_BOTTOM_MARGINS, y + mc.font.lineHeight, backgroundColour);
+        guiGraphicsExtractor.outline(x - LEFT_RIGHT_MARGINS, y - LEFT_RIGHT_MARGINS, markerWidth + HORIZONTAL_BACKGROUND_MARGINS, mc.font.lineHeight + VERTICAL_BACKGROUND_MARGINS, renderColour);
     }
 
     public void drawProgressAndInfo(GuiGraphicsExtractor guiGraphicsExtractor, Compass.CompassRenderContext compassRenderContext, int x, int yRow, int progress)

@@ -10,6 +10,7 @@ import me.brynview.navidrohim.util.GeneralUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.GuiPipeline;
+import net.minecraft.client.gui.contextualbar.LocatorBar;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -128,7 +129,6 @@ public class VehicleEntryGroup extends AbstractEntryGroup<VehicleEntryGroup.Vehi
             {
                 return;
             }
-
             this.addEntry(new VehicleEntry(entity, vehicleTexture));
         }
         );

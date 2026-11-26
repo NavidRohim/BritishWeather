@@ -14,6 +14,7 @@ import me.brynview.navidrohim.client.screen.PinSearchScreen;
 import me.brynview.navidrohim.util.ColorHelper;
 import me.brynview.navidrohim.util.GeneralUtils;
 import me.brynview.navidrohim.util.MathHelper;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -102,7 +103,7 @@ public class Compass
             this.contentY = y + Constants.LINE_HEIGHT_HALVED;
 
             this.yaw = yaw;
-            this.playerPosition = player.getPosition(partialTicks);
+            this.playerPosition = compass.mc.gameRenderer.mainCamera().position();
 
             this.highlightArea = Math.min(HIGHLIGHT_BOUNDS * compass.displayZoom * 2, compassWidthHalf);
         }
@@ -155,17 +156,7 @@ public class Compass
 
         public int centerStringAroundX(String str, int xPlacement)
         {
-            return centerWidthAroundX(font.width(str), xPlacement);
-        }
-
-        public int centerWidthAroundX(int width, int x)
-        {
-            return x - width / 2;
-        }
-
-        public boolean isXOutOfBounds(int x)
-        {
-            return x == Integer.MAX_VALUE;
+            return MathHelper.centerWidthAroundX(font.width(str), xPlacement);
         }
 
         public boolean isXHighlightable(int x)
@@ -288,7 +279,7 @@ public class Compass
 
         // Calculate compass dimensions
         float partialTicks = guiGraphics.partialTicks();
-        float yaw = smoothYaw(player.getYRot(partialTicks));
+        float yaw = smoothYaw(mc.gameRenderer.mainCamera().yaw());
         boolean compassView = !(KeyHandler.ENTRY_HUD_KEY.isDown() || currentScreen instanceof PinSearchScreen) && !isDummy;
 
         context = new CompassRenderContext(scaledWidth, y, partialTicks, yaw, player, this, zoomAmount, trackedPin != null);
@@ -515,7 +506,7 @@ public class Compass
             if (entry == trackedPin)
             {
                 tracked = entry;
-            } else if (renderer.calculateState(context) == EntryRenderer.RenderState.HIGHLIGHT && (closest == null || renderer.distanceFromHeading < closest.getRenderer().distanceFromHeading))
+            } else if (renderer.calculateState(context) == EntryRenderer.RenderState.HIGHLIGHT && (closest == null || renderer.distanceFromHeadingDeg < closest.getRenderer().distanceFromHeadingDeg))
             {
                 closest = entry;
             }
@@ -553,6 +544,11 @@ public class Compass
      */
     private float smoothYaw(float targetYaw)
     {
+        if (zoomAmount == 1)
+        {
+            return targetYaw;
+        }
+
         long now = System.nanoTime();
         long elapsed = now - lastYawUpdateNanos;
         lastYawUpdateNanos = now;
