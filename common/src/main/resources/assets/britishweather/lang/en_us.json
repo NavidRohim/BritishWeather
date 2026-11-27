@@ -55,7 +55,7 @@
   "br.keybind.create_pin": "Create pin",
   "br.keybind.find_pin": "Search pin",
   "br.keybind.edit_pin": "Edit pin",
-  "br.keybind.track_pin": "Track pin",
+  "br.keybind.track_pin": "Track / untrack pin",
   "br.keybind.zoom_modifier": "Zoom + (scroll up / down)",
 
   "br.compass.time_methods.gametime.tooltip": "Timer will only countdown whilst in-game.",
