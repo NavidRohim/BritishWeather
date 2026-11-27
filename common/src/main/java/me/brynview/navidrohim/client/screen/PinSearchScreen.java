@@ -76,23 +76,34 @@ public class PinSearchScreen extends Screen
 
     private static final int SLOT_SPACING = 2; // 2px for top and bottom. Total is 4px.
     private static final int SLOT_HEIGHT = Constants.LINE_HEIGHT + (SLOT_SPACING * 2);
-    //private static final int AVAILABLE_SLOTS = INFO_BOX_WIDTH_HEIGHT / SLOT_HEIGHT;
 
     private StyledEditBox searchBox;
     private @Nullable AbstractEntry selectedEntryOld;
     private @Nullable AbstractEntry selectedEntry;
 
-    private final LocalPlayer localPlayer;
     private final HashMap<String, AbstractEntry> entriesMatching = new HashMap<>();
+    private final LocalPlayer localPlayer;
     private final ResourceKey<Level> levelKey;
 
     private List<Map.Entry<String, AbstractEntry>> hints = List.of();
     private int entryIndex = 0;
 
+    // Scroll animation values
     private static final float SCROLL_EASE_SPEED = 18F; // Higher = snappier. ~18 settles in roughly 200ms.
     private float animatedIndex = 0.0F; // Smoothly follows entryIndex for the scroll animation.
+
+    // Common values used for animations
+    private float lastFrameTime = 0;
     private long nowOld = -1L;
 
+    // Heading change animation variables
+    private float targetTilt = 0;
+    private float oldTilt = 0;
+    private float targetYaw = 0;
+    private float oldYaw = 0;
+
+    private float currentAnimationTime = 0;
+    private float changeHeadingAnimationDuration = 0;
 
     public PinSearchScreen(ResourceKey<Level> level, LocalPlayer localPlayer)
     {
@@ -114,13 +125,34 @@ public class PinSearchScreen extends Screen
         this.setInitialFocus(searchBox);
     }
 
-    private void setYRot(float yRot)
+    private void lookAt(AbstractEntry entry)
     {
-        localPlayer.setYRot(yRot);
-        if (localPlayer.getVehicle() != null)
+        if (changeHeadingAnimationDuration != 0F)
         {
-            localPlayer.getVehicle().setYRot(yRot);
+            return;
         }
+
+        resetLookAtAnimation();
+
+        targetYaw = entry.getRenderer().angleYawFromHeading;
+        oldYaw = localPlayer.getYRot();
+
+        targetTilt = entry.getRenderer().angleTiltFromHeading;
+        oldTilt = localPlayer.getXRot();
+
+        changeHeadingAnimationDuration = 0.15F;
+
+
+    }
+
+    private void resetLookAtAnimation()
+    {
+        targetYaw = 0;
+        oldYaw = 0;
+        targetTilt = 0;
+        oldTilt = 0;
+        changeHeadingAnimationDuration = 0F;
+        currentAnimationTime = 0;
     }
 
     @Override
@@ -152,10 +184,6 @@ public class PinSearchScreen extends Screen
         selectedEntryOld = selectedEntry;
         selectedEntry = hints.get(entryIndex).getValue();
 
-        Constants.LOG.info(String.valueOf(selectedEntry.getRenderer().angleYawFromHeading));
-        //setYRot(selectedEntry.getRenderer().angleYawFromHeading);
-        //localPlayer.setXRot(selectedEntry.getRenderer().angleTiltFromHeading);
-
         return true;
     }
 
@@ -181,6 +209,8 @@ public class PinSearchScreen extends Screen
         entryIndex = 0;
         animatedIndex = 0.0F; // New results, so snap rather than animate from the old list.
         hints = List.of();
+
+        resetLookAtAnimation();
     }
 
     private void typedString(String string)
@@ -219,6 +249,26 @@ public class PinSearchScreen extends Screen
         this.onClose();
     }
 
+    private void animateYawAndTilt()
+    {
+        currentAnimationTime += lastFrameTime;
+        if (currentAnimationTime >= changeHeadingAnimationDuration)
+        {
+            resetLookAtAnimation();
+            return;
+        }
+
+        float animationFinishedPercentage = currentAnimationTime / changeHeadingAnimationDuration; // between 0.0 and 1.0;
+        float currentLerpedYaw = Mth.lerp(animationFinishedPercentage, oldYaw, targetYaw);
+
+        localPlayer.setYRot(currentLerpedYaw);
+        localPlayer.setXRot(Mth.lerp(animationFinishedPercentage, oldTilt, targetTilt));
+
+        if (localPlayer.getVehicle() != null)
+        {
+            localPlayer.getVehicle().setYRot(currentLerpedYaw);
+        }
+    }
 
     @Override
     public void extractRenderState(@NonNull GuiGraphicsExtractor graphics)
@@ -227,7 +277,9 @@ public class PinSearchScreen extends Screen
         int baseHintY = searchBox.getY() + searchBox.getHeight();
         float selectedEntryAnimationProgress = 1;
 
+        updateAnimationTimer();
         updateScrollAnimation();
+        animateYawAndTilt();
 
         if (!entriesMatching.isEmpty() && selectedEntry != null)
         {
@@ -265,7 +317,7 @@ public class PinSearchScreen extends Screen
                     drawPinInfo(graphics, selectedAnimationProgress, entry);
                 } else if (!pinAheadOfPlayer && entry == selectedEntry)
                 {
-                    setYRot(selectedEntry.getRenderer().angleYawFromHeading);
+                    lookAt(selectedEntry);
                 }
 
                 if (BritishWeather.getConfig().debug())
@@ -282,6 +334,13 @@ public class PinSearchScreen extends Screen
         super.extractRenderState(graphics);
     }
 
+    private void updateAnimationTimer()
+    {
+        long now = Util.getNanos();
+        lastFrameTime = nowOld < 0 ? 0.0F : (now - nowOld) / Constants.NANOS_TO_SECONDS_MAGIC;
+        nowOld = now;
+    }
+
     private void drawPinInfo(@NotNull GuiGraphicsExtractor graphics, float animationProgress, AbstractEntry entry)
     {
         Vec3 pinPos = entry.getPosition(graphics.partialTicks());
@@ -293,7 +352,7 @@ public class PinSearchScreen extends Screen
 
         if ( (x < 0 || y < 0 || x + INFO_BOX_WIDTH > width || y + finalInfoBoxHeight > height) && entry == selectedEntry)
         {
-            setYRot(selectedEntry.getRenderer().angleYawFromHeading);
+            lookAt(selectedEntry);
         }
 
         int lerpInfoBoxHeight = (int) Mth.lerp(animationProgress, INFO_BOX_MINIMISED_WIDTH_HEIGHT, (SLOT_HEIGHT * 2) + SLOT_SPACING);
@@ -333,11 +392,6 @@ public class PinSearchScreen extends Screen
     private void updateScrollAnimation()
     {
         // Slow transition animatedIndex to entryIndex
-
-        long now = Util.getNanos();
-        float deltaSeconds = nowOld < 0 ? 0.0F : (now - nowOld) / Constants.NANOS_TO_SECONDS_MAGIC;
-        nowOld = now;
-
         float remaining = entryIndex - animatedIndex;
         // If we are close enough to the index, just set it
         if (Math.abs(remaining) < 0.01F)
@@ -346,7 +400,7 @@ public class PinSearchScreen extends Screen
             return;
         }
 
-        animatedIndex += remaining * (1.0F - (float) Math.exp(-SCROLL_EASE_SPEED * deltaSeconds));
+        animatedIndex += remaining * (1.0F - (float) Math.exp(-SCROLL_EASE_SPEED * lastFrameTime));
     }
 
     /**

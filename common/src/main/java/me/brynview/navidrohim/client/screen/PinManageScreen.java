@@ -373,11 +373,13 @@ public class PinManageScreen extends Screen
     @Override
     public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick)
     {
-        boolean didAction = super.mouseClicked(event, doubleClick);
+        boolean didAction = true;
         if (isSelectingColour && frameCounter >= 10)
         {
             enableColourDropper(false);
             colourPicked(red, green, blue);
+        } else {
+            didAction = super.mouseClicked(event, doubleClick);
         }
 
         return didAction;
