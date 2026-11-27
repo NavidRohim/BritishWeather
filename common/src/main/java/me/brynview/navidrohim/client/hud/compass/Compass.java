@@ -285,7 +285,7 @@ public class Compass
         context = new CompassRenderContext(scaledWidth, y, partialTicks, yaw, player, this, zoomAmount, trackedPin != null);
 
         // Compass background
-        drawBackground(guiGraphics, mc);
+        drawBackground(guiGraphics);
 
         // Check if the entry HUD key is pressed.
         if (compassView)
@@ -367,7 +367,7 @@ public class Compass
         }
     }
 
-    private void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, Minecraft mc)
+    private void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor)
     {
         // Draw 2 lines. One for normal visible line and one for shadow (is there a way to combine this?)
         int decoY = context.contentY - Constants.LINE_HEIGHT_HALVED;

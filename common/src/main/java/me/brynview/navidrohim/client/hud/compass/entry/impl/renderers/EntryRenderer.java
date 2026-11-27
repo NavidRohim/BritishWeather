@@ -277,7 +277,7 @@ public class EntryRenderer<T extends AbstractEntry>
         drawMarker(guiGraphicsExtractor, compassRenderContext, x, renderY, true);
     }
 
-    public int drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, @Nullable Compass.CompassRenderContext compassRenderContext, int x, int y, boolean shouldCenterX)
+    public void drawMarker(GuiGraphicsExtractor guiGraphicsExtractor, @Nullable Compass.CompassRenderContext compassRenderContext, int x, int y, boolean shouldCenterX)
     {
         String displayableMarker = compassRenderContext != null ? getDisplayableMarker(owner, compassRenderContext, owner.getMarker().length() <= 15, screenX) : owner.getMarker();
 
@@ -298,7 +298,6 @@ public class EntryRenderer<T extends AbstractEntry>
         guiGraphicsExtractor.text(mc.font, displayableMarker, 0, 0, renderColour, owner.getSettings().shouldShowShadow());
         pose.popMatrix();
 
-        return markerWidth;
     }
 
     public void drawBackground(GuiGraphicsExtractor guiGraphicsExtractor, int x, int y, int markerWidth)

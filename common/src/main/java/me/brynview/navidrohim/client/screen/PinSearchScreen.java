@@ -16,6 +16,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.util.ARGB;
@@ -69,6 +70,7 @@ public class PinSearchScreen extends Screen
     }
 
     private static final Component PIN_SEARCH_NARRATION = Component.translatable("br.search_screen.pin_search.narration");
+    private static final Component PIN_SEARCH_BOX_HELP = Component.translatable("br.search_screen.pin_search.hint");
     private static final double FAT_TEXT_SCALE = 1.8D;
     private static final double SCALED_LINE_HEIGHT = Constants.LINE_HEIGHT * FAT_TEXT_SCALE;
     private static final int INFO_BOX_WIDTH = 130;
@@ -123,6 +125,8 @@ public class PinSearchScreen extends Screen
 
         this.addRenderableWidget(searchBox);
         this.setInitialFocus(searchBox);
+
+        typedString("");
     }
 
     private void lookAt(AbstractEntry entry)
@@ -219,12 +223,14 @@ public class PinSearchScreen extends Screen
 
         if (string.isEmpty())
         {
-            return;
+            searchBox.setSuggestion(PIN_SEARCH_BOX_HELP.getString());
+        } else {
+            searchBox.setSuggestion("");
         }
 
         for (AbstractEntry allEntry : EntryManager.getEntriesInDimension(levelKey))
         {
-            if (allEntry.getMarker().toLowerCase().contains(string.toLowerCase()))
+            if (string.isEmpty() || allEntry.getMarker().toLowerCase().contains(string.toLowerCase()))
             {
                 String marker = allEntry.getMarker();
                 if (entriesMatching.containsKey(marker))
